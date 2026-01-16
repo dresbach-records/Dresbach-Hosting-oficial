@@ -2,7 +2,7 @@
 
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Activity, ShoppingCart, FileX, AlertTriangle, PlusCircle, Search } from 'lucide-react';
+import { Activity, ShoppingCart, FileX, AlertTriangle, PlusCircle, Search, Ticket } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,6 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart"
-import { Ticket } from 'lucide-react';
 
 const chartData = [
   { month: 'Jan', revenue: 186, orders: 80, income: 200 },
@@ -52,8 +51,8 @@ const todoItems = [
 
 export default function AdminDashboard() {
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left Sidebar */}
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Left Sidebar within Dashboard */}
         <aside className="lg:col-span-3 space-y-6">
             <Card>
                 <CardHeader>
@@ -94,7 +93,6 @@ export default function AdminDashboard() {
 
         {/* Main Content */}
         <div className="lg:col-span-9 space-y-6">
-            <h1 className="text-2xl font-semibold">Dashboard</h1>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
