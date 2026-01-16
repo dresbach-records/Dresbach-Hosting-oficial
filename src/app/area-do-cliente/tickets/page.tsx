@@ -5,8 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useMemoFirebase, useCollection, useFirestore, useUser } from '@/firebase';
-import { collection } from 'firebase/firestore';
-import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { collection, doc, writeBatch } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +19,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast';
 
 const newTicketSchema = z.object({
   subject: z.string().min(5, "O assunto deve ter pelo menos 5 caracteres."),
@@ -46,6 +46,7 @@ function TicketsPageContent() {
     const firestore = useFirestore();
     const searchParams = useSearchParams();
     const router = useRouter();
+    const { toast } = useToast();
 
     const [isDialogOpen, setIsDialogOpen] = useState(searchParams.get('new') === 'true');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -76,21 +77,44 @@ function TicketsPageContent() {
     });
 
     const onSubmit = async (values: NewTicketForm) => {
-        if (!user) return;
+        if (!user || !firestore) return;
         setIsSubmitting(true);
+
+        const newTicketRef = doc(collection(firestore, `clients/${user.uid}/tickets`));
+        const rootTicketRef = doc(firestore, 'tickets', newTicketRef.id);
+
         const ticketData = {
             ...values,
+            id: newTicketRef.id,
             clientId: user.uid,
+            clientName: user.displayName || user.email,
             status: 'Open',
             createdAt: new Date().toISOString(),
         };
 
-        const ticketsCollection = collection(firestore, `clients/${user.uid}/tickets`);
-        await addDocumentNonBlocking(ticketsCollection, ticketData);
+        try {
+            const batch = writeBatch(firestore);
+            batch.set(newTicketRef, ticketData);
+            batch.set(rootTicketRef, ticketData);
+            await batch.commit();
 
-        setIsSubmitting(false);
-        handleOpenChange(false);
-        form.reset();
+            toast({
+                title: "Ticket Enviado!",
+                description: "Sua solicitação foi recebida e será analisada em breve.",
+            });
+            setIsSubmitting(false);
+            handleOpenChange(false);
+            form.reset();
+
+        } catch (error) {
+            console.error("Error creating ticket:", error);
+            toast({
+                variant: "destructive",
+                title: "Erro ao criar ticket",
+                description: "Ocorreu um erro ao enviar sua solicitação. Tente novamente.",
+            });
+            setIsSubmitting(false);
+        }
     }
 
     return (
@@ -214,3 +238,5 @@ export default function TicketsPage() {
         </Suspense>
     )
 }
+
+    

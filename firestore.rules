@@ -97,6 +97,19 @@ service cloud.firestore {
     // ----------------------------------------------------------------------
     // Collection Rules
     // ----------------------------------------------------------------------
+    
+    /**
+     * @description Manages a global, denormalized collection of all support tickets for efficient admin querying.
+     * @path /tickets/{ticketId}
+     * @allow (get, list, update, delete) Admins have full read/write access.
+     * @allow (create) Authenticated users can create tickets, but the `clientId` must match their own UID, and the document `id` must match the ticketId.
+     * @principle Enables a central ticket queue for admins while maintaining user-level write security.
+     */
+    match /tickets/{ticketId} {
+      allow get, list, update, delete: if isAdmin();
+      allow create: if (isOwner(request.resource.data.clientId) || isAdmin()) && request.resource.data.id == ticketId;
+    }
+
 
     /**
      * @description Manages top-level client documents.
@@ -174,3 +187,5 @@ service cloud.firestore {
     }
   }
 }
+
+    
