@@ -6,8 +6,13 @@ import { Bot, MessageSquare, Ticket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function SupportPage() {
-  async function getAnswer(query: string) {
+  async function getAnswer(prevState: string | null, formData: FormData): Promise<string> {
     "use server";
+    const query = formData.get("query") as string;
+    if (!query) {
+      return "Por favor, insira uma pergunta.";
+    }
+
     try {
       const result = await intelligentSupportAssistant({ query });
       return result.answer;
