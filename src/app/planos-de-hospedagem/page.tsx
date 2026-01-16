@@ -15,7 +15,7 @@ const plans = [
       "Suporte Básico",
       "Painel de Controle",
     ],
-    cta: "Contratar no Painel",
+    cta: "Contratar Agora",
     isFeatured: false,
   },
   {
@@ -30,7 +30,7 @@ const plans = [
       "Acesso SSH",
       "Backups Diários",
     ],
-    cta: "Contratar no Painel",
+    cta: "Contratar Agora",
     isFeatured: true,
   },
   {
@@ -44,7 +44,7 @@ const plans = [
       "Suporte Especializado 24/7",
       "Consultoria Tech Ops inclusa",
     ],
-    cta: "Contratar no Painel",
+    cta: "Contratar Agora",
     isFeatured: false,
   },
 ];
@@ -64,27 +64,27 @@ export default function HostingPlansPage() {
 
         <div className="mt-16 grid grid-cols-1 gap-8 md:grid-cols-3">
           {plans.map((plan) => (
-            <Card key={plan.name} className={`flex flex-col ${plan.isFeatured ? 'border-primary ring-2 ring-primary' : ''}`}>
+            <Card key={plan.name} className={`flex flex-col text-center ${plan.isFeatured ? 'border-accent ring-2 ring-accent' : 'border-border'}`}>
               <CardHeader>
                 <CardTitle className="font-headline text-2xl">{plan.name}</CardTitle>
-                <CardDescription>
+                <div className="mt-4">
                   <span className="text-4xl font-bold text-foreground">{plan.price}</span>
                   <span className="text-muted-foreground">{plan.period}</span>
-                </CardDescription>
+                </div>
               </CardHeader>
               <CardContent className="flex-grow">
-                <ul className="space-y-4">
+                <ul className="space-y-4 text-left">
                   {plan.features.map((feature) => (
                     <li key={feature} className="flex items-center">
-                      <Check className="h-5 w-5 text-green-500 mr-2" />
+                      <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
                       <span>{feature}</span>
                     </li>
                   ))}
                 </ul>
               </CardContent>
               <CardFooter>
-                <Button className={`w-full ${plan.isFeatured ? '' : 'variant-outline'}`} asChild>
-                  <Link href="/area-do-cliente">{plan.cta}</Link>
+                <Button className={`w-full ${plan.isFeatured ? 'bg-accent text-accent-foreground hover:bg-accent/90' : 'bg-primary text-primary-foreground hover:bg-primary/90'}`} asChild>
+                  <Link href="/signup">{plan.cta}</Link>
                 </Button>
               </CardFooter>
             </Card>

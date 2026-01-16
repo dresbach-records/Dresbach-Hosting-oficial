@@ -35,7 +35,7 @@ function NavLink({ href, children }: { href: string; children: React.ReactNode }
   return (
     <Link
       href={href}
-      className={`px-4 py-4 text-sm font-medium border-b-2 flex items-center gap-1 transition-colors ${isActive ? 'border-white text-white' : 'border-transparent text-primary-foreground/80 hover:text-white'}`}
+      className={`px-4 py-4 text-sm font-medium border-b-2 flex items-center gap-1 transition-colors ${isActive ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
     >
       {children}
     </Link>
@@ -67,10 +67,10 @@ export default function ClientAreaLayout({
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-muted/50 text-foreground">
-      <div className="sticky top-0 z-50">
+    <div className="min-h-screen flex flex-col bg-muted/40 text-foreground">
+      <div className="sticky top-0 z-50 bg-card shadow-sm">
         {/* Top Header */}
-        <header className="bg-card border-b">
+        <header className="border-b">
           <div className="container flex h-16 items-center justify-between">
             <Logo className="h-8 w-auto text-primary" />
             <div className="flex items-center gap-4 text-sm">
@@ -98,13 +98,13 @@ export default function ClientAreaLayout({
                   <div className="p-4 text-center text-sm text-muted-foreground">Nenhuma notificação não lida.</div>
                 </DropdownMenuContent>
               </DropdownMenu>
-              <Button variant="default" size="sm" onClick={handleLogout}>Sair</Button>
+              <Button variant="outline" size="sm" onClick={handleLogout}>Sair</Button>
             </div>
           </div>
         </header>
 
         {/* Main Navigation */}
-        <nav className="bg-primary text-primary-foreground shadow-md">
+        <nav className="border-b">
           <div className="container flex h-14 items-center justify-between">
               <div className="flex items-center">
                   <NavLink href="/area-do-cliente"><Home className="mr-1 h-4 w-4" />Início</NavLink>
@@ -114,7 +114,7 @@ export default function ClientAreaLayout({
                   <NavLink href="/area-do-cliente/tickets"><MessageSquare className="mr-1 h-4 w-4" />Suporte</NavLink>
                   <NavLink href="/area-do-cliente/tickets?new=true">Abrir Ticket</NavLink>
               </div>
-              <div className="text-sm text-primary-foreground/80">
+              <div className="text-sm text-muted-foreground">
                   Olá, {user.displayName?.split(' ')[0] || 'Usuário'}!
               </div>
           </div>
