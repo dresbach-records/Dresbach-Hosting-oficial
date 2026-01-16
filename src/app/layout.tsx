@@ -3,6 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { FirebaseClientProvider } from '@/firebase';
 import { SiteLayout } from '@/components/site-layout';
+import { ThemeProvider } from '@/components/theme-provider';
 
 export const metadata: Metadata = {
   title: 'Dresbach Hosting',
@@ -23,7 +24,9 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen font-body antialiased">
         <FirebaseClientProvider>
-          <SiteLayout>{children}</SiteLayout>
+          <ThemeProvider>
+            <SiteLayout>{children}</SiteLayout>
+          </ThemeProvider>
           <Toaster />
         </FirebaseClientProvider>
       </body>
