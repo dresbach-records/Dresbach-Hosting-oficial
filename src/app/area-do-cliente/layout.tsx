@@ -77,7 +77,7 @@ export default function ClientAreaLayout({
                <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                    <Button variant="ghost" size="sm" className="gap-1 text-muted-foreground">
-                    English
+                    Idioma
                     <ChevronDown className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -88,17 +88,17 @@ export default function ClientAreaLayout({
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                    <Button variant="ghost" size="sm" className="gap-1 text-muted-foreground">
-                    Notifications
+                    Notificações
                     <Bell className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-80">
-                  <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+                  <DropdownMenuLabel>Notificações</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <div className="p-4 text-center text-sm text-muted-foreground">No unread notifications.</div>
+                  <div className="p-4 text-center text-sm text-muted-foreground">Nenhuma notificação não lida.</div>
                 </DropdownMenuContent>
               </DropdownMenu>
-              <Button variant="default" size="sm" onClick={handleLogout}>Logout</Button>
+              <Button variant="default" size="sm" onClick={handleLogout}>Sair</Button>
             </div>
           </div>
         </header>
@@ -107,15 +107,15 @@ export default function ClientAreaLayout({
         <nav className="bg-primary text-primary-foreground shadow-md">
           <div className="container flex h-14 items-center justify-between">
               <div className="flex items-center">
-                  <NavLink href="/area-do-cliente"><Home className="mr-1 h-4 w-4" />Home</NavLink>
-                  <NavLink href="/area-do-cliente/servicos"><Server className="mr-1 h-4 w-4" />Services</NavLink>
-                  <NavLink href="/area-do-cliente/dominios"><Globe className="mr-1 h-4 w-4" />Domains</NavLink>
-                  <NavLink href="/area-do-cliente/faturas"><CreditCard className="mr-1 h-4 w-4" />Billing</NavLink>
-                  <NavLink href="/area-do-cliente/tickets"><MessageSquare className="mr-1 h-4 w-4" />Support</NavLink>
-                  <NavLink href="/area-do-cliente/tickets?new=true">Open Ticket</NavLink>
+                  <NavLink href="/area-do-cliente"><Home className="mr-1 h-4 w-4" />Início</NavLink>
+                  <NavLink href="/area-do-cliente/servicos"><Server className="mr-1 h-4 w-4" />Serviços</NavLink>
+                  <NavLink href="/area-do-cliente/dominios"><Globe className="mr-1 h-4 w-4" />Domínios</NavLink>
+                  <NavLink href="/area-do-cliente/faturas"><CreditCard className="mr-1 h-4 w-4" />Faturas</NavLink>
+                  <NavLink href="/area-do-cliente/tickets"><MessageSquare className="mr-1 h-4 w-4" />Suporte</NavLink>
+                  <NavLink href="/area-do-cliente/tickets?new=true">Abrir Ticket</NavLink>
               </div>
               <div className="text-sm text-primary-foreground/80">
-                  Hello, {user.displayName?.split(' ')[0] || 'User'}!
+                  Olá, {user.displayName?.split(' ')[0] || 'Usuário'}!
               </div>
           </div>
         </nav>
@@ -134,10 +134,10 @@ export default function ClientAreaLayout({
       <footer className="py-4 mt-auto bg-card border-t">
         <div className="container flex items-center justify-center">
           <p className="text-xs text-muted-foreground">
-            Copyright © 2026 Dresbach hosting do brasil.ltda. All Rights Reserved.
+            Copyright © 2026 Dresbach hosting do brasil.ltda. Todos os direitos reservados.
           </p>
           <Button variant="outline" size="sm" className="ml-4" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-            <ArrowUp className="mr-2 h-4 w-4" /> Back to Top
+            <ArrowUp className="mr-2 h-4 w-4" /> Voltar ao Topo
           </Button>
         </div>
       </footer>

@@ -12,7 +12,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Logo } from "@/components/logo";
 
 const navLinks = [
-  { href: "/", label: "Home" },
+  { href: "/", label: "Início" },
   { href: "/planos-de-hospedagem", label: "Planos" },
   { href: "/tech-ops", label: "Tech Ops" },
   { href: "/suporte", label: "Suporte" },

@@ -35,6 +35,12 @@ function TicketStatusBadge({ status }: { status: string }) {
     return <Badge variant={variant}>{text}</Badge>;
 }
 
+const priorityMap: { [key: string]: string } = {
+    'Low': 'Baixa',
+    'Medium': 'Média',
+    'High': 'Alta',
+};
+
 function TicketsPageContent() {
     const { user } = useUser();
     const firestore = useFirestore();
@@ -181,7 +187,7 @@ function TicketsPageContent() {
                             tickets.map((ticket) => (
                                 <TableRow key={ticket.id}>
                                     <TableCell className="font-medium">{ticket.subject}</TableCell>
-                                    <TableCell>{ticket.priority}</TableCell>
+                                    <TableCell>{priorityMap[ticket.priority] || ticket.priority}</TableCell>
                                     <TableCell><TicketStatusBadge status={ticket.status} /></TableCell>
                                     <TableCell>{format(new Date(ticket.createdAt), 'dd/MM/yyyy HH:mm')}</TableCell>
                                 </TableRow>

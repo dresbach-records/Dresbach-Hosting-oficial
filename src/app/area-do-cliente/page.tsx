@@ -44,20 +44,20 @@ export default function ClientAreaDashboard() {
   return (
     <div className="space-y-6">
         <div>
-            <p className="text-sm text-muted-foreground">Portal Home / Client Area</p>
-            <h1 className="text-3xl font-light">Welcome Back, <span className="font-medium">{user?.displayName?.split(' ')[0] || 'User'}</span></h1>
+            <p className="text-sm text-muted-foreground">Início do Portal / Área do Cliente</p>
+            <h1 className="text-3xl font-light">Bem-vindo de volta, <span className="font-medium">{user?.displayName?.split(' ')[0] || 'Usuário'}</span></h1>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <StatCard 
-                title="SERVICES" 
+                title="SERVIÇOS" 
                 icon={<Server className="h-10 w-10" />} 
                 count={services?.length || 0}
                 colorClass="bg-cyan-500"
                 isLoading={servicesLoading}
             />
              <StatCard 
-                title="DOMAINS" 
+                title="DOMÍNIOS" 
                 icon={<Globe className="h-10 w-10" />} 
                 count={domains?.length || 0}
                 colorClass="bg-green-500"
@@ -71,7 +71,7 @@ export default function ClientAreaDashboard() {
                 isLoading={ticketsLoading}
             />
             <StatCard 
-                title="INVOICES" 
+                title="FATURAS" 
                 icon={<CreditCard className="h-10 w-10" />} 
                 count={invoices?.filter(inv => inv.status !== 'Paid').length || 0}
                 colorClass="bg-orange-500"
@@ -81,19 +81,19 @@ export default function ClientAreaDashboard() {
         
         <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <Input placeholder="Enter a question here to search our knowledgebase for answers..." className="pl-10 h-12 bg-card" />
+            <Input placeholder="Digite sua dúvida para pesquisar em nossa base de conhecimento..." className="pl-10 h-12 bg-card" />
         </div>
 
         <Card>
             <CardHeader>
-                <CardTitle className="text-base font-semibold">Your Active Products/Services</CardTitle>
+                <CardTitle className="text-base font-semibold">Seus Produtos/Serviços Ativos</CardTitle>
             </CardHeader>
             <CardContent>
-                <p className="text-muted-foreground text-center py-4">It appears you do not have any products/services with us yet. <Link href="/planos-de-hospedagem" className="text-accent-600 font-semibold hover:underline">Place an order to get started</Link>.</p>
+                <p className="text-muted-foreground text-center py-4">Parece que você ainda não tem nenhum produto/serviço conosco. <Link href="/planos-de-hospedagem" className="text-accent-600 font-semibold hover:underline">Faça um pedido para começar</Link>.</p>
             </CardContent>
             <CardFooter className="bg-muted/50 p-2 flex justify-end">
                 <Button asChild size="sm" variant="outline" className="shadow-sm">
-                    <Link href="/area-do-cliente/servicos">My Services</Link>
+                    <Link href="/area-do-cliente/servicos">Meus Serviços</Link>
                 </Button>
             </CardFooter>
         </Card>
@@ -101,36 +101,36 @@ export default function ClientAreaDashboard() {
         <div className="grid md:grid-cols-2 gap-6">
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-base font-semibold">Recent Support Tickets</CardTitle>
+                    <CardTitle className="text-base font-semibold">Tickets de Suporte Recentes</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <p className="text-muted-foreground text-center py-4">No Recent Tickets Found. If you need any help, please <Link href="/area-do-cliente/tickets?new=true" className="text-accent-600 font-semibold hover:underline">open a ticket</Link>.</p>
+                    <p className="text-muted-foreground text-center py-4">Nenhum ticket recente encontrado. Se precisar de ajuda, por favor <Link href="/area-do-cliente/tickets?new=true" className="text-accent-600 font-semibold hover:underline">abra um ticket</Link>.</p>
                 </CardContent>
                  <CardFooter className="bg-muted/50 p-2 flex justify-end">
                     <Button asChild size="sm" className="bg-primary hover:bg-primary/90">
-                        <Link href="/area-do-cliente/tickets?new=true"><Plus className="mr-2 h-4 w-4" />Open New Ticket</Link>
+                        <Link href="/area-do-cliente/tickets?new=true"><Plus className="mr-2 h-4 w-4" />Abrir Novo Ticket</Link>
                     </Button>
                 </CardFooter>
             </Card>
              <Card>
                 <CardHeader>
-                    <CardTitle className="text-base font-semibold">Register a New Domain</CardTitle>
+                    <CardTitle className="text-base font-semibold">Registrar um Novo Domínio</CardTitle>
                 </CardHeader>
                 <CardContent className="flex gap-2">
                     <Input placeholder="example.com" className="bg-card"/>
-                    <Button className="bg-green-600 hover:bg-green-700">Register</Button>
-                    <Button variant="outline" className="shadow-sm">Transfer</Button>
+                    <Button className="bg-green-600 hover:bg-green-700">Registrar</Button>
+                    <Button variant="outline" className="shadow-sm">Transferir</Button>
                 </CardContent>
             </Card>
         </div>
 
         <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-base font-semibold flex items-center gap-2"><Newspaper className="h-5 w-5" /> Recent News</CardTitle>
-                <Button variant="outline" size="sm" className="shadow-sm">View All</Button>
+                <CardTitle className="text-base font-semibold flex items-center gap-2"><Newspaper className="h-5 w-5" /> Notícias Recentes</CardTitle>
+                <Button variant="outline" size="sm" className="shadow-sm">Ver Tudo</Button>
             </CardHeader>
             <CardContent>
-                <p className="text-muted-foreground text-center py-4">No recent news.</p>
+                <p className="text-muted-foreground text-center py-4">Nenhuma notícia recente.</p>
             </CardContent>
         </Card>
 
