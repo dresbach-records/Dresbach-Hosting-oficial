@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, redirect } from 'next/navigation';
 import {
   Bell,
   CreditCard,
@@ -9,14 +9,17 @@ import {
   Home,
   LifeBuoy,
   Menu,
-  Search,
   Server,
   Settings,
   ShoppingCart,
   Users,
-  BarChart
+  BarChart,
+  Loader2,
+  LogOut,
 } from 'lucide-react';
+import { signOut } from 'firebase/auth';
 
+import { useUser, useAuth } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -72,6 +75,34 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const { user, isUserLoading } = useUser();
+  const auth = useAuth();
+
+  if (pathname.startsWith('/admin/login')) {
+      return <>{children}</>;
+  }
+
+  if (isUserLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-muted/40">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    redirect('/admin/login');
+    return null;
+  }
+
+  if (user.email !== 'dmgproductionsoficial@gmail.com') {
+      redirect('/area-do-cliente');
+      return null;
+  }
+
+  const handleLogout = () => {
+    signOut(auth);
+  }
 
   const desktopNav = (
       <nav className="grid items-start px-2 text-sm font-medium">
@@ -184,7 +215,7 @@ export default function AdminLayout({
               <DropdownMenuItem>Configurações</DropdownMenuItem>
               <DropdownMenuItem>Suporte</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Sair</DropdownMenuItem>
+              <DropdownMenuItem onClick={handleLogout}><LogOut className="mr-2 h-4 w-4" />Sair</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </header>
