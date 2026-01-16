@@ -1,26 +1,15 @@
-import type { SVGProps } from 'react';
+import Image from 'next/image';
 
-export function Logo(props: SVGProps<SVGSVGElement>) {
+export function Logo({ className }: { className?: string }) {
+  // NOTE: This component assumes a logo file named "logosem fundo.png" exists in the `public` directory.
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 200 40"
-      width="200"
-      height="40"
-      aria-label="Dresbach Hosting Logo"
-      {...props}
-    >
-      <rect width="200" height="40" fill="transparent" />
-      <text
-        x="10"
-        y="28"
-        fontFamily="'PT Sans', sans-serif"
-        fontSize="24"
-        fontWeight="bold"
-        fill="currentColor"
-      >
-        Dresbach Hosting
-      </text>
-    </svg>
+    <Image
+      src="/logosem fundo.png"
+      alt="Dresbach Hosting Logo"
+      width={140}
+      height={35}
+      priority
+      className={className}
+    />
   );
 }

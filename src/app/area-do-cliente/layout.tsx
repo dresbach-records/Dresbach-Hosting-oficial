@@ -72,7 +72,7 @@ export default function ClientAreaLayout({
         {/* Top Header */}
         <header className="border-b">
           <div className="container flex h-16 items-center justify-between">
-            <Logo className="h-8 w-auto text-primary" />
+            <Logo />
             <div className="flex items-center gap-4 text-sm">
                <DropdownMenu>
                 <DropdownMenuTrigger asChild>
