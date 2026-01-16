@@ -64,7 +64,7 @@ export default function HostingPlansPage() {
 
         <div className="mt-16 grid grid-cols-1 gap-8 md:grid-cols-3">
           {plans.map((plan) => (
-            <Card key={plan.name} className={`flex flex-col text-center ${plan.isFeatured ? 'border-accent ring-2 ring-accent' : 'border-border'}`}>
+            <Card key={plan.name} className={`flex flex-col text-center ${plan.isFeatured ? 'border-primary ring-2 ring-primary' : 'border-border'}`}>
               <CardHeader>
                 <CardTitle className="font-headline text-2xl">{plan.name}</CardTitle>
                 <div className="mt-4">
@@ -83,8 +83,8 @@ export default function HostingPlansPage() {
                 </ul>
               </CardContent>
               <CardFooter>
-                <Button className={`w-full ${plan.isFeatured ? 'bg-accent text-accent-foreground hover:bg-accent/90' : 'bg-primary text-primary-foreground hover:bg-primary/90'}`} asChild>
-                  <Link href="/signup">{plan.cta}</Link>
+                <Button className={`w-full ${plan.isFeatured ? 'bg-primary text-primary-foreground hover:bg-primary/90' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'}`} asChild>
+                  <Link href="/pedido">{plan.cta}</Link>
                 </Button>
               </CardFooter>
             </Card>
