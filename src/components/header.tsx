@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Menu, MessageCircle } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { Menu, MessageCircle, LogOut } from "lucide-react";
+import { useAuth, useUser } from "@/firebase";
+import { signOut } from "firebase/auth";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -19,6 +21,14 @@ const navLinks = [
 
 export function Header() {
   const pathname = usePathname();
+  const { user, isUserLoading } = useUser();
+  const auth = useAuth();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await signOut(auth);
+    router.push('/login');
+  };
 
   const renderNavLinks = (isMobile = false) =>
     navLinks.map((link) => (
@@ -81,9 +91,25 @@ export function Header() {
                 WhatsApp
               </a>
             </Button>
-            <Button size="sm" asChild>
-              <Link href="/area-do-cliente">Área do Cliente</Link>
-            </Button>
+            {!isUserLoading && (
+              <>
+                {user ? (
+                  <>
+                    <Button size="sm" variant="secondary" asChild>
+                      <Link href="/area-do-cliente">Área do Cliente</Link>
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={handleLogout}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Sair
+                    </Button>
+                  </>
+                ) : (
+                  <Button size="sm" asChild>
+                    <Link href="/login">Área do Cliente</Link>
+                  </Button>
+                )}
+              </>
+            )}
           </nav>
         </div>
       </div>
