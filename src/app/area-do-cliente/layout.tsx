@@ -11,7 +11,8 @@ import {
   Server,
   Globe,
   CreditCard,
-  MessageSquare
+  MessageSquare,
+  ArrowUp,
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 
@@ -67,56 +68,58 @@ export default function ClientAreaLayout({
 
   return (
     <div className="min-h-screen flex flex-col bg-muted/50 text-foreground">
-      {/* Top Header */}
-      <header className="bg-card border-b">
-        <div className="container flex h-16 items-center justify-between">
-          <Logo className="h-8 w-auto text-primary" />
-          <div className="flex items-center gap-4 text-sm">
-             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                 <Button variant="ghost" size="sm" className="gap-1 text-muted-foreground">
-                  English
-                  <ChevronDown className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem>Português</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                 <Button variant="ghost" size="sm" className="gap-1 text-muted-foreground">
-                  Notifications
-                  <Bell className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-80">
-                <DropdownMenuLabel>Notifications</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <div className="p-4 text-center text-sm text-muted-foreground">No unread notifications.</div>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <Button variant="default" size="sm" onClick={handleLogout}>Logout</Button>
+      <div className="sticky top-0 z-50">
+        {/* Top Header */}
+        <header className="bg-card border-b">
+          <div className="container flex h-16 items-center justify-between">
+            <Logo className="h-8 w-auto text-primary" />
+            <div className="flex items-center gap-4 text-sm">
+               <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                   <Button variant="ghost" size="sm" className="gap-1 text-muted-foreground">
+                    English
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem>Português</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                   <Button variant="ghost" size="sm" className="gap-1 text-muted-foreground">
+                    Notifications
+                    <Bell className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-80">
+                  <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <div className="p-4 text-center text-sm text-muted-foreground">No unread notifications.</div>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <Button variant="default" size="sm" onClick={handleLogout}>Logout</Button>
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
 
-      {/* Main Navigation */}
-      <nav className="bg-primary text-primary-foreground shadow-md">
-        <div className="container flex h-14 items-center justify-between">
-            <div className="flex items-center">
-                <NavLink href="/area-do-cliente"><Home className="mr-1 h-4 w-4" />Home</NavLink>
-                <NavLink href="/area-do-cliente/servicos"><Server className="mr-1 h-4 w-4" />Services</NavLink>
-                <NavLink href="/area-do-cliente/dominios"><Globe className="mr-1 h-4 w-4" />Domains</NavLink>
-                <NavLink href="/area-do-cliente/faturas"><CreditCard className="mr-1 h-4 w-4" />Billing</NavLink>
-                <NavLink href="/area-do-cliente/tickets"><MessageSquare className="mr-1 h-4 w-4" />Support</NavLink>
-                <NavLink href="/area-do-cliente/tickets?new=true">Open Ticket</NavLink>
-            </div>
-            <div className="text-sm text-primary-foreground/80">
-                Hello, {user.displayName?.split(' ')[0] || 'User'}!
-            </div>
-        </div>
-      </nav>
+        {/* Main Navigation */}
+        <nav className="bg-primary text-primary-foreground shadow-md">
+          <div className="container flex h-14 items-center justify-between">
+              <div className="flex items-center">
+                  <NavLink href="/area-do-cliente"><Home className="mr-1 h-4 w-4" />Home</NavLink>
+                  <NavLink href="/area-do-cliente/servicos"><Server className="mr-1 h-4 w-4" />Services</NavLink>
+                  <NavLink href="/area-do-cliente/dominios"><Globe className="mr-1 h-4 w-4" />Domains</NavLink>
+                  <NavLink href="/area-do-cliente/faturas"><CreditCard className="mr-1 h-4 w-4" />Billing</NavLink>
+                  <NavLink href="/area-do-cliente/tickets"><MessageSquare className="mr-1 h-4 w-4" />Support</NavLink>
+                  <NavLink href="/area-do-cliente/tickets?new=true">Open Ticket</NavLink>
+              </div>
+              <div className="text-sm text-primary-foreground/80">
+                  Hello, {user.displayName?.split(' ')[0] || 'User'}!
+              </div>
+          </div>
+        </nav>
+      </div>
 
       {/* Main Content */}
       <main className="flex-1 py-8 container">
@@ -128,11 +131,14 @@ export default function ClientAreaLayout({
         </div>
       </main>
 
-      <footer className="py-4 mt-auto">
-        <div className="container text-center">
+      <footer className="py-4 mt-auto bg-card border-t">
+        <div className="container flex items-center justify-center">
           <p className="text-xs text-muted-foreground">
-            Powered by Dresbach Hosting
+            Copyright © 2026 Dresbach hosting do brasil.ltda. All Rights Reserved.
           </p>
+          <Button variant="outline" size="sm" className="ml-4" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+            <ArrowUp className="mr-2 h-4 w-4" /> Back to Top
+          </Button>
         </div>
       </footer>
     </div>
