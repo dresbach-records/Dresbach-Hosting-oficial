@@ -135,7 +135,7 @@ export default function AdminLayout({
         </div>
       </div>
       <div className="flex flex-col">
-        <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:h-[60px] lg:px-6">
+        <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:h-[60px] lg:px-6 sticky top-0 z-30 shadow-sm">
           <Sheet>
             <SheetTrigger asChild>
               <Button
@@ -148,8 +148,8 @@ export default function AdminLayout({
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="flex flex-col">
-              <SheetHeader className="sr-only">
-                <SheetTitle>Navigation Menu</SheetTitle>
+              <SheetHeader>
+                <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
               </SheetHeader>
               {mobileNav}
               <div className="mt-auto">
