@@ -17,8 +17,7 @@ export function Logo(props: SVGProps<SVGSVGElement>) {
         fontFamily="'PT Sans', sans-serif"
         fontSize="24"
         fontWeight="bold"
-        fill="hsl(var(--primary))"
-        className="dark:fill-hsl(var(--primary))"
+        fill="currentColor"
       >
         Dresbach Hosting
       </text>

@@ -56,7 +56,7 @@ export function Footer() {
 
         <div className="mt-12 border-t pt-8">
           <div className="flex flex-col items-center justify-between gap-6 sm:flex-row">
-            <Logo className="h-6 w-auto" />
+            <Logo className="h-6 w-auto text-primary" />
             <p className="text-center text-sm text-muted-foreground">
               © {new Date().getFullYear()} Dresbach Hosting do Brasil LTDA
               <br className="sm:hidden" />

@@ -50,7 +50,7 @@ export function Header() {
       <div className="container flex h-14 max-w-screen-2xl items-center">
         <div className="mr-4 hidden md:flex">
           <Link href="/" className="mr-6 flex items-center space-x-2">
-            <Logo className="h-6 w-auto" />
+            <Logo className="h-6 w-auto text-primary" />
           </Link>
           <nav className="flex items-center gap-6 text-sm">
             {renderNavLinks()}
@@ -72,7 +72,7 @@ export function Header() {
           <SheetContent side="left" className="w-[300px] sm:w-[400px]">
             <nav className="flex flex-col gap-4">
               <Link href="/" className="mb-4">
-                <Logo className="h-8 w-auto" />
+                <Logo className="h-8 w-auto text-primary" />
               </Link>
               {renderNavLinks(true)}
             </nav>
