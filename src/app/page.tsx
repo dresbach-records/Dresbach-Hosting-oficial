@@ -73,7 +73,7 @@ export default function Home() {
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
         <div className="absolute inset-0 bg-black/30" />
         <div className="relative z-10 flex h-full flex-col items-center justify-center text-center text-primary-foreground">
-          <div className="container px-4">
+          <div className="container">
             <h1 className="font-headline text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl">
               Hospedagem Profissional com Atendimento Inteligente
             </h1>
