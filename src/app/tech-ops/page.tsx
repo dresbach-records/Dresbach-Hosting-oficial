@@ -3,9 +3,6 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle, Shield, ServerCog, HardHat, MessageCircle } from "lucide-react";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
-
-const techOpsImage = PlaceHolderImages.find((img) => img.id === "tech-ops-consulting");
 
 const services = [
     {
@@ -61,16 +58,13 @@ export default function TechOpsPage() {
               </div>
             </div>
             <div className="flex justify-center">
-              {techOpsImage && (
-                <Image
-                  src={techOpsImage.imageUrl}
-                  alt={techOpsImage.description}
-                  data-ai-hint={techOpsImage.imageHint}
-                  width={600}
-                  height={400}
-                  className="rounded-lg shadow-xl"
-                />
-              )}
+              <Image
+                src="/post.png"
+                alt="Post sobre Tech Ops"
+                width={600}
+                height={400}
+                className="rounded-lg shadow-xl"
+              />
             </div>
           </div>
         </div>
