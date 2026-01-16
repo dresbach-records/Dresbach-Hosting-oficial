@@ -3,6 +3,7 @@
 import { redirect, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import {
+  ArrowUp,
   Bell,
   ChevronDown,
   LogOut,
@@ -57,6 +58,10 @@ export default function ClientAreaLayout({
     redirect('/login');
   }
   
+  const handleScrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-muted/40">
       <header className="bg-card border-b sticky top-0 z-50">
@@ -112,6 +117,23 @@ export default function ClientAreaLayout({
       <main className="flex-1 py-8 container">
         {children}
       </main>
+
+      <footer className="bg-card border-t py-4 mt-auto">
+        <div className="container flex items-center justify-center relative">
+          <p className="text-xs text-muted-foreground">
+            Copyright © {new Date().getFullYear()} Dresbach Hosting do Brasil LTDA. All Rights Reserved.
+          </p>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-8 w-8 absolute right-4 top-1/2 -translate-y-1/2"
+            onClick={handleScrollToTop}
+            aria-label="Voltar ao topo"
+          >
+            <ArrowUp className="h-4 w-4" />
+          </Button>
+        </div>
+      </footer>
     </div>
   );
 }
