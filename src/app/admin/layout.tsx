@@ -3,32 +3,8 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  Bell,
-  BarChart,
-  FileText,
-  Globe,
   Home,
-  LayoutDashboard,
-  LineChart,
-  Package,
-  Settings,
-  ShoppingCart,
-  Ticket,
-  Users,
 } from 'lucide-react';
-
-import {
-  SidebarProvider,
-  Sidebar,
-  SidebarHeader,
-  SidebarContent,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarTrigger,
-  SidebarInset,
-  SidebarFooter,
-  SidebarMenuButton,
-} from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -40,59 +16,33 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Logo } from '@/components/logo';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-
+import { cn } from '@/lib/utils';
 
 const menuItems = [
-  { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/admin/pedidos', label: 'Pedidos', icon: ShoppingCart },
-  { href: '/admin/clientes', label: 'Clientes', icon: Users },
-  { href: '/admin/servicos', label: 'Serviços', icon: Package },
-  { href: '/admin/dominios', label: 'Domínios', icon: Globe },
-  { href: '/admin/faturamento', label: 'Faturamento', icon: FileText },
-  { href: '/admin/suporte', label: 'Suporte', icon: Ticket },
-  { href: '/admin/relatorios', label: 'Relatórios', icon: BarChart },
-  { href: '/admin/configuracoes', label: 'Configurações', icon: Settings },
+  { href: '/admin', label: 'Dashboard' },
+  { href: '/admin/pedidos', label: 'Pedidos' },
+  { href: '/admin/clientes', label: 'Clientes' },
+  { href: '/admin/servicos', label: 'Serviços' },
+  { href: '/admin/dominios', label: 'Domínios' },
+  { href: '/admin/faturamento', label: 'Faturamento' },
+  { href: '/admin/suporte', label: 'Suporte' },
+  { href: '/admin/relatorios', label: 'Relatórios' },
+  { href: '/admin/configuracoes', label: 'Configurações' },
 ];
 
-function AdminSidebar() {
-  const pathname = usePathname();
-
+function NavLink({ href, children, isActive }: { href: string; children: React.ReactNode; isActive: boolean }) {
   return (
-    <Sidebar>
-      <SidebarHeader>
-        <Logo />
-      </SidebarHeader>
-      <SidebarContent>
-        <SidebarMenu>
-          {menuItems.map((item) => (
-            <SidebarMenuItem key={item.href}>
-              <SidebarMenuButton
-                asChild
-                isActive={pathname === item.href}
-                tooltip={{ children: item.label, side: 'right' }}
-              >
-                <Link href={item.href}>
-                  <item.icon />
-                  <span>{item.label}</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
-        </SidebarMenu>
-      </SidebarContent>
-      <SidebarFooter>
-        <SidebarMenu>
-           <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip={{ children: 'Voltar ao Site', side: 'right' }}>
-                <Link href="/">
-                    <Home />
-                    <span>Voltar ao Site</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
-    </Sidebar>
+    <Link
+      href={href}
+      className={cn(
+        'rounded-md px-3 py-2 text-sm font-medium transition-colors',
+        isActive
+          ? 'bg-primary text-primary-foreground'
+          : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+      )}
+    >
+      {children}
+    </Link>
   );
 }
 
@@ -101,37 +51,54 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
+
   return (
-    <SidebarProvider>
-      <AdminSidebar />
-      <SidebarInset>
-        <header className="sticky top-0 z-40 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
-          <SidebarTrigger className="md:hidden" />
-          <div className="ml-auto flex items-center gap-4">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon" className="overflow-hidden rounded-full">
-                   <Avatar>
-                    <AvatarImage src="https://picsum.photos/seed/admin/32/32" alt="@admin" />
-                    <AvatarFallback>A</AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>Configurações</DropdownMenuItem>
-                <DropdownMenuItem>Suporte</DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>Sair</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </header>
-        <main className="flex-1 p-4 sm:px-6 sm:py-0">
-            {children}
-        </main>
-      </SidebarInset>
-    </SidebarProvider>
+    <div className="flex min-h-screen w-full flex-col bg-muted/40">
+      <header className="sticky top-0 flex h-16 items-center justify-between gap-4 border-b bg-card px-6 z-30">
+        <div className="flex items-center gap-6">
+          <Link href="/admin">
+            <Logo />
+          </Link>
+          <nav className="hidden md:flex items-center gap-2">
+            {menuItems.map((item) => (
+              <NavLink key={item.href} href={item.href} isActive={pathname === item.href}>
+                {item.label}
+              </NavLink>
+            ))}
+          </nav>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/">
+              <Home className="mr-2 h-4 w-4" />
+              Voltar ao Site
+            </Link>
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon" className="overflow-hidden rounded-full">
+                <Avatar>
+                  <AvatarImage src="https://picsum.photos/seed/admin/32/32" alt="@admin" />
+                  <AvatarFallback>A</AvatarFallback>
+                </Avatar>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>Configurações</DropdownMenuItem>
+              <DropdownMenuItem>Suporte</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>Sair</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </header>
+      <main className="flex-1 p-6">
+        {children}
+      </main>
+    </div>
   );
 }
