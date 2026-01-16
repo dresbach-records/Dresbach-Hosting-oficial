@@ -1,9 +1,8 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import { Header } from '@/components/header';
-import { Footer } from '@/components/footer';
 import { Toaster } from "@/components/ui/toaster";
 import { FirebaseClientProvider } from '@/firebase';
+import { SiteLayout } from '@/components/site-layout';
 
 export const metadata: Metadata = {
   title: 'Dresbach Hosting',
@@ -24,11 +23,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen font-body antialiased">
         <FirebaseClientProvider>
-          <div className="relative flex min-h-screen flex-col bg-background">
-            <Header />
-            <main className="flex-1">{children}</main>
-            <Footer />
-          </div>
+          <SiteLayout>{children}</SiteLayout>
           <Toaster />
         </FirebaseClientProvider>
       </body>
