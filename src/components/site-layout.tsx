@@ -10,6 +10,11 @@ import { Button } from '@/components/ui/button';
 export function SiteLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const isAuthPage = pathname === '/login' || pathname === '/signup';
+    const isClientArea = pathname.startsWith('/area-do-cliente');
+
+    if (isClientArea) {
+        return <>{children}</>;
+    }
 
     if (isAuthPage) {
         return (
