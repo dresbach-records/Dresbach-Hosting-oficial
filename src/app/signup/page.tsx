@@ -41,6 +41,7 @@ export default function SignupPage() {
         lastName,
         email: user.email,
         createdAt: new Date().toISOString(),
+        status: 'Ativo',
       };
 
       const clientRef = doc(firestore, 'clients', user.uid);

@@ -35,6 +35,15 @@
           "type": "string",
           "description": "Date and time the client was created.",
           "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "description": "Status of the client (e.g., Ativo, Inativo, Suspenso).",
+          "enum": [
+            "Ativo",
+            "Inativo",
+            "Suspenso"
+          ]
         }
       },
       "required": [
@@ -42,7 +51,8 @@
         "firstName",
         "lastName",
         "email",
-        "createdAt"
+        "createdAt",
+        "status"
       ]
     },
     "Service": {

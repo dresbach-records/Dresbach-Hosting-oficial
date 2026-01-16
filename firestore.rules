@@ -1,37 +1,31 @@
 /**
  * Core Philosophy:
- * This ruleset enforces a strict user-ownership model for a web hosting client area.
+ * This ruleset enforces a strict user-ownership model for a web hosting client area,
+ * with a full access override for users with an 'admin' custom claim.
  * Each authenticated user corresponds to a single client document. All associated
  * data (services, domains, invoices, tickets) is strictly segregated and can only be
- * accessed by the authenticated user who owns it. The default security posture is to
- * deny all access, granting permissions explicitly on a per-collection basis.
- * An administrative override is anticipated but not yet implemented, so listing
- * top-level collections like `/clients` is currently disallowed for all non-admin users.
+ * accessed by the authenticated user who owns it, or by an admin. The default
+ * security posture is to deny all access, granting permissions explicitly.
  *
  * Data Structure:
  * All user-specific data is nested within their own document in the top-level
  * `/clients` collection. For example, a user with UID 'user123' will have their
- * data stored at `/clients/user123`, with their services located in the
- * `/clients/user123/services` subcollection. This path-based structure is the
- * primary mechanism for enforcing ownership.
+ * data stored at `/clients/user123`. This path-based structure is the
+ * primary mechanism for enforcing ownership for regular users.
  *
  * Key Security Decisions:
- * - Strict User Isolation: A user can only ever read or write data located under
- *   `/clients/{their_own_uid}`. Cross-user access is impossible.
- * - No User Listing: To protect user privacy, listing the top-level `/clients`
- *   collection is forbidden for client users. This prevents enumeration of the user base.
- * - Admin Access Placeholder: The data structure anticipates a future admin role
- *   that would have broader read access (e.g., for support and billing), but these
- *   rules are not yet implemented.
- * - Relational Integrity: On creation, documents MUST contain a foreign key
- *   (e.g., `clientId`) that matches the ID in the path to ensure data consistency
- *   from the start. This key is enforced as immutable on updates.
+ * - Strict User Isolation: A non-admin user can only ever read or write data located under
+ *   `/clients/{their_own_uid}`. Cross-user access is impossible for non-admins.
+ * - Admin Override: A user with `request.auth.token.admin == true` bypasses
+ *   ownership checks and has read/write access to all data for management purposes.
+ * - No Public User Listing: To protect user privacy, listing the top-level `/clients`
+ *   collection is forbidden for non-admin users, preventing enumeration of the user base.
  *
  * Denormalization for Authorization:
  * This ruleset relies on path-based ownership, where the user's UID is part of the
  * document path (e.g., `/clients/{clientId}`). This is the most performant way to
  * secure subcollections, as it avoids any slow and costly `get()` calls to parent
-*  documents for authorization checks.
+ * documents for authorization checks.
  *
  * Structural Segregation:
  * Each data type (Services, Domains, Invoices, Tickets) is stored in its own
@@ -54,19 +48,18 @@ service cloud.firestore {
     }
 
     /**
+     * Checks if the user is an admin via custom claims.
+     */
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.admin == true;
+    }
+
+    /**
      * Checks if the currently authenticated user's UID matches the provided userId.
      * This is the primary function for validating ownership.
      */
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
-    }
-
-    /**
-     * Checks for ownership on an existing document. Used for update and delete
-     * operations to prevent acting on documents that do not exist.
-     */
-    function isExistingOwner(userId) {
-      return isOwner(userId) && resource != null;
     }
 
     /**
@@ -108,75 +101,75 @@ service cloud.firestore {
     /**
      * @description Manages top-level client documents.
      * @path /clients/{clientId}
-     * @allow (create) A new user can create their own client document.
-     * @deny (list) A regular user cannot list all clients in the system.
-     * @principle Restricts access to a user's own data tree and prevents user enumeration.
+     * @allow (create) A new user can create their own client document. Admins can create clients.
+     * @allow (list) Admins can list all clients.
+     * @principle Restricts access to a user's own data tree and prevents user enumeration, except for admins.
      */
     match /clients/{clientId} {
-      allow get: if isOwner(clientId);
-      allow list: if false; // Prevents clients from listing each other. TODO: Add admin override rule.
-      allow create: if isOwner(clientId) && isCreatingOwnClient(clientId);
-      allow update: if isExistingOwner(clientId) && isClientDataImmutable();
-      allow delete: if isExistingOwner(clientId);
+      allow get: if isOwner(clientId) || isAdmin();
+      allow list: if isAdmin();
+      allow create: if (isOwner(clientId) || isAdmin()) && isCreatingOwnClient(clientId);
+      allow update: if (isOwner(clientId) || isAdmin()) && resource != null && isClientDataImmutable();
+      allow delete: if (isOwner(clientId) || isAdmin()) && resource != null;
 
       /**
        * @description Manages a client's subscribed services.
        * @path /clients/{clientId}/services/{serviceId}
-       * @allow (get, list, create) An authenticated user can manage their own services.
+       * @allow (get, list, create) An authenticated user can manage their own services. Admins have full access.
        * @deny (get, create) An authenticated user cannot access another user's services.
-       * @principle Enforces strict data ownership through path-based security.
+       * @principle Enforces strict data ownership through path-based security, with an admin override.
        */
       match /services/{serviceId} {
-        allow get: if isOwner(clientId);
-        allow list: if isOwner(clientId);
-        allow create: if isOwner(clientId) && isCreatingConsistentSubdocument(clientId);
-        allow update: if isExistingOwner(clientId) && isSubdocumentDataImmutable();
-        allow delete: if isExistingOwner(clientId);
+        allow get: if isOwner(clientId) || isAdmin();
+        allow list: if isOwner(clientId) || isAdmin();
+        allow create: if (isOwner(clientId) || isAdmin()) && isCreatingConsistentSubdocument(clientId);
+        allow update: if (isOwner(clientId) || isAdmin()) && resource != null && isSubdocumentDataImmutable();
+        allow delete: if (isOwner(clientId) || isAdmin()) && resource != null;
       }
 
       /**
        * @description Manages a client's registered domains.
        * @path /clients/{clientId}/domains/{domainId}
-       * @allow (get, list, create) An authenticated user can manage their own domains.
+       * @allow (get, list, create) An authenticated user can manage their own domains. Admins have full access.
        * @deny (get, create) An authenticated user cannot access another user's domains.
-       * @principle Enforces strict data ownership through path-based security.
+       * @principle Enforces strict data ownership through path-based security, with an admin override.
        */
       match /domains/{domainId} {
-        allow get: if isOwner(clientId);
-        allow list: if isOwner(clientId);
-        allow create: if isOwner(clientId) && isCreatingConsistentSubdocument(clientId);
-        allow update: if isExistingOwner(clientId) && isSubdocumentDataImmutable();
-        allow delete: if isExistingOwner(clientId);
+        allow get: if isOwner(clientId) || isAdmin();
+        allow list: if isOwner(clientId) || isAdmin();
+        allow create: if (isOwner(clientId) || isAdmin()) && isCreatingConsistentSubdocument(clientId);
+        allow update: if (isOwner(clientId) || isAdmin()) && resource != null && isSubdocumentDataImmutable();
+        allow delete: if (isOwner(clientId) || isAdmin()) && resource != null;
       }
 
       /**
        * @description Manages a client's invoices.
        * @path /clients/{clientId}/invoices/{invoiceId}
-       * @allow (get, list, create) An authenticated user can manage their own invoices.
+       * @allow (get, list, create) An authenticated user can manage their own invoices. Admins have full access.
        * @deny (get, create) An authenticated user cannot access another user's invoices.
-       * @principle Enforces strict data ownership through path-based security.
+       * @principle Enforces strict data ownership through path-based security, with an admin override.
        */
       match /invoices/{invoiceId} {
-        allow get: if isOwner(clientId);
-        allow list: if isOwner(clientId);
-        allow create: if isOwner(clientId) && isCreatingConsistentSubdocument(clientId);
-        allow update: if isExistingOwner(clientId) && isSubdocumentDataImmutable();
-        allow delete: if isExistingOwner(clientId);
+        allow get: if isOwner(clientId) || isAdmin();
+        allow list: if isOwner(clientId) || isAdmin();
+        allow create: if (isOwner(clientId) || isAdmin()) && isCreatingConsistentSubdocument(clientId);
+        allow update: if (isOwner(clientId) || isAdmin()) && resource != null && isSubdocumentDataImmutable();
+        allow delete: if (isOwner(clientId) || isAdmin()) && resource != null;
       }
 
       /**
        * @description Manages a client's support tickets.
        * @path /clients/{clientId}/tickets/{ticketId}
-       * @allow (get, list, create) An authenticated user can manage their own support tickets.
+       * @allow (get, list, create) An authenticated user can manage their own support tickets. Admins have full access.
        * @deny (get, create) An authenticated user cannot access another user's tickets.
-       * @principle Enforces strict data ownership through path-based security.
+       * @principle Enforces strict data ownership through path-based security, with an admin override.
        */
       match /tickets/{ticketId} {
-        allow get: if isOwner(clientId);
-        allow list: if isOwner(clientId);
-        allow create: if isOwner(clientId) && isCreatingConsistentSubdocument(clientId);
-        allow update: if isExistingOwner(clientId) && isSubdocumentDataImmutable();
-        allow delete: if isExistingOwner(clientId);
+        allow get: if isOwner(clientId) || isAdmin();
+        allow list: if isOwner(clientId) || isAdmin();
+        allow create: if (isOwner(clientId) || isAdmin()) && isCreatingConsistentSubdocument(clientId);
+        allow update: if (isOwner(clientId) || isAdmin()) && resource != null && isSubdocumentDataImmutable();
+        allow delete: if (isOwner(clientId) || isAdmin()) && resource != null;
       }
     }
   }
