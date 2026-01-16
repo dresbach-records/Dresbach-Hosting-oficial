@@ -61,7 +61,7 @@ export function Footer() {
               © {new Date().getFullYear()} Dresbach Hosting do Brasil LTDA
               <br className="sm:hidden" />
               <span className="hidden sm:inline"> | </span>
-              CNPJ: XX.XXX.XXX/0001-XX
+              CNPJ: 63.187.175/0001-70
             </p>
             <p className="text-sm text-muted-foreground">Todos os direitos reservados.</p>
           </div>
