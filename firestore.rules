@@ -1,0 +1,183 @@
+/**
+ * Core Philosophy:
+ * This ruleset enforces a strict user-ownership model for a web hosting client area.
+ * Each authenticated user corresponds to a single client document. All associated
+ * data (services, domains, invoices, tickets) is strictly segregated and can only be
+ * accessed by the authenticated user who owns it. The default security posture is to
+ * deny all access, granting permissions explicitly on a per-collection basis.
+ * An administrative override is anticipated but not yet implemented, so listing
+ * top-level collections like `/clients` is currently disallowed for all non-admin users.
+ *
+ * Data Structure:
+ * All user-specific data is nested within their own document in the top-level
+ * `/clients` collection. For example, a user with UID 'user123' will have their
+ * data stored at `/clients/user123`, with their services located in the
+ * `/clients/user123/services` subcollection. This path-based structure is the
+ * primary mechanism for enforcing ownership.
+ *
+ * Key Security Decisions:
+ * - Strict User Isolation: A user can only ever read or write data located under
+ *   `/clients/{their_own_uid}`. Cross-user access is impossible.
+ * - No User Listing: To protect user privacy, listing the top-level `/clients`
+ *   collection is forbidden for client users. This prevents enumeration of the user base.
+ * - Admin Access Placeholder: The data structure anticipates a future admin role
+ *   that would have broader read access (e.g., for support and billing), but these
+ *   rules are not yet implemented.
+ * - Relational Integrity: On creation, documents MUST contain a foreign key
+ *   (e.g., `clientId`) that matches the ID in the path to ensure data consistency
+ *   from the start. This key is enforced as immutable on updates.
+ *
+ * Denormalization for Authorization:
+ * This ruleset relies on path-based ownership, where the user's UID is part of the
+ * document path (e.g., `/clients/{clientId}`). This is the most performant way to
+ * secure subcollections, as it avoids any slow and costly `get()` calls to parent
+*  documents for authorization checks.
+ *
+ * Structural Segregation:
+ * Each data type (Services, Domains, Invoices, Tickets) is stored in its own
+ * dedicated subcollection under the parent client. This ensures that security rules
+ * are simple, targeted, and easy to reason about for each type of data.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ----------------------------------------------------------------------
+    // Helper Functions
+    // ----------------------------------------------------------------------
+
+    /**
+     * Checks if the user is authenticated.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * Checks if the currently authenticated user's UID matches the provided userId.
+     * This is the primary function for validating ownership.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * Checks for ownership on an existing document. Used for update and delete
+     * operations to prevent acting on documents that do not exist.
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    /**
+     * On client creation, ensures the document's internal `id` field matches
+     * the document's ID in the path, establishing a consistent ownership link.
+     */
+    function isCreatingOwnClient(clientId) {
+      return request.resource.data.id == clientId;
+    }
+
+    /**
+     * On client update, ensures the internal `id` field cannot be changed,
+     * protecting the core ownership link.
+     */
+    function isClientDataImmutable() {
+      return request.resource.data.id == resource.data.id;
+    }
+
+    /**
+     * On subcollection document creation, ensures the document's internal
+     * `clientId` foreign key matches the `clientId` from the path.
+     */
+    function isCreatingConsistentSubdocument(clientId) {
+      return request.resource.data.clientId == clientId;
+    }
+
+    /**
+     * On subcollection document update, ensures the `clientId` foreign key
+     * is immutable, preventing a document from being moved between owners.
+     */
+    function isSubdocumentDataImmutable() {
+      return request.resource.data.clientId == resource.data.clientId;
+    }
+
+    // ----------------------------------------------------------------------
+    // Collection Rules
+    // ----------------------------------------------------------------------
+
+    /**
+     * @description Manages top-level client documents.
+     * @path /clients/{clientId}
+     * @allow (create) A new user can create their own client document.
+     * @deny (list) A regular user cannot list all clients in the system.
+     * @principle Restricts access to a user's own data tree and prevents user enumeration.
+     */
+    match /clients/{clientId} {
+      allow get: if isOwner(clientId);
+      allow list: if false; // Prevents clients from listing each other. TODO: Add admin override rule.
+      allow create: if isOwner(clientId) && isCreatingOwnClient(clientId);
+      allow update: if isExistingOwner(clientId) && isClientDataImmutable();
+      allow delete: if isExistingOwner(clientId);
+
+      /**
+       * @description Manages a client's subscribed services.
+       * @path /clients/{clientId}/services/{serviceId}
+       * @allow (get, list, create) An authenticated user can manage their own services.
+       * @deny (get, create) An authenticated user cannot access another user's services.
+       * @principle Enforces strict data ownership through path-based security.
+       */
+      match /services/{serviceId} {
+        allow get: if isOwner(clientId);
+        allow list: if isOwner(clientId);
+        allow create: if isOwner(clientId) && isCreatingConsistentSubdocument(clientId);
+        allow update: if isExistingOwner(clientId) && isSubdocumentDataImmutable();
+        allow delete: if isExistingOwner(clientId);
+      }
+
+      /**
+       * @description Manages a client's registered domains.
+       * @path /clients/{clientId}/domains/{domainId}
+       * @allow (get, list, create) An authenticated user can manage their own domains.
+       * @deny (get, create) An authenticated user cannot access another user's domains.
+       * @principle Enforces strict data ownership through path-based security.
+       */
+      match /domains/{domainId} {
+        allow get: if isOwner(clientId);
+        allow list: if isOwner(clientId);
+        allow create: if isOwner(clientId) && isCreatingConsistentSubdocument(clientId);
+        allow update: if isExistingOwner(clientId) && isSubdocumentDataImmutable();
+        allow delete: if isExistingOwner(clientId);
+      }
+
+      /**
+       * @description Manages a client's invoices.
+       * @path /clients/{clientId}/invoices/{invoiceId}
+       * @allow (get, list, create) An authenticated user can manage their own invoices.
+       * @deny (get, create) An authenticated user cannot access another user's invoices.
+       * @principle Enforces strict data ownership through path-based security.
+       */
+      match /invoices/{invoiceId} {
+        allow get: if isOwner(clientId);
+        allow list: if isOwner(clientId);
+        allow create: if isOwner(clientId) && isCreatingConsistentSubdocument(clientId);
+        allow update: if isExistingOwner(clientId) && isSubdocumentDataImmutable();
+        allow delete: if isExistingOwner(clientId);
+      }
+
+      /**
+       * @description Manages a client's support tickets.
+       * @path /clients/{clientId}/tickets/{ticketId}
+       * @allow (get, list, create) An authenticated user can manage their own support tickets.
+       * @deny (get, create) An authenticated user cannot access another user's tickets.
+       * @principle Enforces strict data ownership through path-based security.
+       */
+      match /tickets/{ticketId} {
+        allow get: if isOwner(clientId);
+        allow list: if isOwner(clientId);
+        allow create: if isOwner(clientId) && isCreatingConsistentSubdocument(clientId);
+        allow update: if isExistingOwner(clientId) && isSubdocumentDataImmutable();
+        allow delete: if isExistingOwner(clientId);
+      }
+    }
+  }
+}

@@ -1,0 +1,330 @@
+{
+  "entities": {
+    "Client": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Client",
+      "type": "object",
+      "description": "Represents a hosting client.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the client."
+        },
+        "firstName": {
+          "type": "string",
+          "description": "First name of the client."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "Last name of the client."
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the client.",
+          "format": "email"
+        },
+        "phoneNumber": {
+          "type": "string",
+          "description": "Phone number of the client."
+        },
+        "address": {
+          "type": "string",
+          "description": "Address of the client."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Date and time the client was created.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "firstName",
+        "lastName",
+        "email",
+        "createdAt"
+      ]
+    },
+    "Service": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Service",
+      "type": "object",
+      "description": "Represents a service the client has, like hosting or tech ops.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the service."
+        },
+        "clientId": {
+          "type": "string",
+          "description": "Reference to Client. (Relationship: Client 1:N Service)"
+        },
+        "serviceType": {
+          "type": "string",
+          "description": "Type of service (e.g., Hosting, Tech Ops)."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the service."
+        },
+        "startDate": {
+          "type": "string",
+          "description": "Date the service started.",
+          "format": "date-time"
+        },
+        "endDate": {
+          "type": "string",
+          "description": "Date the service ends (can be null if ongoing).",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "description": "Status of the service (Active, Inactive, Suspended)."
+        }
+      },
+      "required": [
+        "id",
+        "clientId",
+        "serviceType",
+        "startDate",
+        "status"
+      ]
+    },
+    "Domain": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Domain",
+      "type": "object",
+      "description": "Represents a domain associated with a client.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the domain."
+        },
+        "clientId": {
+          "type": "string",
+          "description": "Reference to Client. (Relationship: Client 1:N Domain)"
+        },
+        "domainName": {
+          "type": "string",
+          "description": "The domain name."
+        },
+        "registrationDate": {
+          "type": "string",
+          "description": "Date the domain was registered.",
+          "format": "date-time"
+        },
+        "expirationDate": {
+          "type": "string",
+          "description": "Date the domain expires.",
+          "format": "date-time"
+        },
+        "autoRenew": {
+          "type": "boolean",
+          "description": "Whether the domain is set to auto-renew."
+        }
+      },
+      "required": [
+        "id",
+        "clientId",
+        "domainName",
+        "registrationDate",
+        "expirationDate"
+      ]
+    },
+    "Invoice": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Invoice",
+      "type": "object",
+      "description": "Represents an invoice for a client.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the invoice."
+        },
+        "clientId": {
+          "type": "string",
+          "description": "Reference to Client. (Relationship: Client 1:N Invoice)"
+        },
+        "issueDate": {
+          "type": "string",
+          "description": "Date the invoice was issued.",
+          "format": "date-time"
+        },
+        "dueDate": {
+          "type": "string",
+          "description": "Date the invoice is due.",
+          "format": "date-time"
+        },
+        "amount": {
+          "type": "number",
+          "description": "Total amount of the invoice."
+        },
+        "status": {
+          "type": "string",
+          "description": "Status of the invoice (e.g., Paid, Unpaid, Overdue)."
+        }
+      },
+      "required": [
+        "id",
+        "clientId",
+        "issueDate",
+        "dueDate",
+        "amount",
+        "status"
+      ]
+    },
+    "Ticket": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Ticket",
+      "type": "object",
+      "description": "Represents a support ticket.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the ticket."
+        },
+        "clientId": {
+          "type": "string",
+          "description": "Reference to Client. (Relationship: Client 1:N Ticket)"
+        },
+        "subject": {
+          "type": "string",
+          "description": "Subject of the ticket."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the issue."
+        },
+        "status": {
+          "type": "string",
+          "description": "Status of the ticket (Open, Closed, In Progress)."
+        },
+        "priority": {
+          "type": "string",
+          "description": "Priority of the ticket (High, Medium, Low)."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Date and time the ticket was created.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "clientId",
+        "subject",
+        "description",
+        "status",
+        "priority",
+        "createdAt"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/clients/{clientId}",
+        "definition": {
+          "entityName": "Client",
+          "schema": {
+            "$ref": "#/backend/entities/Client"
+          },
+          "description": "Stores client information. Root level collection enables listing of all clients (admin only).",
+          "params": [
+            {
+              "name": "clientId",
+              "description": "Unique identifier for the client."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/clients/{clientId}/services/{serviceId}",
+        "definition": {
+          "entityName": "Service",
+          "schema": {
+            "$ref": "#/backend/entities/Service"
+          },
+          "description": "Stores services associated with a client. Path-based ownership enforces that only the client (or admin) can access these services.",
+          "params": [
+            {
+              "name": "clientId",
+              "description": "Unique identifier for the client."
+            },
+            {
+              "name": "serviceId",
+              "description": "Unique identifier for the service."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/clients/{clientId}/domains/{domainId}",
+        "definition": {
+          "entityName": "Domain",
+          "schema": {
+            "$ref": "#/backend/entities/Domain"
+          },
+          "description": "Stores domains associated with a client. Path-based ownership enforces that only the client (or admin) can access these domains.",
+          "params": [
+            {
+              "name": "clientId",
+              "description": "Unique identifier for the client."
+            },
+            {
+              "name": "domainId",
+              "description": "Unique identifier for the domain."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/clients/{clientId}/invoices/{invoiceId}",
+        "definition": {
+          "entityName": "Invoice",
+          "schema": {
+            "$ref": "#/backend/entities/Invoice"
+          },
+          "description": "Stores invoices associated with a client. Path-based ownership enforces that only the client (or admin) can access these invoices.",
+          "params": [
+            {
+              "name": "clientId",
+              "description": "Unique identifier for the client."
+            },
+            {
+              "name": "invoiceId",
+              "description": "Unique identifier for the invoice."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/clients/{clientId}/tickets/{ticketId}",
+        "definition": {
+          "entityName": "Ticket",
+          "schema": {
+            "$ref": "#/backend/entities/Ticket"
+          },
+          "description": "Stores support tickets associated with a client. Path-based ownership enforces that only the client (or admin) can access these tickets.",
+          "params": [
+            {
+              "name": "clientId",
+              "description": "Unique identifier for the client."
+            },
+            {
+              "name": "ticketId",
+              "description": "Unique identifier for the ticket."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "This Firestore data structure is designed for the Dresbach Hosting web application, prioritizing security, scalability, and debuggability. It leverages path-based ownership and denormalization to ensure authorization independence, simplifying security rules and enabling atomic operations. The structure is segregated to maintain a homogeneous security posture within each collection. The design explicitly models the relationships between Clients, Services, Domains, Invoices, and Tickets, enforcing invariants for ownership and data integrity.\n\nAuthorization Independence is achieved by using path-based ownership for client data. For example, services, domains, invoices, and tickets are stored as subcollections of the `clients` collection (e.g., `/clients/{clientId}/services/{serviceId}`). This structure eliminates the need for `get()` calls in security rules to verify ownership, enabling atomic operations. Segregation is achieved by storing different entities in separate collections or subcollections, each with its specific security rules.\n\nQAPs (Rules are not Filters) are supported by enforcing that list operations are always scoped to the user's own data. For example, a client can only list services, domains, invoices, or tickets associated with their `clientId`."
+  }
+}
