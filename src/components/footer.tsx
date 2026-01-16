@@ -23,6 +23,7 @@ export function Footer() {
               <FooterLink href="/sobre">Sobre</FooterLink>
               <FooterLink href="/#infraestrutura">Infraestrutura</FooterLink>
               <FooterLink href="/tech-ops">Tech Ops</FooterLink>
+              <FooterLink href="/admin">Painel da Empresa</FooterLink>
             </ul>
           </div>
           <div>

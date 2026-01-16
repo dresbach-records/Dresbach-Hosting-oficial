@@ -11,8 +11,9 @@ export function SiteLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const isAuthPage = pathname === '/login' || pathname === '/signup';
     const isClientArea = pathname.startsWith('/area-do-cliente');
+    const isAdminArea = pathname.startsWith('/admin');
 
-    if (isClientArea) {
+    if (isClientArea || isAdminArea) {
         return <>{children}</>;
     }
 
