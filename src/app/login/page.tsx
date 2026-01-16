@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/firebase';
-import { initiateEmailSignIn } from '@/firebase/non-blocking-login';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 import { Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
@@ -24,11 +24,17 @@ export default function LoginPage() {
     setIsLoading(true);
     setError(null);
     try {
-      initiateEmailSignIn(auth, email, password);
-      // Non-blocking, so we redirect. The auth state listener will handle the rest.
+      await signInWithEmailAndPassword(auth, email, password);
+      // On success, the onAuthStateChanged listener will eventually handle auth state.
+      // We can push the user immediately for a better UX.
       router.push('/area-do-cliente');
     } catch (err: any) {
-      setError(err.message);
+      if (err.code === 'auth/invalid-credential') {
+        setError('Email ou senha inválidos. Por favor, tente novamente.');
+      } else {
+        console.error(err);
+        setError('Ocorreu um erro ao tentar fazer login. Tente novamente mais tarde.');
+      }
       setIsLoading(false);
     }
   };
