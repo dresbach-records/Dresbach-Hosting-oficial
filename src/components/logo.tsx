@@ -6,8 +6,8 @@ export function Logo({ className }: { className?: string }) {
     <Image
       src="/logosem fundo.png"
       alt="Dresbach Hosting Logo"
-      width={140}
-      height={35}
+      width={180}
+      height={45}
       priority
       className={className}
     />
