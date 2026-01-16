@@ -1,35 +1,40 @@
 'use client';
 
-import { useMemo } from 'react';
 import { redirect, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import {
-  LayoutDashboard,
-  Globe,
-  Server,
-  FileText,
-  LifeBuoy,
-  User,
+  Bell,
+  ChevronDown,
   LogOut,
+  User as UserIcon,
   Loader2,
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 
 import { useUser, useAuth } from '@/firebase';
-import {
-  SidebarProvider,
-  Sidebar,
-  SidebarHeader,
-  SidebarContent,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  SidebarFooter,
-  SidebarInset,
-  SidebarTrigger,
-} from '@/components/ui/sidebar';
 import { Logo } from '@/components/logo';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+
+function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
+  const pathname = usePathname();
+  const isActive = pathname === href;
+  return (
+    <Link
+      href={href}
+      className={`px-3 py-2 text-sm font-medium rounded-md hover:bg-black/10 transition-colors ${isActive ? 'bg-black/20' : ''}`}
+    >
+      {children}
+    </Link>
+  );
+}
 
 export default function ClientAreaLayout({
   children,
@@ -40,21 +45,9 @@ export default function ClientAreaLayout({
   const auth = useAuth();
   const pathname = usePathname();
 
-  const navItems = useMemo(
-    () => [
-      { href: '/area-do-cliente', label: 'Painel', icon: LayoutDashboard },
-      { href: '/area-do-cliente/servicos', label: 'Serviços', icon: Server },
-      { href: '/area-do-cliente/dominios', label: 'Domínios', icon: Globe },
-      { href: '/area-do-cliente/faturas', label: 'Faturas', icon: FileText },
-      { href: '/area-do-cliente/tickets', label: 'Tickets', icon: LifeBuoy },
-      { href: '/area-do-cliente/perfil', label: 'Meu Perfil', icon: User },
-    ],
-    []
-  );
-
   if (isUserLoading) {
     return (
-      <div className="flex h-screen items-center justify-center">
+      <div className="flex h-screen items-center justify-center bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
@@ -63,50 +56,62 @@ export default function ClientAreaLayout({
   if (!user) {
     redirect('/login');
   }
-
+  
   return (
-    <SidebarProvider>
-      <Sidebar>
-        <SidebarHeader>
-          <Logo className="h-7 w-auto" />
-        </SidebarHeader>
-        <SidebarContent>
-          <SidebarMenu>
-            {navItems.map((item) => (
-              <SidebarMenuItem key={item.href}>
-                <Link href={item.href} legacyBehavior passHref>
-                  <SidebarMenuButton
-                    isActive={pathname === item.href}
-                    tooltip={item.label}
-                  >
-                    <item.icon />
-                    <span>{item.label}</span>
-                  </SidebarMenuButton>
-                </Link>
-              </SidebarMenuItem>
-            ))}
-          </SidebarMenu>
-        </SidebarContent>
-        <SidebarFooter>
-          <SidebarMenu>
-             <SidebarMenuItem>
-                <SidebarMenuButton onClick={() => signOut(auth)}>
-                    <LogOut />
-                    <span>Sair</span>
-                </SidebarMenuButton>
-             </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarFooter>
-      </Sidebar>
-      <SidebarInset>
-        <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-6">
-            <SidebarTrigger className="md:hidden" />
-            <h1 className="flex-1 text-lg font-semibold md:text-2xl">
-              {navItems.find(item => item.href === pathname)?.label || 'Área do Cliente'}
-            </h1>
-        </header>
-        <main className="flex-1 p-6">{children}</main>
-      </SidebarInset>
-    </SidebarProvider>
+    <div className="min-h-screen flex flex-col bg-muted/40">
+      <header className="bg-card border-b sticky top-0 z-50">
+        <div className="container flex h-16 items-center justify-between">
+          <Logo className="h-8 w-auto" />
+          <div className="flex items-center gap-4">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                 <Button variant="ghost" size="sm" className="gap-1 text-muted-foreground">
+                  Notificações
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-80">
+                <DropdownMenuLabel>Notificações</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <div className="p-4 text-center text-sm text-muted-foreground">Nenhuma notificação nova.</div>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button variant="default" size="sm" onClick={() => signOut(auth)}>Sair</Button>
+          </div>
+        </div>
+      </header>
+
+      <nav className="bg-primary text-primary-foreground shadow-md sticky top-16 z-40">
+        <div className="container flex h-14 items-center justify-between">
+            <div className="flex items-center gap-1">
+                <NavLink href="/area-do-cliente">Área do Cliente</NavLink>
+                <NavLink href="/area-do-cliente/servicos">Serviços</NavLink>
+                <NavLink href="/area-do-cliente/dominios">Domínios</NavLink>
+                <NavLink href="/area-do-cliente/faturas">Faturas</NavLink>
+                 <NavLink href="/area-do-cliente/tickets">Suporte</NavLink>
+                 <NavLink href="/area-do-cliente/tickets?new=true">Abrir Ticket</NavLink>
+                 <NavLink href="/area-do-cliente/afiliados">Afiliados</NavLink>
+            </div>
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="flex items-center gap-2 h-auto py-2 px-3 text-sm font-medium hover:bg-black/10 hover:text-primary-foreground">
+                        Olá, {user.displayName?.split(' ')[0] || user.email}!
+                        <ChevronDown className="h-4 w-4" />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild><Link href="/area-do-cliente/perfil"><UserIcon className="mr-2 h-4 w-4"/> Editar Perfil</Link></DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => signOut(auth)}><LogOut className="mr-2 h-4 w-4"/> Sair</DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+        </div>
+      </nav>
+
+      <main className="flex-1 py-8 container">
+        {children}
+      </main>
+    </div>
   );
 }

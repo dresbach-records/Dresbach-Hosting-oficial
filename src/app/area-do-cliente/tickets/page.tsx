@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -19,6 +19,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
+import { useSearchParams, useRouter } from 'next/navigation';
 
 const newTicketSchema = z.object({
   subject: z.string().min(5, "O assunto deve ter pelo menos 5 caracteres."),
@@ -34,11 +35,27 @@ function TicketStatusBadge({ status }: { status: string }) {
     return <Badge variant={variant}>{text}</Badge>;
 }
 
-export default function TicketsPage() {
+function TicketsPageContent() {
     const { user } = useUser();
     const firestore = useFirestore();
-    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const searchParams = useSearchParams();
+    const router = useRouter();
+
+    const [isDialogOpen, setIsDialogOpen] = useState(searchParams.get('new') === 'true');
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    useEffect(() => {
+        if (searchParams.get('new') === 'true') {
+            setIsDialogOpen(true);
+        }
+    }, [searchParams]);
+    
+    const handleOpenChange = (open: boolean) => {
+        setIsDialogOpen(open);
+        if (!open) {
+            router.replace('/area-do-cliente/tickets', { scroll: false });
+        }
+    }
 
     const ticketsQuery = useMemoFirebase(() => user && collection(firestore, 'clients', user.uid, 'tickets'), [firestore, user]);
     const { data: tickets, isLoading } = useCollection(ticketsQuery);
@@ -66,7 +83,7 @@ export default function TicketsPage() {
         await addDocumentNonBlocking(ticketsCollection, ticketData);
 
         setIsSubmitting(false);
-        setIsDialogOpen(false);
+        handleOpenChange(false);
         form.reset();
     }
 
@@ -77,7 +94,7 @@ export default function TicketsPage() {
                     <CardTitle>Tickets de Suporte</CardTitle>
                     <CardDescription>Acompanhe suas solicitações de suporte.</CardDescription>
                 </div>
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
                     <DialogTrigger asChild>
                         <Button>Abrir Novo Ticket</Button>
                     </DialogTrigger>
@@ -180,5 +197,14 @@ export default function TicketsPage() {
                 </Table>
             </CardContent>
         </Card>
+    )
+}
+
+
+export default function TicketsPage() {
+    return (
+        <Suspense>
+            <TicketsPageContent />
+        </Suspense>
     )
 }
