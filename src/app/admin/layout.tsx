@@ -1,7 +1,100 @@
-import { Logo } from "@/components/logo";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+'use client';
+
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import {
+  Bell,
+  BarChart,
+  FileText,
+  Globe,
+  Home,
+  LayoutDashboard,
+  LineChart,
+  Package,
+  Settings,
+  ShoppingCart,
+  Ticket,
+  Users,
+} from 'lucide-react';
+
+import {
+  SidebarProvider,
+  Sidebar,
+  SidebarHeader,
+  SidebarContent,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarTrigger,
+  SidebarInset,
+  SidebarFooter,
+  SidebarMenuButton,
+} from '@/components/ui/sidebar';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Logo } from '@/components/logo';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+
+
+const menuItems = [
+  { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/admin/pedidos', label: 'Pedidos', icon: ShoppingCart },
+  { href: '/admin/clientes', label: 'Clientes', icon: Users },
+  { href: '/admin/servicos', label: 'Serviços', icon: Package },
+  { href: '/admin/dominios', label: 'Domínios', icon: Globe },
+  { href: '/admin/faturamento', label: 'Faturamento', icon: FileText },
+  { href: '/admin/suporte', label: 'Suporte', icon: Ticket },
+  { href: '/admin/relatorios', label: 'Relatórios', icon: BarChart },
+  { href: '/admin/configuracoes', label: 'Configurações', icon: Settings },
+];
+
+function AdminSidebar() {
+  const pathname = usePathname();
+
+  return (
+    <Sidebar>
+      <SidebarHeader>
+        <Logo />
+      </SidebarHeader>
+      <SidebarContent>
+        <SidebarMenu>
+          {menuItems.map((item) => (
+            <SidebarMenuItem key={item.href}>
+              <SidebarMenuButton
+                asChild
+                isActive={pathname === item.href}
+                tooltip={{ children: item.label, side: 'right' }}
+              >
+                <Link href={item.href}>
+                  <item.icon />
+                  <span>{item.label}</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
+        </SidebarMenu>
+      </SidebarContent>
+      <SidebarFooter>
+        <SidebarMenu>
+           <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip={{ children: 'Voltar ao Site', side: 'right' }}>
+                <Link href="/">
+                    <Home />
+                    <span>Voltar ao Site</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+    </Sidebar>
+  );
+}
 
 export default function AdminLayout({
   children,
@@ -9,30 +102,36 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen flex flex-col bg-muted/40">
-       <header className="sticky top-0 z-50 w-full border-b bg-card shadow-sm">
-        <div className="container flex h-16 items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Logo />
-            <span className="font-semibold text-lg">Painel Administrativo</span>
+    <SidebarProvider>
+      <AdminSidebar />
+      <SidebarInset>
+        <header className="sticky top-0 z-40 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
+          <SidebarTrigger className="md:hidden" />
+          <div className="ml-auto flex items-center gap-4">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon" className="overflow-hidden rounded-full">
+                   <Avatar>
+                    <AvatarImage src="https://picsum.photos/seed/admin/32/32" alt="@admin" />
+                    <AvatarFallback>A</AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>Configurações</DropdownMenuItem>
+                <DropdownMenuItem>Suporte</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>Sair</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
-          <Button asChild variant="outline">
-            <Link href="/">
-              <ArrowLeft className="mr-2 h-4 w-4" /> Voltar ao Site
-            </Link>
-          </Button>
-        </div>
-      </header>
-      <main className="flex-1 p-8 container">
-        {children}
-      </main>
-      <footer className="py-4 mt-auto bg-card border-t">
-        <div className="container flex items-center justify-center">
-          <p className="text-xs text-muted-foreground">
-            Painel Administrativo Dresbach Hosting
-          </p>
-        </div>
-      </footer>
-    </div>
+        </header>
+        <main className="flex-1 p-4 sm:px-6 sm:py-0">
+            {children}
+        </main>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }
