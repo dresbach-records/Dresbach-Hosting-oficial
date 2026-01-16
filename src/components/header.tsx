@@ -8,7 +8,13 @@ import { signOut } from "firebase/auth";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { Logo } from "@/components/logo";
 
 const navLinks = [
@@ -70,7 +76,10 @@ export function Header() {
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="w-[300px] sm:w-[400px]">
-            <nav className="flex flex-col gap-4">
+            <SheetHeader>
+              <SheetTitle className="sr-only">Menu de Navegação</SheetTitle>
+            </SheetHeader>
+            <nav className="flex flex-col gap-4 pt-4">
               <Link href="/" className="mb-4">
                 <Logo />
               </Link>
