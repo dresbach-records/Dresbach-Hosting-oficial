@@ -1,5 +1,19 @@
-# Firebase Studio
+# Dresbach Hosting Platform
 
-This is a NextJS starter in Firebase Studio.
+Plataforma enterprise de gestão de hosting, billing e automação,
+desenvolvida para substituir WHMCS com arquitetura moderna.
 
-To get started, take a look at src/app/page.tsx.
+## Recursos
+- Gestão de clientes e serviços
+- Provisionamento automático (WHM)
+- Billing recorrente
+- Suporte por tickets
+- API-first (OpenAPI)
+- Segurança e RBAC
+
+## Documentação
+- API: /docs (Swagger UI)
+- Status: /health
+
+## Licença
+Proprietária – Dresbach Hosting
