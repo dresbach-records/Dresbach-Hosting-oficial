@@ -14,7 +14,12 @@ const invoices = [
 ];
 
 function InvoiceStatusBadge({ status }: { status: string }) {
-    const variant = status === 'Paga' ? 'default' : status === 'Vencida' ? 'destructive' : 'secondary';
+    let variant: "success" | "destructive" | "warning" = "warning";
+    if (status === 'Paga') {
+        variant = 'success';
+    } else if (status === 'Vencida') {
+        variant = 'destructive';
+    }
     return <Badge variant={variant}>{status}</Badge>;
 }
 

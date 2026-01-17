@@ -10,9 +10,20 @@ import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 
 function InvoiceStatusBadge({ status }: { status: string }) {
-    const variant = status === 'Paid' ? 'default' : status === 'Overdue' ? 'destructive' : 'secondary';
-    const text = status === 'Paid' ? 'Pago' : status === 'Overdue' ? 'Vencida' : 'Pendente';
-    return <Badge variant={variant}>{text}</Badge>;
+    let variant: "success" | "destructive" | "warning" = "warning";
+    const textMap: { [key: string]: string } = {
+        'Paid': 'Pago',
+        'Overdue': 'Vencida',
+        'Unpaid': 'Pendente',
+    }
+    const currentStatus = textMap[status] || status;
+
+    if (currentStatus === 'Pago') {
+        variant = 'success';
+    } else if (currentStatus === 'Vencida') {
+        variant = 'destructive';
+    }
+    return <Badge variant={variant}>{currentStatus}</Badge>;
 }
 
 

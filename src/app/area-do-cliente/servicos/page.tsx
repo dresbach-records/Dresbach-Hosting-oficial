@@ -9,9 +9,19 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 
 function ServiceStatusBadge({ status }: { status: string }) {
-    const variant = status === 'Active' ? 'default' : status === 'Suspended' ? 'destructive' : 'secondary';
-    const text = status === 'Active' ? 'Ativo' : status === 'Suspended' ? 'Suspenso' : 'Inativo';
-    return <Badge variant={variant}>{text}</Badge>;
+    let variant: "success" | "destructive" | "secondary" = "secondary";
+    const textMap: { [key: string]: string } = {
+        'Active': 'Ativo',
+        'Suspended': 'Suspenso',
+    }
+    const currentStatus = textMap[status] || status;
+
+    if (currentStatus === 'Ativo') {
+        variant = 'success';
+    } else if (currentStatus === 'Suspenso') {
+        variant = 'destructive';
+    }
+    return <Badge variant={variant}>{currentStatus}</Badge>;
 }
 
 export default function ServicesPage() {

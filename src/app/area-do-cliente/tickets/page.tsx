@@ -30,16 +30,33 @@ const newTicketSchema = z.object({
 type NewTicketForm = z.infer<typeof newTicketSchema>;
 
 function TicketStatusBadge({ status }: { status: string }) {
-    const variant = status === 'Open' ? 'default' : status === 'In Progress' ? 'secondary' : 'outline';
-    const text = status === 'Open' ? 'Aberto' : status === 'In Progress' ? 'Em Progresso' : 'Fechado';
-    return <Badge variant={variant}>{text}</Badge>;
+    let variant: "success" | "secondary" | "outline" = "outline";
+    const textMap: { [key: string]: string } = {
+        'Open': 'Aberto',
+        'In Progress': 'Em Progresso',
+        'Closed': 'Fechado',
+    }
+    const currentStatus = textMap[status] || status;
+
+    if (currentStatus === 'Aberto') {
+        variant = 'success';
+    } else if (currentStatus === 'Em Progresso') {
+        variant = 'secondary';
+    }
+    
+    return <Badge variant={variant}>{currentStatus}</Badge>;
 }
 
-const priorityMap: { [key: string]: string } = {
-    'Low': 'Baixa',
-    'Medium': 'Média',
-    'High': 'Alta',
+const priorityMap: { [key: string]: { text: string; variant: "destructive" | "warning" | "secondary" } } = {
+    'Low': { text: 'Baixa', variant: 'secondary' },
+    'Medium': { text: 'Média', variant: 'warning' },
+    'High': { text: 'Alta', variant: 'destructive' },
 };
+
+function TicketPriorityBadge({ priority }: { priority: string }) {
+    const priorityInfo = priorityMap[priority] || { text: priority, variant: 'secondary' };
+    return <Badge variant={priorityInfo.variant}>{priorityInfo.text}</Badge>
+}
 
 function TicketsPageContent() {
     const { user } = useUser();
@@ -202,7 +219,7 @@ function TicketsPageContent() {
                         {isLoading && Array.from({ length: 3 }).map((_, i) => (
                              <TableRow key={i}>
                                 <TableCell><Skeleton className="h-5 w-48" /></TableCell>
-                                <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                                <TableCell><Skeleton className="h-6 w-16 rounded-full" /></TableCell>
                                 <TableCell><Skeleton className="h-6 w-20 rounded-full" /></TableCell>
                                 <TableCell><Skeleton className="h-5 w-28" /></TableCell>
                             </TableRow>
@@ -211,7 +228,7 @@ function TicketsPageContent() {
                             tickets.map((ticket) => (
                                 <TableRow key={ticket.id}>
                                     <TableCell className="font-medium">{ticket.subject}</TableCell>
-                                    <TableCell>{priorityMap[ticket.priority] || ticket.priority}</TableCell>
+                                    <TableCell><TicketPriorityBadge priority={ticket.priority} /></TableCell>
                                     <TableCell><TicketStatusBadge status={ticket.status} /></TableCell>
                                     <TableCell>{format(new Date(ticket.createdAt), 'dd/MM/yyyy HH:mm')}</TableCell>
                                 </TableRow>
@@ -238,5 +255,3 @@ export default function TicketsPage() {
         </Suspense>
     )
 }
-
-    

@@ -41,7 +41,12 @@ type NewClientForm = z.infer<typeof newClientSchema>;
 
 
 function ClientStatusBadge({ status }: { status: string }) {
-    const variant = status === 'Ativo' ? 'default' : status === 'Suspenso' ? 'destructive' : 'secondary';
+    let variant: "success" | "destructive" | "secondary" = "secondary";
+    if (status === 'Ativo') {
+        variant = 'success';
+    } else if (status === 'Suspenso') {
+        variant = 'destructive';
+    }
     return <Badge variant={variant}>{status}</Badge>;
 }
 
