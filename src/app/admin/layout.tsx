@@ -27,6 +27,10 @@ import {
   Globe,
   Server,
   FileX,
+  PauseCircle,
+  CheckCircle,
+  ShieldAlert,
+  XCircle,
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 
@@ -177,9 +181,52 @@ export default function AdminLayout({
           </AccordionItem>
         </Accordion>
         
-        <NavLink href="/admin/pedidos" isActive={isActive('/admin/pedidos')} badge={2} isMobile={isMobile}>
-          <ShoppingCart className={iconSize} /> Pedidos
-        </NavLink>
+        <Accordion type="multiple" className="w-full">
+          <AccordionItem value="orders" className="border-b-0">
+            <AccordionTrigger className={cn("rounded-lg px-3 py-2 hover:no-underline hover:text-primary", isActive('/admin/pedidos') && 'text-primary bg-muted')}>
+              <div className="flex w-full items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <ShoppingCart className={iconSize} />
+                    Pedidos
+                </div>
+                <Badge className="bg-red-500 text-white hover:bg-red-600">2</Badge>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className={cn("pt-1 space-y-1", isMobile ? "pl-10" : "pl-7")}>
+              <Link href={'/admin/pedidos?new=true'} className={cn(subLinkClass, isExactlyActive('/admin/pedidos?new=true') && 'bg-muted text-primary')}>
+                <ShoppingCart className={iconSize} />
+                Adicionar Novo Pedido
+              </Link>
+              <Link href={'/admin/pedidos'} className={cn(subLinkClass, isExactlyActive('/admin/pedidos') && 'bg-muted text-primary')}>
+                <ListTodo className={iconSize} />
+                Listar Todos os Pedidos
+              </Link>
+              <Link href={'/admin/pedidos?status=pending'} className={cn(subLinkClass, 'flex justify-between', isExactlyActive('/admin/pedidos?status=pending') && 'bg-muted text-primary')}>
+                <div className="flex items-center gap-3">
+                  <PauseCircle className={iconSize} />
+                  Pedidos Pendentes
+                </div>
+                <Badge variant="destructive">2</Badge>
+              </Link>
+              <Link href={'/admin/pedidos?status=active'} className={cn(subLinkClass, 'flex justify-between', isExactlyActive('/admin/pedidos?status=active') && 'bg-muted text-primary')}>
+                <div className="flex items-center gap-3">
+                  <CheckCircle className={iconSize} />
+                  Pedidos Ativos
+                </div>
+                <Badge className="bg-green-600 text-white hover:bg-green-700">123</Badge>
+              </Link>
+              <Link href={'/admin/pedidos?status=fraud'} className={cn(subLinkClass, isExactlyActive('/admin/pedidos?status=fraud') && 'bg-muted text-primary')}>
+                <ShieldAlert className={iconSize} />
+                Pedidos Fraudulentos
+              </Link>
+              <Link href={'/admin/pedidos?status=cancelled'} className={cn(subLinkClass, isExactlyActive('/admin/pedidos?status=cancelled') && 'bg-muted text-primary')}>
+                <XCircle className={iconSize} />
+                Pedidos Cancelados
+              </Link>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+
         <NavLink href="/admin/faturamento" isActive={isActive('/admin/faturamento')} badge={2} isMobile={isMobile}>
           <DollarSign className={iconSize} /> Faturamento
         </NavLink>
