@@ -64,7 +64,7 @@ export default function LoginPage() {
         const recaptchaToken = await (window as any).grecaptcha.enterprise.execute(siteKey, { action: 'LOGIN' });
         
         // First, verify the token with our Go backend
-        await fetchFromGoBackend('/api/auth/verify-token', {
+        await fetchFromGoBackend('/api/v1/auth/verify-token', {
             method: 'POST',
             body: JSON.stringify({ recaptchaToken }),
         });
@@ -101,7 +101,7 @@ export default function LoginPage() {
       try {
         const recaptchaToken = await (window as any).grecaptcha.enterprise.execute(siteKey, { action: 'LOGIN' });
 
-        await fetchFromGoBackend('/api/auth/verify-token', {
+        await fetchFromGoBackend('/api/v1/auth/verify-token', {
             method: 'POST',
             body: JSON.stringify({ recaptchaToken }),
         });

@@ -55,7 +55,7 @@ export default function SignupPage() {
     try {
       // Use the backend endpoint for registration.
       // This creates the user in Firebase Auth and the client document in Firestore atomically.
-      await fetchFromGoBackend('/api/auth/register', {
+      await fetchFromGoBackend('/api/v1/auth/register', {
         method: 'POST',
         body: JSON.stringify({ email, password, firstName, lastName }),
       });

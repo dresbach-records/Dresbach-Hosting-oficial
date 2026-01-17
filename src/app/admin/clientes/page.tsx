@@ -68,7 +68,7 @@ export default function ClientsAdminPage() {
     setIsSubmitting(true);
     try {
       // Este endpoint no backend Go usa o Admin SDK para criar o usuário de autenticação e o documento Firestore.
-      await fetchFromGoBackend('/api/admin/create-client', {
+      await fetchFromGoBackend('/api/v1/admin/clients', {
         method: 'POST',
         body: JSON.stringify(values),
       });

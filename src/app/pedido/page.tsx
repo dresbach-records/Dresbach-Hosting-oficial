@@ -167,7 +167,7 @@ export default function OrderPage() {
         const currentPlanDetails = planDetails[selectedPlan];
         
         try {
-            const response = await fetchFromGoBackend<{ clientSecret: string, amount: number }>('/api/payments/create-intent', {
+            const response = await fetchFromGoBackend<{ clientSecret: string, amount: number }>('/api/v1/payments/create-intent', {
                 method: 'POST',
                 body: JSON.stringify({ plan: currentPlanDetails.name, cycle: selectedCycle }),
             });
@@ -186,7 +186,7 @@ export default function OrderPage() {
 
     const handleProvisionAccount = async (orderDetails: { plan: string, cycle: string, domain: string, price: number }) => {
         try {
-            await fetchFromGoBackend('/api/provision-account', {
+            await fetchFromGoBackend('/api/v1/provision-account', {
                 method: 'POST',
                 body: JSON.stringify({
                     plan: orderDetails.plan,

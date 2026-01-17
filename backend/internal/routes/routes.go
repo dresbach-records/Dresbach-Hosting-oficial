@@ -16,7 +16,7 @@ func Register(r *gin.Engine) {
 	})
 
 	// Grupo principal da API v1
-	api := r.Group("/api")
+	api := r.Group("/api/v1")
 	{
 		// --- ROTAS PÚBLICAS DE AUTENTICAÇÃO ---
 		authRouter := api.Group("/auth")

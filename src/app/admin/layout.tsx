@@ -19,11 +19,11 @@ import {
   HelpCircle,
   Search,
   UserPlus,
-  PlusCircle,
-  DollarSign,
   Globe,
   Server,
-  FileX,
+  ClipboardList,
+  Cog,
+  FileText,
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 
@@ -141,6 +141,20 @@ export default function AdminLayout({
               </Link>
             </AccordionContent>
           </AccordionItem>
+
+          <AccordionItem value="pedidos" className="border-b-0">
+            <AccordionTrigger className={cn("rounded-lg px-3 py-2 hover:no-underline hover:text-primary font-medium", isActive('/admin/pedidos') && 'text-primary bg-muted')}>
+              <div className="flex items-center gap-3">
+                <ClipboardList className={iconSize} />
+                Pedidos
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className={cn("pt-1 space-y-1", isMobile ? "pl-10" : "pl-7")}>
+                <Link href={'/admin/pedidos'} className={cn(subLinkClass, isExactlyActive('/admin/pedidos') && 'bg-muted text-primary')}>
+                   Listar Pedidos
+                </Link>
+            </AccordionContent>
+          </AccordionItem>
           
           <AccordionItem value="faturamento" className="border-b-0">
             <AccordionTrigger className={cn("rounded-lg px-3 py-2 hover:no-underline hover:text-primary font-medium", isActive('/admin/faturamento') && 'text-primary bg-muted')}>
@@ -154,9 +168,6 @@ export default function AdminLayout({
             <AccordionContent className={cn("pt-1 space-y-1", isMobile ? "pl-10" : "pl-7")}>
                 <Link href={'/admin/faturamento'} className={cn(subLinkClass, isExactlyActive('/admin/faturamento') && 'bg-muted text-primary')}>
                    Faturas
-                </Link>
-                <Link href={'/admin/faturamento/orcamentos'} className={cn(subLinkClass, isExactlyActive('/admin/faturamento/orcamentos') && 'bg-muted text-primary')}>
-                   Orçamentos
                 </Link>
             </AccordionContent>
           </AccordionItem>
@@ -213,6 +224,12 @@ export default function AdminLayout({
                 </Link>
                 <Link href={'/admin/dominios'} className={cn(subLinkClass, isActive('/admin/dominios') && 'bg-muted text-primary')}>
                   <Globe className={iconSize} /> Registros de Domínio
+                </Link>
+                <Link href={'/admin/automacao'} className={cn(subLinkClass, isActive('/admin/automacao') && 'bg-muted text-primary')}>
+                  <Cog className={iconSize} /> Automação
+                </Link>
+                <Link href={'/admin/logs'} className={cn(subLinkClass, isActive('/admin/logs') && 'bg-muted text-primary')}>
+                  <FileText className={iconSize} /> Logs
                 </Link>
                 <Link href={'/admin/configuracoes'} className={cn(subLinkClass, isActive('/admin/configuracoes') && 'bg-muted text-primary')}>
                   <Wrench className={iconSize} /> Configurações Gerais

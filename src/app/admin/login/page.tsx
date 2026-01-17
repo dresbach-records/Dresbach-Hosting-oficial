@@ -52,7 +52,7 @@ export default function AdminLoginPage() {
 
         // Primeiro, o backend Go cria a sessão baseada em cookie.
         // A API de login do Go agora verifica se o usuário é admin.
-        const loginResponse = await fetchFromGoBackend('/api/auth/login', {
+        const loginResponse = await fetchFromGoBackend('/api/v1/auth/login', {
             method: 'POST',
             body: JSON.stringify({ email, password, recaptchaToken }), // recaptchaToken é validado pelo backend
         });
@@ -90,7 +90,7 @@ export default function AdminLoginPage() {
     setMakeAdminMessage('');
     try {
         // Este endpoint agora está protegido e requer que um admin já esteja logado
-        await fetchFromGoBackend('/api/admin/make-admin', {
+        await fetchFromGoBackend('/api/v1/admin/make-admin', {
             method: 'POST',
             body: JSON.stringify({ email: adminEmail }),
         });
