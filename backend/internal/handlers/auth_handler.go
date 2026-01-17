@@ -32,6 +32,7 @@ type SessionLoginPayload struct {
 
 // ensureUserAndRole verifica se um usuário existe no Firestore e o cria se necessário.
 // Se for o primeiro usuário a se registrar, ele é promovido a 'admin'.
+// Esta função agora também cria o documento na coleção `clients`.
 func ensureUserAndRole(ctx context.Context, fs *firestore.Client, user *auth.UserRecord, firstName, lastName string) (string, error) {
 	userRef := fs.Collection("users").Doc(user.UID)
 	doc, err := userRef.Get(ctx)
@@ -45,7 +46,7 @@ func ensureUserAndRole(ctx context.Context, fs *firestore.Client, user *auth.Use
 	// Usuário não existe, vamos criá-lo.
 	var role = "client" // Papel padrão
 
-	// Transação para garantir a atomicidade da verificação do primeiro admin.
+	// Transação para garantir a atomicidade da verificação do primeiro admin e criação do cliente.
 	err = fs.RunTransaction(ctx, func(ctx context.Context, tx *firestore.Transaction) error {
 		// Contar quantos administradores existem.
 		adminQuery := fs.Collection("users").Where("role", "==", "admin").Limit(1)
@@ -68,11 +69,27 @@ func ensureUserAndRole(ctx context.Context, fs *firestore.Client, user *auth.Use
 			Role:      role,
 			CreatedAt: time.Now(),
 		}
-		return tx.Set(userRef, newUser)
+		if err := tx.Set(userRef, newUser); err != nil {
+			return err
+		}
+
+		// Cria o documento do cliente na coleção `clients`
+		clientRef := fs.Collection("clients").Doc(user.UID)
+		clientData := map[string]interface{}{
+			"id":          user.UID,
+			"firstName":   firstName,
+			"lastName":    lastName,
+			"email":       user.Email,
+			"createdAt":   time.Now().Format(time.RFC3339),
+			"status":      constants.StatusActive,
+			"phoneNumber": "",
+			"address":     "",
+		}
+		return tx.Set(clientRef, clientData)
 	})
 
 	if err != nil {
-		log.Printf("Erro na transação para criar usuário e definir papel para UID %s: %v", user.UID, err)
+		log.Printf("Erro na transação para criar usuário e cliente para UID %s: %v", user.UID, err)
 		return "", err
 	}
 
@@ -134,26 +151,6 @@ func RegisterHandler(c *gin.Context) {
 	}
 
 
-	// 4. Criar documento do cliente na coleção `clients` para compatibilidade com o frontend
-	clientData := map[string]interface{}{
-		"id":          userRecord.UID,
-		"firstName":   p.FirstName,
-		"lastName":    p.LastName,
-		"email":       p.Email,
-		"createdAt":   time.Now().Format(time.RFC3339),
-		"status":      constants.StatusActive,
-		"phoneNumber": "",
-		"address":     "",
-	}
-
-	_, err = firebase.FirestoreClient.Collection("clients").Doc(userRecord.UID).Set(context.Background(), clientData)
-	if err != nil {
-		log.Printf("Erro ao criar documento do cliente no Firestore para UID %s: %v", userRecord.UID, err)
-		utils.Error(c, http.StatusInternalServerError, "Falha ao salvar os dados do cliente após a criação do usuário")
-		return
-	}
-
-
 	utils.Success(c, http.StatusCreated, gin.H{
 		"message": "Usuário criado com sucesso",
 		"userId": userRecord.UID,
@@ -176,7 +173,6 @@ func SessionLoginHandler(c *gin.Context) {
 		return
 	}
 
-	// Garante que o usuário existe no Firestore e obtém seu papel.
 	userRecord, err := firebase.AuthClient.GetUser(context.Background(), token.UID)
 	if err != nil {
 		log.Printf("Erro ao obter registro do usuário para UID %s: %v", token.UID, err)
@@ -184,18 +180,36 @@ func SessionLoginHandler(c *gin.Context) {
 		return
 	}
 
-	// A função ensureUserAndRole não é chamada aqui para evitar criar um usuário no login.
-	// O usuário DEVE existir do registro. Vamos buscar o papel direto.
-	userDoc, err := firebase.FirestoreClient.Collection("users").Doc(userRecord.UID).Get(context.Background())
+    // Garante que o usuário existe no Firestore (cria se for o primeiro login) e obtém seu papel.
+	displayName := userRecord.DisplayName
+    parts := strings.SplitN(displayName, " ", 2)
+    firstName := ""
+    lastName := ""
+    if len(parts) > 0 {
+        firstName = parts[0]
+    }
+    if len(parts) > 1 {
+        lastName = parts[1]
+    }
+
+	role, err := ensureUserAndRole(context.Background(), firebase.FirestoreClient, userRecord, firstName, lastName)
 	if err != nil {
-		log.Printf("Usuário %s (UID: %s) autenticado mas não encontrado no Firestore. Forçando logout.", userRecord.Email, userRecord.UID)
-		utils.Error(c, http.StatusForbidden, "Usuário não registrado no sistema. Contate o suporte.")
+		utils.Error(c, http.StatusInternalServerError, "Falha ao processar os dados do usuário.")
 		return
 	}
+    
+    // Garante que o custom claim de role está definido no Auth. Essencial para o primeiro login.
+    if userRecord.CustomClaims == nil || userRecord.CustomClaims["role"] != role {
+        claims := map[string]interface{}{"role": role}
+	    err = firebase.AuthClient.SetCustomUserClaims(context.Background(), userRecord.UID, claims)
+	    if err != nil {
+		    log.Printf("AVISO: Erro ao definir custom claims para UID %s: %v", userRecord.UID, err)
+		    // Não é um erro fatal para o login, mas deve ser logado. O middleware de RBAC pode falhar na próxima requisição.
+	    }
+    }
 
-	role, _ := userDoc.Data()["role"].(string)
+
 	isAdmin := role == "admin"
-
 
 	sess, _ := session.Store.Get(c.Request, session.Name)
 	sess.Values["userID"] = userRecord.UID

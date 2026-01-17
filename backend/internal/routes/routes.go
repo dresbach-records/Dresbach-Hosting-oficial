@@ -22,15 +22,13 @@ func Register(r *gin.Engine) {
 		{
 			// Autenticação
 			auth := public.Group("/auth")
-			auth.POST("/register", handlers.RegisterHandler)
+			// O endpoint de registro foi removido. O frontend agora usa o SDK do Firebase para criar o usuário.
+			// O backend sincroniza o usuário na primeira chamada a /session-login.
 			auth.POST("/session-login", handlers.SessionLoginHandler)
 			auth.POST("/logout", handlers.LogoutHandler)
 
 			// Domínios
 			public.GET("/domains/lookup/:domain", handlers.DomainLookupHandler)
-			
-			// A rota /make-admin pública foi removida permanentemente.
-			// O primeiro usuário a se registrar torna-se admin automaticamente.
 		}
 
 		// --- ROTAS AUTENTICADAS ---

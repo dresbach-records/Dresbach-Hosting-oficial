@@ -9,10 +9,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/firebase';
 import {
+  createUserWithEmailAndPassword,
+  updateProfile,
   GoogleAuthProvider,
   FacebookAuthProvider,
   signInWithPopup,
-  signInWithEmailAndPassword
 } from 'firebase/auth';
 import { Loader2 } from 'lucide-react';
 import { Logo } from '@/components/logo';
@@ -51,34 +52,37 @@ export default function SignupPage() {
     setError(null);
 
     try {
-      // 1. Use the backend endpoint for registration.
-      // This creates the user in Firebase Auth and the user document in Firestore.
-      // The first user registered is automatically made an admin by the backend.
-      await fetchFromGoBackend('/api/v1/auth/register', {
-        method: 'POST',
-        body: JSON.stringify({ email, password, firstName, lastName }),
-      });
+      // 1. Create user on the client using the Firebase SDK
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
 
-      // 2. After successful registration, sign the user in to establish a client-side session,
-      // then call the session-login endpoint to create the backend session cookie.
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      // 2. Update the new user's profile with their name
+      await updateProfile(userCredential.user, {
+        displayName: `${firstName} ${lastName}`.trim(),
+      });
+      
+      // 3. Get the ID token from the newly created user
       const idToken = await userCredential.user.getIdToken();
 
-      await fetchFromGoBackend('/api/v1/auth/session-login', {
+      // 4. Call the backend to create a session cookie. This endpoint will also handle
+      // creating the user in Firestore and assigning the 'admin' role if it's the first user.
+      const sessionData = await fetchFromGoBackend<{ isAdmin: boolean }>('/api/v1/auth/session-login', {
         method: 'POST',
         body: JSON.stringify({ idToken }),
       });
       
-      // 3. Redirect to the appropriate area.
-      const idTokenResult = await userCredential.user.getIdTokenResult(true);
-      if (idTokenResult.claims.role === 'admin') {
+      // 5. Redirect to the correct dashboard based on the role returned from the session creation
+      if (sessionData.isAdmin) {
         router.push('/admin');
       } else {
         router.push('/area-do-cliente');
       }
 
     } catch (err: any) {
-      setError(err.message || 'Falha ao criar conta. Verifique se o e-mail já está em uso e tente novamente.');
+      if (err.code === 'auth/email-already-in-use') {
+        setError('Este email já está em uso. Tente fazer login ou use um email diferente.');
+      } else {
+        setError(err.message || 'Falha ao criar conta. Verifique os dados e tente novamente.');
+      }
       console.error(err);
       setIsLoading(false);
     }
@@ -96,14 +100,13 @@ export default function SignupPage() {
         const idToken = await user.getIdToken();
 
         // The backend's session-login will handle user creation in Firestore if they don't exist
-        await fetchFromGoBackend('/api/v1/auth/session-login', {
+        const sessionData = await fetchFromGoBackend<{ isAdmin: boolean }>('/api/v1/auth/session-login', {
             method: 'POST',
             body: JSON.stringify({ idToken }),
         });
         
-        // After session is created, redirect. The backend determined the role.
-        const idTokenResult = await user.getIdTokenResult(true);
-        if (idTokenResult.claims.role === 'admin') {
+        // After session is created, redirect.
+        if (sessionData.isAdmin) {
             router.push('/admin');
         } else {
             router.push('/area-do-cliente');
