@@ -4,12 +4,13 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import Link from 'next/link';
 
 import { useMemoFirebase, useCollection, useFirestore } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Loader2 } from "lucide-react";
+import { PlusCircle, Loader2, Eye } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from '@/components/ui/skeleton';
@@ -181,6 +182,7 @@ export default function ClientsAdminPage() {
                         <TableHead>Email</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Data de Cadastro</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -190,6 +192,7 @@ export default function ClientsAdminPage() {
                             <TableCell><Skeleton className="h-5 w-48" /></TableCell>
                             <TableCell><Skeleton className="h-6 w-20 rounded-full" /></TableCell>
                             <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                             <TableCell className="text-right"><Skeleton className="h-8 w-8" /></TableCell>
                         </TableRow>
                     ))}
                     {clients && clients.length > 0 ? (
@@ -199,12 +202,20 @@ export default function ClientsAdminPage() {
                                 <TableCell>{client.email}</TableCell>
                                 <TableCell><ClientStatusBadge status={client.status} /></TableCell>
                                 <TableCell>{format(new Date(client.createdAt), 'dd/MM/yyyy')}</TableCell>
+                                <TableCell className="text-right">
+                                    <Button asChild variant="ghost" size="icon">
+                                        <Link href={`/admin/clientes/${client.id}`}>
+                                            <Eye className="h-4 w-4" />
+                                            <span className="sr-only">Gerenciar Cliente</span>
+                                        </Link>
+                                    </Button>
+                                </TableCell>
                             </TableRow>
                         ))
                     ) : (
                         !isLoading && (
                             <TableRow>
-                                <TableCell colSpan={4} className="text-center">Nenhum cliente encontrado.</TableCell>
+                                <TableCell colSpan={5} className="text-center">Nenhum cliente encontrado.</TableCell>
                             </TableRow>
                         )
                     )}
