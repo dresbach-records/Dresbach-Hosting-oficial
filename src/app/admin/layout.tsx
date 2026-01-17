@@ -5,26 +5,24 @@ import { usePathname, redirect } from 'next/navigation';
 import {
   Bell,
   CreditCard,
-  Globe,
   Home,
   LifeBuoy,
   Menu,
-  Server,
   Settings,
   ShoppingCart,
   Users,
   BarChart,
   Loader2,
   LogOut,
+  Wrench,
+  Puzzle,
+  HelpCircle,
+  Search,
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 
 import { useUser, useAuth } from '@/firebase';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardHeader,
-} from '@/components/ui/card';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,20 +35,21 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { Logo } from '@/components/logo';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Input } from '@/components/ui/input';
 
 
 const menuItems = [
   { href: '/admin', label: 'Dashboard', icon: Home },
-  { href: '/admin/pedidos', label: 'Pedidos', icon: ShoppingCart },
   { href: '/admin/clientes', label: 'Clientes', icon: Users },
-  { href: '/admin/servicos', label: 'Serviços', icon: Server },
-  { href: '/admin/dominios', label: 'Domínios', icon: Globe },
+  { href: '/admin/pedidos', label: 'Pedidos', icon: ShoppingCart },
   { href: '/admin/faturamento', label: 'Faturamento', icon: CreditCard },
   { href: '/admin/suporte', label: 'Suporte', icon: LifeBuoy },
   { href: '/admin/relatorios', label: 'Relatórios', icon: BarChart },
+  { href: '/admin/utilitarios', label: 'Utilitários', icon: Wrench },
+  { href: '/admin/addons', label: 'Addons', icon: Puzzle },
+  { href: '/admin/configuracoes', label: 'Configurações', icon: Settings },
+  { href: '/admin/ajuda', label: 'Ajuda', icon: HelpCircle },
 ];
-
-const settingsMenuItem = { href: '/admin/configuracoes', label: 'Configurações', icon: Settings };
 
 
 function NavLink({ href, children, isActive, isMobile = false }: { href: string; children: React.ReactNode; isActive: boolean, isMobile?: boolean }) {
@@ -107,7 +106,7 @@ export default function AdminLayout({
   const desktopNav = (
       <nav className="grid items-start px-2 text-sm font-medium">
         {menuItems.map((item) => (
-          <NavLink key={item.href} href={item.href} isActive={pathname === item.href}>
+          <NavLink key={item.href} href={item.href} isActive={pathname.startsWith(item.href) && (item.href !== '/admin' || pathname === '/admin')}>
             <item.icon className="h-4 w-4" />
             {item.label}
           </NavLink>
@@ -125,15 +124,11 @@ export default function AdminLayout({
             <span className="sr-only">Dresbach Hosting</span>
         </Link>
         {menuItems.map((item) => (
-          <NavLink key={item.href} href={item.href} isActive={pathname === item.href} isMobile>
+          <NavLink key={item.href} href={item.href} isActive={pathname.startsWith(item.href) && (item.href !== '/admin' || pathname === '/admin')} isMobile>
             <item.icon className="h-5 w-5" />
             {item.label}
           </NavLink>
         ))}
-         <NavLink href={settingsMenuItem.href} isActive={pathname === settingsMenuItem.href} isMobile>
-            <settingsMenuItem.icon className="h-5 w-5" />
-            {settingsMenuItem.label}
-        </NavLink>
      </nav>
   );
 
@@ -152,16 +147,6 @@ export default function AdminLayout({
           </div>
           <div className="flex-1 overflow-auto py-2">
             {desktopNav}
-          </div>
-          <div className="mt-auto p-4">
-            <Card>
-              <CardHeader className="p-2 pt-0 md:p-4">
-                 <NavLink href={settingsMenuItem.href} isActive={pathname === settingsMenuItem.href}>
-                    <settingsMenuItem.icon className="h-4 w-4" />
-                    {settingsMenuItem.label}
-                </NavLink>
-              </CardHeader>
-            </Card>
           </div>
         </div>
       </div>
@@ -183,21 +168,20 @@ export default function AdminLayout({
                 <SheetTitle>Menu de Navegação</SheetTitle>
               </SheetHeader>
               {mobileNav}
-              <div className="mt-auto">
-                 <Card>
-                    <CardHeader>
-                        <NavLink href={settingsMenuItem.href} isActive={pathname === settingsMenuItem.href} isMobile>
-                            <settingsMenuItem.icon className="h-5 w-5" />
-                            {settingsMenuItem.label}
-                        </NavLink>
-                    </CardHeader>
-                 </Card>
-              </div>
             </SheetContent>
           </Sheet>
 
           <div className="w-full flex-1">
-            {/* Can add search here if needed */}
+             <form>
+                <div className="relative">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        type="search"
+                        placeholder="Buscar clientes, domínios, etc..."
+                        className="w-full appearance-none bg-muted pl-8 shadow-none md:w-2/3 lg:w-1/3"
+                    />
+                </div>
+            </form>
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
