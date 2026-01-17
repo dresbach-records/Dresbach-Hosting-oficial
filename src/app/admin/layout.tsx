@@ -123,6 +123,11 @@ export default function AdminLayout({
       return null;
   }
 
+  // For the full-screen CRM page, render children without the standard admin layout shell.
+  if (pathname === '/admin/addons') {
+    return <>{children}</>;
+  }
+
   const handleLogout = () => {
     signOut(auth);
   }
