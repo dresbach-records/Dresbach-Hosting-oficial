@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
+import { useRouter } from 'next/navigation';
 
 function ServiceStatusBadge({ status }: { status: string }) {
     let variant: "success" | "destructive" | "secondary" = "secondary";
@@ -27,9 +28,14 @@ function ServiceStatusBadge({ status }: { status: string }) {
 export default function ServicesPage() {
     const { user } = useUser();
     const firestore = useFirestore();
+    const router = useRouter();
 
     const servicesQuery = useMemoFirebase(() => user && collection(firestore, 'clients', user.uid, 'services'), [firestore, user]);
     const { data: services, isLoading } = useCollection(servicesQuery);
+
+    const handleRowClick = (serviceId: string) => {
+        router.push(`/area-do-cliente/servicos/${serviceId}`);
+    };
 
     return (
         <Card>
@@ -56,7 +62,7 @@ export default function ServicesPage() {
                         ))}
                         {services && services.length > 0 ? (
                             services.map((service) => (
-                                <TableRow key={service.id}>
+                                <TableRow key={service.id} onClick={() => handleRowClick(service.id)} className="cursor-pointer">
                                     <TableCell className="font-medium">{service.serviceType}</TableCell>
                                     <TableCell>{format(new Date(service.startDate), 'dd/MM/yyyy')}</TableCell>
                                     <TableCell><ServiceStatusBadge status={service.status} /></TableCell>
