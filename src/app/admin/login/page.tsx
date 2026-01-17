@@ -24,6 +24,11 @@ export default function AdminLoginPage() {
   const { user, isAdmin, isUserLoading } = useUser();
   const siteKey = '6LdZHk0sAAAAAPSnAIbpdQ6wXthwbzGEcdFQiGOD';
 
+  // New state for the dev tool
+  const [adminEmail, setAdminEmail] = useState('');
+  const [isMakingAdmin, setIsMakingAdmin] = useState(false);
+  const [makeAdminMessage, setMakeAdminMessage] = useState('');
+
   useEffect(() => {
     if (!isUserLoading && user && isAdmin) {
       router.replace('/admin');
@@ -53,7 +58,7 @@ export default function AdminLoginPage() {
 
         // If reCAPTCHA is valid, proceed with Firebase login
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        const idTokenResult = await userCredential.user.getIdTokenResult();
+        const idTokenResult = await userCredential.user.getIdTokenResult(true); // Force refresh
         
         if (!idTokenResult.claims.admin) {
             await auth.signOut();
@@ -75,6 +80,25 @@ export default function AdminLoginPage() {
     });
   };
 
+    // New handler for the dev tool
+  const handleMakeAdmin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsMakingAdmin(true);
+    setMakeAdminMessage('');
+    try {
+        await fetchFromGoBackend('/auth/make-admin', {
+            method: 'POST',
+            body: JSON.stringify({ email: adminEmail }),
+        });
+        setMakeAdminMessage(`Sucesso! ${adminEmail} agora é um administrador. Faça login para acessar o painel.`);
+    } catch(err: any) {
+        setMakeAdminMessage(`Erro: ${err.message}`);
+    } finally {
+        setIsMakingAdmin(false);
+    }
+  };
+
+
   if (isUserLoading || (!isUserLoading && user && isAdmin)) {
     return (
         <div className="flex h-screen items-center justify-center bg-muted/40">
@@ -86,7 +110,7 @@ export default function AdminLoginPage() {
   return (
     <>
       <Script src={`https://www.google.com/recaptcha/enterprise.js?render=${siteKey}`} />
-      <div className="flex min-h-screen items-center justify-center p-6 bg-muted/40">
+      <div className="flex min-h-screen flex-col items-center justify-center p-6 bg-muted/40">
           <Card className="w-full max-w-sm">
               <CardHeader className="text-center">
                   <div className="mb-4 flex justify-center">
@@ -128,6 +152,34 @@ export default function AdminLoginPage() {
                   </form>
               </CardContent>
           </Card>
+          
+          {/* New Dev Tool Card */}
+          <Card className="w-full max-w-sm mt-6 border-dashed">
+            <CardHeader>
+                <CardTitle className="text-lg">Ferramenta de Desenvolvedor</CardTitle>
+                <CardDescription>Use este formulário para conceder privilégios de administrador a um usuário existente.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <form onSubmit={handleMakeAdmin} className="space-y-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="admin-email">Email do Usuário</Label>
+                        <Input
+                            id="admin-email"
+                            type="email"
+                            placeholder="usuario@email.com"
+                            value={adminEmail}
+                            onChange={(e) => setAdminEmail(e.target.value)}
+                            required
+                        />
+                    </div>
+                    {makeAdminMessage && <p className="text-sm text-muted-foreground">{makeAdminMessage}</p>}
+                    <Button type="submit" className="w-full" variant="secondary" disabled={isMakingAdmin}>
+                        {isMakingAdmin && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Tornar Administrador
+                    </Button>
+                </form>
+            </CardContent>
+        </Card>
       </div>
     </>
   );

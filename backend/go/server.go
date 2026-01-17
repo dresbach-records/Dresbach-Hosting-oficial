@@ -287,6 +287,49 @@ func getProfileHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// makeAdminHandler sets the 'admin' custom claim for a user.
+// FOR DEVELOPMENT/SETUP PURPOSES ONLY. THIS IS INSECURE IN A PRODUCTION ENV.
+func makeAdminHandler(w http.ResponseWriter, r *http.Request) {
+	// In a real app, this endpoint should be protected and only accessible by existing admins.
+	var p struct {
+		Email string `json:"email"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	if p.Email == "" {
+		respondWithError(w, http.StatusBadRequest, "Email is required")
+		return
+	}
+
+	user, err := firebaseAuth.GetUserByEmail(context.Background(), p.Email)
+	if err != nil {
+		log.Printf("Error getting user by email '%s': %v", p.Email, err)
+		respondWithError(w, http.StatusNotFound, "User not found")
+		return
+	}
+
+	// Get existing claims
+	claims := user.CustomClaims
+	if claims == nil {
+		claims = make(map[string]interface{})
+	}
+
+	// Set admin claim
+	claims["admin"] = true
+
+	err = firebaseAuth.SetCustomUserClaims(context.Background(), user.UID, claims)
+	if err != nil {
+		log.Printf("Error setting custom claims for UID %s: %v", user.UID, err)
+		respondWithError(w, http.StatusInternalServerError, "Failed to set admin claim")
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, map[string]string{"message": fmt.Sprintf("User %s is now an admin.", p.Email)})
+}
+
 // authMiddleware protects routes by verifying the user's session.
 func authMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -352,6 +395,7 @@ func main() {
 	authRouter.HandleFunc("/login", loginHandler).Methods("POST")
 	authRouter.HandleFunc("/logout", logoutHandler).Methods("POST")
 	authRouter.HandleFunc("/verify-token", verifyTokenHandler).Methods("POST")
+	authRouter.HandleFunc("/make-admin", makeAdminHandler).Methods("POST")
 
 	// Protected routes
 	userRouter := r.PathPrefix("/user").Subrouter()
