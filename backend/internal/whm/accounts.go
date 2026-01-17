@@ -56,6 +56,13 @@ func (c *Client) ListAccounts() (*http.Response, error) {
 	return c.Request(endpoint, "GET", nil)
 }
 
+// GetAccountSummary retrieves a summary for a hosting account.
+// See: https://documentation.cpanel.net/display/DD/WHM+API+1+Functions+-+accountsummary
+func (c *Client) GetAccountSummary(user string) (*http.Response, error) {
+	endpoint := fmt.Sprintf("accountsummary?api.version=1&user=%s", user)
+	return c.Request(endpoint, "GET", nil)
+}
+
 // CreateUserSession creates a temporary session for cPanel, DirectAdmin, etc. (SSO)
 // See: https://documentation.cpanel.net/display/DD/WHM+API+1+Functions+-+create_user_session
 func (c *Client) CreateUserSession(user, service string) (*http.Response, error) {

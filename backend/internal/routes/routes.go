@@ -56,6 +56,8 @@ func Register(r *gin.Engine) {
 				clientRouter.GET("/dashboard", handlers.GetClientDashboard)
 				clientRouter.GET("/services", handlers.ListClientServices)
 				clientRouter.GET("/services/:id", handlers.GetClientService)
+				clientRouter.POST("/services/:id/sso", handlers.CreateCPanelSessionHandler)
+				clientRouter.GET("/services/:id/summary", handlers.GetAccountSummaryHandler)
 				clientRouter.GET("/invoices", handlers.ListClientInvoices)
 				clientRouter.POST("/invoices/:id/pay", handlers.PayClientInvoice)
 				clientRouter.GET("/tickets", handlers.ListClientTickets)

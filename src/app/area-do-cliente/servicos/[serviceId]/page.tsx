@@ -3,19 +3,18 @@
 import { useParams, useRouter } from 'next/navigation';
 import { useMemoFirebase, useDoc, useFirestore, useUser } from '@/firebase';
 import { doc } from 'firebase/firestore';
+import React, { useState, useEffect } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { fetchFromGoBackend } from '@/lib/go-api';
 import {
   Card,
   CardHeader,
   CardTitle,
-  CardDescription,
   CardContent,
-  CardFooter
 } from "@/components/ui/card";
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   ArrowLeft,
-  Info,
-  KeyRound,
   LogIn,
   Mail,
   Server,
@@ -28,14 +27,14 @@ import {
   Shield,
   Clock,
   PlusCircle,
-  ExternalLink
+  ExternalLink,
+  Loader2
 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
-import { Progress } from "@/components/ui/progress";
 import {
   ChartContainer,
   ChartTooltip,
@@ -49,21 +48,55 @@ const chartConfig = {
   free: { label: "Livre", color: "hsl(var(--muted))" },
 };
 
-const UsageChart = ({ title, used, total, unit }: { title: string, used: number, total: number, unit: string }) => {
+type SummaryData = {
+    disk_limit: number;
+    disk_used: number;
+    email_accounts_limit: number;
+    email_accounts_used: number;
+    mysql_db_limit: number;
+    mysql_db_used: number;
+    bandwidth_limit: number;
+    bandwidth_used: number;
+    is_mock: boolean;
+};
+
+
+const UsageChart = ({ title, used, total, unit, isLoading, isUnlimited }: { title: string, used: number, total: number, unit: string, isLoading: boolean, isUnlimited: boolean }) => {
+    
+    if (isLoading) {
+        return <div className="flex flex-col items-center">
+            <Skeleton className="h-[120px] w-[120px] rounded-full" />
+            <Skeleton className="h-5 w-24 mt-2" />
+            <Skeleton className="h-4 w-20 mt-1" />
+        </div>
+    }
+
+    if (isUnlimited) {
+        return (
+             <div className="flex flex-col items-center text-center">
+                <div className="h-[120px] flex items-center justify-center">
+                    <p className="text-4xl font-bold">∞</p>
+                </div>
+                <p className="font-semibold mt-2 text-sm">{title}</p>
+                <p className="text-xs text-muted-foreground">{used > 0 ? `${used.toFixed(2)} ${unit} utilizados` : 'Ilimitado'}</p>
+            </div>
+        )
+    }
+
     const usagePercentage = total > 0 ? (used / total) * 100 : 0;
     const chartData = [
         { name: 'used', value: used, fill: `hsl(var(--chart-1))` },
-        { name: 'free', value: total - used, fill: `hsl(var(--muted))` }
+        { name: 'free', value: Math.max(0, total - used), fill: `hsl(var(--muted))` }
     ];
 
     return (
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col items-center text-center">
             <ChartContainer config={chartConfig} className="mx-auto aspect-square h-[120px]">
                 <ResponsiveContainer>
                     <PieChart>
                          <ChartTooltip
                             cursor={false}
-                            content={<ChartTooltipContent hideLabel />}
+                            content={<ChartTooltipContent hideLabel formatter={(value, name) => <span>{value.toFixed(2)} {unit}</span>} />}
                         />
                         <Pie
                             data={chartData}
@@ -72,6 +105,8 @@ const UsageChart = ({ title, used, total, unit }: { title: string, used: number,
                             innerRadius={40}
                             outerRadius={50}
                             strokeWidth={5}
+                            startAngle={90}
+                            endAngle={450}
                         >
                              <Cell key="cell-0" fill={chartData[0].fill} />
                              <Cell key="cell-1" fill={chartData[1].fill} />
@@ -80,7 +115,7 @@ const UsageChart = ({ title, used, total, unit }: { title: string, used: number,
                 </ResponsiveContainer>
             </ChartContainer>
             <p className="font-semibold mt-2 text-sm">{title}</p>
-            <p className="text-xs text-muted-foreground">{`${used.toFixed(2)} ${unit} / ${total} ${unit}`}</p>
+            <p className="text-xs text-muted-foreground">{`${used.toFixed(2)} ${unit} / ${total.toFixed(2)} ${unit}`}</p>
         </div>
     );
 };
@@ -98,9 +133,61 @@ export default function ServiceDetailPage() {
     const { user } = useUser();
     const firestore = useFirestore();
     const serviceId = params.serviceId as string;
+    const { toast } = useToast();
+
+    const [isSsoLoading, setIsSsoLoading] = useState(false);
+    const [summary, setSummary] = useState<SummaryData | null>(null);
+    const [isSummaryLoading, setIsSummaryLoading] = useState(true);
+
 
     const serviceDocRef = useMemoFirebase(() => user && serviceId ? doc(firestore, 'clients', user.uid, 'services', serviceId) : null, [firestore, user, serviceId]);
     const { data: service, isLoading } = useDoc(serviceDocRef);
+
+    useEffect(() => {
+        if (!serviceId) return;
+
+        const fetchSummary = async () => {
+            setIsSummaryLoading(true);
+            try {
+                const data = await fetchFromGoBackend<SummaryData>(`/api/v1/client/services/${serviceId}/summary`);
+                setSummary(data);
+            } catch (error: any) {
+                console.error("Failed to fetch account summary:", error);
+                 toast({
+                    variant: 'destructive',
+                    title: 'Falha ao buscar resumo',
+                    description: error.message || 'Não foi possível carregar os dados de uso da conta.',
+                });
+            } finally {
+                setIsSummaryLoading(false);
+            }
+        };
+
+        fetchSummary();
+    }, [serviceId, toast]);
+
+
+    const handleSsoLogin = async () => {
+        if (!serviceId) return;
+        setIsSsoLoading(true);
+
+        try {
+            const response = await fetchFromGoBackend<{ url: string }>(
+                `/api/v1/client/services/${serviceId}/sso`, 
+                { method: 'POST' }
+            );
+            window.open(response.url, '_blank');
+        } catch (error: any) {
+            toast({
+                variant: 'destructive',
+                title: 'Falha no Login Automático',
+                description: error.message || 'Não foi possível gerar a sessão de login.',
+            });
+        } finally {
+            setIsSsoLoading(false);
+        }
+    }
+
 
     if (isLoading) {
         return <div className="space-y-4">
@@ -167,9 +254,15 @@ export default function ServiceDetailPage() {
                         </CardHeader>
                         <CardContent className="p-0">
                             <ul className="text-sm">
-                                {['Login no cPanel', 'Login no Webmail', 'Mudar Senha'].map(action => (
+                                <li>
+                                    <Button variant="ghost" className="w-full justify-start rounded-none px-4 py-3" onClick={handleSsoLogin} disabled={isSsoLoading}>
+                                        {isSsoLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <LogIn className="mr-2 h-4 w-4"/>}
+                                        Login no cPanel
+                                    </Button>
+                                </li>
+                                {['Login no Webmail', 'Mudar Senha'].map(action => (
                                     <li key={action}>
-                                        <Button variant="ghost" className="w-full justify-start rounded-none px-4 py-3">
+                                        <Button variant="ghost" className="w-full justify-start rounded-none px-4 py-3" disabled>
                                             <LogIn className="mr-2 h-4 w-4"/> {action}
                                         </Button>
                                     </li>
@@ -204,12 +297,44 @@ export default function ServiceDetailPage() {
                     <Card>
                         <CardHeader><CardTitle>Possibilidade de uso</CardTitle></CardHeader>
                         <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4 justify-items-center">
-                            {/* Placeholder data */}
-                            <UsageChart title="Espaço em Disco" used={4.21} total={10} unit="GB"/>
-                            <UsageChart title="Uso de Banda" used={6.89} total={100} unit="GB"/>
-                            <UsageChart title="Contas de Email" used={2} total={10} unit=""/>
-                            <UsageChart title="Bancos de Dados" used={1} total={5} unit=""/>
+                            <UsageChart 
+                                title="Espaço em Disco" 
+                                used={summary?.disk_used || 0} 
+                                total={summary?.disk_limit || 0} 
+                                unit="MB"
+                                isLoading={isSummaryLoading}
+                                isUnlimited={summary?.disk_limit === -1}
+                            />
+                            <UsageChart 
+                                title="Uso de Banda" 
+                                used={summary?.bandwidth_used || 0} 
+                                total={summary?.bandwidth_limit || 0} 
+                                unit="MB"
+                                isLoading={isSummaryLoading}
+                                isUnlimited={summary?.bandwidth_limit === -1}
+                            />
+                            <UsageChart 
+                                title="Contas de Email" 
+                                used={summary?.email_accounts_used || 0} 
+                                total={summary?.email_accounts_limit || 0} 
+                                unit=""
+                                isLoading={isSummaryLoading}
+                                isUnlimited={summary?.email_accounts_limit === -1}
+                            />
+                            <UsageChart 
+                                title="Bancos de Dados" 
+                                used={summary?.mysql_db_used || 0} 
+                                total={summary?.mysql_db_limit || 0} 
+                                unit=""
+                                isLoading={isSummaryLoading}
+                                isUnlimited={summary?.mysql_db_limit === -1}
+                            />
                         </CardContent>
+                         {summary?.is_mock && (
+                            <CardFooter>
+                                <p className="text-xs text-center text-amber-600 p-2 bg-amber-50 rounded-md border border-amber-200 w-full">Os dados de uso são simulados. Configure as credenciais do WHM no seu backend para ver os dados reais.</p>
+                            </CardFooter>
+                        )}
                     </Card>
 
                      <Card>
