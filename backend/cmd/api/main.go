@@ -12,7 +12,7 @@ import (
 	"backend/internal/stripe" // Importa o novo pacote Stripe
 	"backend/internal/whm"
 
-	"github.comcom/gin-gonic/gin"
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
