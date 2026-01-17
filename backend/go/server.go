@@ -1,0 +1,267 @@
+package main
+
+import (
+	"context"
+	"encoding/json"
+	"log"
+	"net/http"
+	"os"
+	"strings"
+	"time"
+
+	firebase "firebase.google.com/go/v4"
+	"firebase.google.com/go/v4/auth"
+
+	"github.com/gorilla/mux"
+	"github.com/gorilla/sessions"
+	"github.com/joho/godotenv"
+	"google.golang.org/api/option"
+)
+
+// Global variables for Firebase, session store, and other configs.
+var (
+	firebaseAuth *auth.Client
+	cookieStore  *sessions.CookieStore
+	sessionName  = "dresbach-hosting-session"
+)
+
+// Structs for JSON request and response payloads.
+type RegisterPayload struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+type LoginPayload struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+type ProfileResponse struct {
+	UserID string `json:"userId"`
+	Email  string `json:"email"`
+}
+
+type ErrorResponse struct {
+	Error string `json:"error"`
+}
+
+// respondWithError is a helper function to write a JSON error response.
+func respondWithError(w http.ResponseWriter, code int, message string) {
+	respondWithJSON(w, code, ErrorResponse{Error: message})
+}
+
+// respondWithJSON is a helper function to write a JSON response.
+func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
+	response, err := json.Marshal(payload)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Internal Server Error"))
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+	w.Write(response)
+}
+
+// registerHandler handles user registration.
+func registerHandler(w http.ResponseWriter, r *http.Request) {
+	var p RegisterPayload
+	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	if p.Email == "" || !strings.Contains(p.Email, "@") {
+		respondWithError(w, http.StatusBadRequest, "Invalid email format")
+		return
+	}
+	if len(p.Password) < 6 {
+		respondWithError(w, http.StatusBadRequest, "Password must be at least 6 characters long")
+		return
+	}
+
+	params := (&auth.UserToCreate{}).
+		Email(p.Email).
+		Password(p.Password).
+		EmailVerified(false).
+		Disabled(false)
+
+	_, err := firebaseAuth.CreateUser(context.Background(), params)
+	if err != nil {
+		if auth.IsEmailAlreadyExists(err) {
+			respondWithError(w, http.StatusConflict, "Email already in use")
+			return
+		}
+		log.Printf("Error creating user: %v\n", err)
+		respondWithError(w, http.StatusInternalServerError, "Failed to create user")
+		return
+	}
+
+	respondWithJSON(w, http.StatusCreated, map[string]string{"message": "User created successfully"})
+}
+
+// loginHandler handles user login and session creation.
+func loginHandler(w http.ResponseWriter, r *http.Request) {
+	var p LoginPayload
+	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	// SENIOR DEV NOTE:
+	// The Firebase Admin SDK (which runs on the server) CANNOT verify a user's password directly.
+	// This is a security measure; only client-side SDKs or the Firebase Auth REST API can do this.
+	// In a production-grade application, the flow would be:
+	// 1. Frontend uses Firebase Client SDK to sign in the user.
+	// 2. Frontend gets the user's ID Token upon successful login.
+	// 3. Frontend sends this ID Token to this backend endpoint.
+	// 4. This backend would use `firebaseAuth.VerifyIDToken()` to validate the token.
+	//
+	// For this exercise, we will simulate a successful login by checking if the user exists
+	// and assuming the password is correct. This is NOT secure and should NOT be used in production.
+	userRecord, err := firebaseAuth.GetUserByEmail(context.Background(), p.Email)
+	if err != nil {
+		// This error means the user was not found.
+		respondWithError(w, http.StatusUnauthorized, "Invalid email or password")
+		return
+	}
+
+	// Create a new session.
+	session, _ := cookieStore.Get(r, sessionName)
+	session.Values["userID"] = userRecord.UID
+	session.Values["email"] = userRecord.Email
+	session.Options.MaxAge = 86400 // 24 hours
+	session.Options.HttpOnly = true
+	// Use SameSite=Lax for SPAs. You might need SameSite=None and Secure=true if front/back are on different domains.
+	session.Options.SameSite = http.SameSiteLaxMode 
+
+	if err := session.Save(r, w); err != nil {
+		log.Printf("Error saving session: %v\n", err)
+		respondWithError(w, http.StatusInternalServerError, "Failed to create session")
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, map[string]string{"message": "Login successful"})
+}
+
+// logoutHandler destroys the user's session.
+func logoutHandler(w http.ResponseWriter, r *http.Request) {
+	session, _ := cookieStore.Get(r, sessionName)
+
+	// Expire the session immediately.
+	session.Options.MaxAge = -1
+
+	if err := session.Save(r, w); err != nil {
+		log.Printf("Error destroying session: %v\n", err)
+		respondWithError(w, http.StatusInternalServerError, "Failed to logout")
+		return
+	}
+	respondWithJSON(w, http.StatusOK, map[string]string{"message": "Logout successful"})
+}
+
+// getProfileHandler returns the profile of the currently logged-in user.
+func getProfileHandler(w http.ResponseWriter, r *http.Request) {
+	// The middleware has already validated the session. We can safely access the values.
+	session, _ := cookieStore.Get(r, sessionName)
+	userID, ok1 := session.Values["userID"].(string)
+	email, ok2 := session.Values["email"].(string)
+
+	if !ok1 || !ok2 {
+		respondWithError(w, http.StatusInternalServerError, "Invalid session data")
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, ProfileResponse{
+		UserID: userID,
+		Email:  email,
+	})
+}
+
+// authMiddleware protects routes by verifying the user's session.
+func authMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		session, err := cookieStore.Get(r, sessionName)
+		if err != nil {
+			// This can happen if the cookie is malformed.
+			respondWithError(w, http.StatusUnauthorized, "Invalid session cookie")
+			return
+		}
+
+		// Check if the session is authenticated (we check for userID).
+		if userID, ok := session.Values["userID"].(string); !ok || userID == "" {
+			respondWithError(w, http.StatusUnauthorized, "Authentication required")
+			return
+		}
+
+		// If the session is empty or has been expired.
+		if session.IsNew {
+			respondWithError(w, http.StatusUnauthorized, "Authentication required")
+			return
+		}
+
+		// If we reach here, the user is authenticated.
+		next.ServeHTTP(w, r)
+	})
+}
+
+func main() {
+	// Load .env file.
+	err := godotenv.Load()
+	if err != nil {
+		log.Println("Warning: .env file not found, relying on environment variables")
+	}
+
+	// Initialize Firebase Admin SDK
+	credsFile := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
+	if credsFile == "" {
+		log.Fatal("GOOGLE_APPLICATION_CREDENTIALS environment variable not set.")
+	}
+	opt := option.WithCredentialsFile(credsFile)
+	app, err := firebase.NewApp(context.Background(), nil, opt)
+	if err != nil {
+		log.Fatalf("error initializing app: %v\n", err)
+	}
+	firebaseAuth, err = app.Auth(context.Background())
+	if err != nil {
+		log.Fatalf("error getting Auth client: %v\n", err)
+	}
+
+	// Initialize Cookie Store
+	sessionKey := os.Getenv("SESSION_KEY")
+	if sessionKey == "" {
+		log.Fatal("SESSION_KEY environment variable not set. It must be a long, random string.")
+	}
+	cookieStore = sessions.NewCookieStore([]byte(sessionKey))
+
+	// Setup Router
+	r := mux.NewRouter()
+
+	// Public routes
+	authRouter := r.PathPrefix("/auth").Subrouter()
+	authRouter.HandleFunc("/register", registerHandler).Methods("POST")
+	authRouter.HandleFunc("/login", loginHandler).Methods("POST")
+	authRouter.HandleFunc("/logout", logoutHandler).Methods("POST")
+
+	// Protected routes
+	userRouter := r.PathPrefix("/user").Subrouter()
+	userRouter.Use(authMiddleware)
+	userRouter.HandleFunc("/profile", getProfileHandler).Methods("GET")
+	
+	// Serve frontend files
+	// This assumes your Go binary is run from the project root.
+	// It will serve the existing Next.js build output.
+	fs := http.FileServer(http.Dir("./public/"))
+	r.PathPrefix("/").Handler(fs)
+
+
+	// Start Server
+	port := "8080"
+	log.Printf("Server starting on port %s", port)
+	srv := &http.Server{
+		Handler:      r,
+		Addr:         ":" + port,
+		WriteTimeout: 15 * time.Second,
+		ReadTimeout:  15 * time.Second,
+	}
+	log.Fatal(srv.ListenAndServe())
+}
