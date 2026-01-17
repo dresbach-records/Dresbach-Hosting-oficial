@@ -10,7 +10,7 @@
 - JWT próprio (planejado)
 
 ## Regras Críticas
-- Primeiro login vira admin automaticamente
+- Primeiro login vira admin automaticamente. Para forçar um admin específico, defina a variável de ambiente `DRESBACH_INITIAL_ADMIN`.
 - Frontend não define permissões
 - RBAC obrigatório em todas as rotas
 

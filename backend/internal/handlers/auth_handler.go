@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -142,8 +143,15 @@ func SessionLoginHandler(c *gin.Context) {
 		return
 	}
     
-    // Garante que o custom claim de role está definido no Auth. Essencial para o primeiro login.
-    // O frontend confia neste claim para a lógica de redirecionamento (admin/cliente).
+    // Força a promoção se este usuário estiver configurado como o admin inicial no ambiente.
+    // Isso garante que o admin correto tenha acesso, mesmo que não tenha sido o primeiro a se registrar.
+    initialAdminEmail := os.Getenv("DRESBACH_INITIAL_ADMIN")
+    if initialAdminEmail != "" && userRecord.Email == initialAdminEmail && role != "admin" {
+        log.Printf("Usuário %s corresponde ao admin inicial designado. Promovendo para 'admin'.", userRecord.Email)
+        role = "admin" // Override the role for the rest of this function
+    }
+    
+    // Garante que o custom claim de role está definido no Auth, especialmente se foi alterado acima.
     if userRecord.CustomClaims == nil || userRecord.CustomClaims["role"] != role {
 		log.Printf("Custom claim 'role' ausente ou diferente para o usuário %s. Atualizando de '%v' para '%s'.", userRecord.Email, userRecord.CustomClaims["role"], role)
         claims := map[string]interface{}{"role": role}
@@ -152,6 +160,14 @@ func SessionLoginHandler(c *gin.Context) {
 		    log.Printf("AVISO: Erro ao definir custom claims para UID %s: %v", userRecord.UID, err)
 		    // Não é um erro fatal para o login, mas deve ser logado. O middleware de RBAC pode falhar na próxima requisição.
 	    }
+        // Se a role foi alterada, também a persistimos no Firestore.
+        if role == "admin" {
+            userRef := firebase.FirestoreClient.Collection("users").Doc(userRecord.UID)
+	        _, err = userRef.Set(context.Background(), map[string]interface{}{"role": "admin"}, firestore.MergeAll)
+            if err != nil {
+                log.Printf("AVISO: Falha ao persistir a promoção para admin no Firestore para %s: %v", userRecord.Email, err)
+            }
+        }
     }
 
 
