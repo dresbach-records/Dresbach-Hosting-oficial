@@ -110,6 +110,16 @@ service cloud.firestore {
       allow create: if (isOwner(request.resource.data.clientId) || isAdmin()) && request.resource.data.id == ticketId;
     }
 
+    /**
+     * @description Manages a global, denormalized collection of all services for efficient admin querying.
+     * @path /services/{serviceId}
+     * @allow (get, list, create, update, delete) Admins have full read/write access.
+     * @principle Enables a central service list for admins, secured from non-admin access.
+     */
+    match /services/{serviceId} {
+        allow get, list, create, update, delete: if isAdmin();
+    }
+
 
     /**
      * @description Manages top-level client documents.

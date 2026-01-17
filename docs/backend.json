@@ -69,6 +69,10 @@
           "type": "string",
           "description": "Reference to Client. (Relationship: Client 1:N Service)"
         },
+        "clientName": {
+          "type": "string",
+          "description": "Denormalized client name for display purposes."
+        },
         "serviceType": {
           "type": "string",
           "description": "Type of service (e.g., Hosting, Tech Ops)."
@@ -95,6 +99,7 @@
       "required": [
         "id",
         "clientId",
+        "clientName",
         "serviceType",
         "startDate",
         "status"
@@ -355,9 +360,26 @@
             }
           ]
         }
+      },
+      {
+        "path": "/services/{serviceId}",
+        "definition": {
+          "entityName": "Service",
+          "schema": {
+            "$ref": "#/backend/entities/Service"
+          },
+          "description": "Stores a global list of all services for admin-level querying and management. This is a denormalized collection for performance.",
+          "params": [
+            {
+              "name": "serviceId",
+              "description": "Unique identifier for the service, mirrors the ID in the client's subcollection."
+            }
+          ]
+        }
       }
     ],
     "reasoning": "This Firestore data structure is designed for the Dresbach Hosting web application, prioritizing security, scalability, and debuggability. It leverages path-based ownership and denormalization to ensure authorization independence, simplifying security rules and enabling atomic operations. The structure is segregated to maintain a homogeneous security posture within each collection. The design explicitly models the relationships between Clients, Services, Domains, Invoices, and Tickets, enforcing invariants for ownership and data integrity.\n\nAuthorization Independence is achieved by using path-based ownership for client data. For example, services, domains, invoices, and tickets are stored as subcollections of the `clients` collection (e.g., `/clients/{clientId}/services/{serviceId}`). This structure eliminates the need for `get()` calls in security rules to verify ownership, enabling atomic operations. Segregation is achieved by storing different entities in separate collections or subcollections, each with its specific security rules.\n\nQAPs (Rules are not Filters) are supported by enforcing that list operations are always scoped to the user's own data. For example, a client can only list services, domains, invoices, or tickets associated with their `clientId`."
   }
 }
+
     
