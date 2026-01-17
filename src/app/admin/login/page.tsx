@@ -77,14 +77,14 @@ export default function AdminLoginPage() {
     setIsMakingAdmin(true);
     setMakeAdminMessage('');
     try {
-        // Este endpoint agora está protegido e requer que um admin já esteja logado
-        await fetchFromGoBackend('/api/v1/admin/make-admin', {
+        // Este endpoint está publicamente acessível para criar o primeiro admin.
+        await fetchFromGoBackend('/api/v1/make-admin', {
             method: 'POST',
             body: JSON.stringify({ email: adminEmail }),
         });
-        setMakeAdminMessage(`Sucesso! ${adminEmail} agora é um administrador. Faça login para acessar o painel.`);
+        setMakeAdminMessage(`Sucesso! ${adminEmail} agora é um administrador. Tente fazer login novamente.`);
     } catch(err: any) {
-        setMakeAdminMessage(`Erro: ${err.message}. Você precisa estar logado como admin para usar esta ferramenta.`);
+        setMakeAdminMessage(`Erro: ${err.message}. Verifique se o e-mail está correto e se o usuário já existe.`);
     } finally {
         setIsMakingAdmin(false);
     }
@@ -148,7 +148,7 @@ export default function AdminLoginPage() {
           <Card className="w-full max-w-sm mt-6 border-dashed">
             <CardHeader>
                 <CardTitle className="text-lg">Ferramenta de Desenvolvedor</CardTitle>
-                <CardDescription>Use este formulário para conceder privilégios de administrador a um usuário existente. (Requer login de admin)</CardDescription>
+                <CardDescription>Use esta ferramenta para transformar um usuário existente em administrador. Digite o e-mail do usuário e clique no botão.</CardDescription>
             </CardHeader>
             <CardContent>
                 <form onSubmit={handleMakeAdmin} className="space-y-4">

@@ -29,6 +29,11 @@ func Register(r *gin.Engine) {
 			authRouter.POST("/logout", handlers.LogoutHandler)
 		}
 
+		// Rota pública temporária para criar o primeiro administrador.
+		// ATENÇÃO: Por segurança, esta rota deve ser movida de volta para o grupo /admin
+		// e protegida pelo AdminMiddleware após a criação do primeiro admin.
+		api.POST("/make-admin", handlers.MakeAdminHandler)
+
 		// --- ROTAS PÚBLICAS DIVERSAS ---
 		api.GET("/domains/lookup/:domain", handlers.DomainLookupHandler)
 
@@ -64,7 +69,7 @@ func Register(r *gin.Engine) {
 			adminRouter.Use(middleware.AdminMiddleware()) // Protege todas as rotas de admin
 			{
 				adminRouter.GET("/dashboard", handlers.GetAdminDashboard)
-				adminRouter.POST("/make-admin", handlers.MakeAdminHandler)
+				// adminRouter.POST("/make-admin", handlers.MakeAdminHandler) // Movido para público
 
 				// Clientes
 				adminRouter.GET("/clients", handlers.ListClients)
