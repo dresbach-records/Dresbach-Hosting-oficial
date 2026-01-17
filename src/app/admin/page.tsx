@@ -6,13 +6,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Activity, ShoppingCart, Users, LifeBuoy, AlertTriangle, Briefcase, FileX, CreditCard, Server } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
-import { fetchFromGoBackend } from '@/lib/go-api';
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { useToast } from '@/hooks/use-toast';
+import { apiFetch } from '@/lib/api';
 
 const chartData = [
   { month: 'Jan', revenue: 1860, newClients: 12 },
@@ -68,7 +68,7 @@ export default function AdminDashboard() {
     const fetchData = async () => {
         setIsLoading(true);
         try {
-            const dashboardData = await fetchFromGoBackend<DashboardData>('/admin/dashboard');
+            const dashboardData = await apiFetch<DashboardData>('/v1/admin/dashboard');
             setData(dashboardData);
         } catch (error: any) {
             console.error("Error fetching dashboard data:", error);

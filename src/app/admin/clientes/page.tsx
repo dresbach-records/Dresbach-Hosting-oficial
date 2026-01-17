@@ -1,18 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import Link from 'next/link';
-
-import { useMemoFirebase, useCollection, useFirestore } from '@/firebase';
-import { collection } from 'firebase/firestore';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Loader2, Eye } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge, badgeVariants } from "@/components/ui/badge";
+import { Badge } from "@/components/ui/badge";
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import {
@@ -27,7 +24,7 @@ import {
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { fetchFromGoBackend } from '@/lib/go-api';
+import { apiFetch } from '@/lib/api';
 
 
 const newClientSchema = z.object({
@@ -42,19 +39,20 @@ type NewClientForm = z.infer<typeof newClientSchema>;
 
 function ClientStatusBadge({ status }: { status: string }) {
     let variant: "success" | "destructive" | "secondary" = "secondary";
-    if (status === 'Active') {
+    if (status === 'active') {
         variant = 'success';
-    } else if (status === 'Suspended') {
+    } else if (status === 'suspended') {
         variant = 'destructive';
     }
     return <Badge variant={variant}>{status}</Badge>;
 }
 
 export default function ClientsAdminPage() {
-  const firestore = useFirestore();
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [clients, setClients] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const form = useForm<NewClientForm>({
     resolver: zodResolver(newClientSchema),
@@ -66,14 +64,30 @@ export default function ClientsAdminPage() {
     },
   });
 
-  const clientsQuery = useMemoFirebase(() => collection(firestore, 'clients'), [firestore]);
-  const { data: clients, isLoading } = useCollection(clientsQuery);
+  const fetchClients = async () => {
+    setIsLoading(true);
+    try {
+        const data = await apiFetch<any[]>('/v1/admin/clients');
+        setClients(data);
+    } catch (error) {
+        toast({
+            variant: "destructive",
+            title: "Erro ao buscar clientes",
+            description: "Não foi possível carregar a lista de clientes.",
+        });
+    } finally {
+        setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchClients();
+  }, []);
 
   const onSubmit = async (values: NewClientForm) => {
     setIsSubmitting(true);
     try {
-      // Este endpoint no backend Go usa o Admin SDK para criar o usuário de autenticação e o documento Firestore.
-      await fetchFromGoBackend('/admin/clients', {
+      await apiFetch('/v1/admin/clients', {
         method: 'POST',
         body: JSON.stringify(values),
       });
@@ -85,7 +99,7 @@ export default function ClientsAdminPage() {
       setIsSubmitting(false);
       setIsDialogOpen(false);
       form.reset();
-      // O hook useCollection irá atualizar a lista automaticamente.
+      fetchClients();
     } catch (error: any) {
       console.error("Failed to create client:", error);
       toast({
@@ -202,10 +216,10 @@ export default function ClientsAdminPage() {
                     {clients && clients.length > 0 ? (
                         clients.map((client) => (
                             <TableRow key={client.id}>
-                                <TableCell>{client.firstName} {client.lastName}</TableCell>
+                                <TableCell>{client.first_name} {client.last_name}</TableCell>
                                 <TableCell>{client.email}</TableCell>
                                 <TableCell><ClientStatusBadge status={client.status} /></TableCell>
-                                <TableCell>{format(new Date(client.createdAt), 'dd/MM/yyyy')}</TableCell>
+                                <TableCell>{format(new Date(client.created_at), 'dd/MM/yyyy')}</TableCell>
                                 <TableCell className="text-right">
                                     <Button asChild variant="ghost" size="icon">
                                         <Link href={`/admin/clientes/${client.id}`}>

@@ -14,9 +14,6 @@ import {
   MessageSquare,
   ArrowUp,
 } from 'lucide-react';
-import { signOut } from 'firebase/auth';
-
-import { useUser, useAuth } from '@/firebase';
 import { Logo } from '@/components/logo';
 import { Button } from '@/components/ui/button';
 import {
@@ -28,6 +25,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { ClientSidebar } from './sidebar';
+import { useAuth } from '@/providers/auth-provider';
 
 function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
   const pathname = usePathname();
@@ -47,10 +45,10 @@ export default function ClientAreaLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, isUserLoading } = useUser();
-  const auth = useAuth();
+  const { user, isLoading, logout } = useAuth();
+  const router = useRouter();
 
-  if (isUserLoading) {
+  if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -63,7 +61,8 @@ export default function ClientAreaLayout({
   }
 
   const handleLogout = () => {
-    signOut(auth);
+    logout();
+    redirect('/login');
   }
 
   return (
@@ -115,7 +114,7 @@ export default function ClientAreaLayout({
                   <NavLink href="/area-do-cliente/tickets?new=true">Abrir Ticket</NavLink>
               </div>
               <div className="text-sm text-muted-foreground">
-                  Olá, {user.displayName?.split(' ')[0] || 'Usuário'}!
+                  Olá, {user.name?.split(' ')[0] || 'Usuário'}!
               </div>
           </div>
         </nav>

@@ -1,19 +1,38 @@
 'use client';
 
-import { useMemoFirebase, useCollection, useFirestore, useUser } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
+import { apiFetch } from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
 
 export default function DomainsPage() {
-    const { user } = useUser();
-    const firestore = useFirestore();
+    const [domains, setDomains] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const { toast } = useToast();
 
-    const domainsQuery = useMemoFirebase(() => user && collection(firestore, 'clients', user.uid, 'domains'), [firestore, user]);
-    const { data: domains, isLoading } = useCollection(domainsQuery);
+    useEffect(() => {
+        const fetchDomains = async () => {
+            setIsLoading(true);
+            try {
+                const data = await apiFetch<any[]>('/v1/client/domains');
+                setDomains(data);
+            } catch (error) {
+                toast({
+                    variant: 'destructive',
+                    title: 'Erro ao buscar domínios',
+                    description: 'Não foi possível carregar a lista de domínios.'
+                });
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchDomains();
+    }, [toast]);
+
 
     return (
         <Card>
@@ -41,11 +60,11 @@ export default function DomainsPage() {
                         {domains && domains.length > 0 ? (
                             domains.map((domain) => (
                                 <TableRow key={domain.id}>
-                                    <TableCell className="font-medium">{domain.domainName}</TableCell>
-                                    <TableCell>{format(new Date(domain.expirationDate), 'dd/MM/yyyy')}</TableCell>
+                                    <TableCell className="font-medium">{domain.domain_name}</TableCell>
+                                    <TableCell>{format(new Date(domain.expiration_date), 'dd/MM/yyyy')}</TableCell>
                                     <TableCell>
-                                        <Badge variant={domain.autoRenew ? 'default' : 'secondary'}>
-                                            {domain.autoRenew ? 'Ativada' : 'Desativada'}
+                                        <Badge variant={domain.auto_renew ? 'default' : 'secondary'}>
+                                            {domain.auto_renew ? 'Ativada' : 'Desativada'}
                                         </Badge>
                                     </TableCell>
                                 </TableRow>

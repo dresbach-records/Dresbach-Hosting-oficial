@@ -1,7 +1,5 @@
 'use client';
 
-import { useMemoFirebase, useCollection, useFirestore } from '@/firebase';
-import { collection, query, orderBy } from 'firebase/firestore';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -10,18 +8,21 @@ import { PlusCircle, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
+import { useState, useEffect } from 'react';
+import { apiFetch } from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
 
 function ServiceStatusBadge({ status }: { status: string }) {
     let variant: "success" | "destructive" | "warning" | "secondary" = "secondary";
 
     switch (status) {
-        case 'Active':
+        case 'active':
             variant = 'success';
             break;
-        case 'Suspended':
+        case 'suspended':
             variant = 'destructive';
             break;
-        case 'Pending':
+        case 'pending':
             variant = 'warning';
             break;
     }
@@ -30,13 +31,29 @@ function ServiceStatusBadge({ status }: { status: string }) {
 }
 
 export default function ServicesAdminPage() {
-    const firestore = useFirestore();
+    const [services, setServices] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const { toast } = useToast();
 
-    const servicesQuery = useMemoFirebase(
-        () => query(collection(firestore, 'services'), orderBy('startDate', 'desc')),
-        [firestore]
-    );
-    const { data: services, isLoading } = useCollection(servicesQuery);
+    useEffect(() => {
+        const fetchServices = async () => {
+            setIsLoading(true);
+            try {
+                const data = await apiFetch<any[]>('/v1/admin/services');
+                setServices(data);
+            } catch (error) {
+                toast({
+                    variant: 'destructive',
+                    title: 'Erro ao buscar serviços',
+                    description: 'Não foi possível carregar a lista de serviços.'
+                });
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchServices();
+    }, [toast]);
+
 
   return (
     <Card>
@@ -80,9 +97,9 @@ export default function ServicesAdminPage() {
                     {services && services.length > 0 ? (
                         services.map((service) => (
                             <TableRow key={service.id}>
-                                <TableCell className="font-medium">{service.serviceType}</TableCell>
-                                <TableCell>{service.clientName}</TableCell>
-                                <TableCell>{format(new Date(service.startDate), 'dd/MM/yyyy')}</TableCell>
+                                <TableCell className="font-medium">{service.service_type}</TableCell>
+                                <TableCell>{service.client_name}</TableCell>
+                                <TableCell>{format(new Date(service.start_date), 'dd/MM/yyyy')}</TableCell>
                                 <TableCell>{service.domain}</TableCell>
                                 <TableCell><ServiceStatusBadge status={service.status} /></TableCell>
                             </TableRow>

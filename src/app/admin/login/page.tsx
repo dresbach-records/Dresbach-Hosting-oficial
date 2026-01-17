@@ -6,11 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useAuth, useUser } from '@/firebase';
-import { signInWithEmailAndPassword } from 'firebase/auth';
 import { Loader2 } from 'lucide-react';
 import { Logo } from '@/components/logo';
-import { fetchFromGoBackend } from '@/lib/go-api';
+import { apiFetch } from '@/lib/api';
+import { useAuth } from '@/providers/auth-provider';
 
 
 export default function AdminLoginPage() {
@@ -18,15 +17,15 @@ export default function AdminLoginPage() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const auth = useAuth();
   const router = useRouter();
-  const { user, isAdmin, isUserLoading } = useUser();
+  const { user, isLoading: isAuthLoading, login } = useAuth();
+  const isAdmin = user?.role === 'admin';
 
   useEffect(() => {
-    if (!isUserLoading && user && isAdmin) {
+    if (!isAuthLoading && user && isAdmin) {
       router.replace('/admin');
     }
-  }, [user, isAdmin, isUserLoading, router]);
+  }, [user, isAdmin, isAuthLoading, router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,46 +33,28 @@ export default function AdminLoginPage() {
     setError(null);
 
     try {
-      // 1. Authenticate with Firebase on the client
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      
-      // 2. Get the ID token to send to the backend
-      const idToken = await userCredential.user.getIdToken();
-
-      // 3. Call the backend to create the session and bootstrap the role if necessary.
-      // The backend is the source of truth for the user's role.
-      const sessionData = await fetchFromGoBackend<{ isAdmin: boolean, role: string }>('/auth/session-login', {
+      const { token, user } = await apiFetch<{token: string, user: any}>('/v1/auth/login', {
         method: 'POST',
-        body: JSON.stringify({ idToken: idToken }),
+        body: JSON.stringify({ email, password }),
       });
       
-      // 4. Check the role returned *from the backend*.
-      if (!sessionData.isAdmin) {
-          // If the backend says the user is not an admin, sign them out and show an error.
-          await auth.signOut(); 
+      if (user.role !== 'admin') {
           setError('Acesso negado. Este usuário não é um administrador.');
           setIsLoading(false);
           return;
       }
 
-      // 5. If successful, the user is an admin. We need to force a refresh of the user's
-      // token on the client to pick up the new custom claim set by the backend.
-      await userCredential.user.getIdToken(true);
-      
-      // The `useUser` hook will now update, and the `useEffect` above will handle the redirect.
+      login(token); // Update auth context
+      router.replace('/admin');
       
     } catch (err: any) {
-      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
-        setError('Credenciais inválidas.');
-      } else {
-        console.error(err);
-        setError('Ocorreu um erro ao fazer login. Tente novamente.');
-      }
+      setError('Credenciais inválidas. Por favor, tente novamente.');
+      console.error(err);
       setIsLoading(false);
     }
   };
 
-  if (isUserLoading || (!isUserLoading && user && isAdmin)) {
+  if (isAuthLoading || (!isAuthLoading && user && isAdmin)) {
     return (
         <div className="flex h-screen items-center justify-center bg-muted/40">
             <Loader2 className="h-12 w-12 animate-spin text-primary" />

@@ -1,27 +1,10 @@
-import { intelligentSupportAssistant } from "@/ai/flows/intelligent-support-assistant";
-import { SupportClient } from "./intelligent-support-client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import { Bot, MessageSquare, Ticket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function SupportPage() {
-  async function getAnswer(prevState: string | null, formData: FormData): Promise<string> {
-    "use server";
-    const query = formData.get("query") as string;
-    if (!query) {
-      return "Por favor, insira uma pergunta.";
-    }
-
-    try {
-      const result = await intelligentSupportAssistant({ query });
-      return result.answer;
-    } catch (error) {
-      console.error(error);
-      return "Desculpe, ocorreu um erro ao processar sua pergunta. Por favor, tente um de nossos outros canais de suporte.";
-    }
-  }
-
+  
   return (
     <div className="container py-16 sm:py-24">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
@@ -41,7 +24,7 @@ export default function SupportPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <SupportClient getAnswer={getAnswer} />
+              <p className="text-muted-foreground">O assistente IA está temporariamente indisponível. Por favor, use um dos canais de suporte ao lado.</p>
             </CardContent>
           </Card>
         </div>

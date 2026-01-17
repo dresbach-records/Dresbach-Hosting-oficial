@@ -7,18 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useAuth, useFirestore } from '@/firebase';
-import {
-  signInWithEmailAndPassword,
-  GoogleAuthProvider,
-  FacebookAuthProvider,
-  signInWithPopup,
-} from 'firebase/auth';
-import { setDoc, doc, getDoc } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 import { Logo } from '@/components/logo';
 import { Checkbox } from '@/components/ui/checkbox';
-import { fetchFromGoBackend } from '@/lib/go-api';
+import { apiFetch } from '@/lib/api';
+import { useAuth } from '@/providers/auth-provider';
 
 
 const GoogleIcon = () => (
@@ -40,11 +33,9 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isSocialLoading, setIsSocialLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const auth = useAuth();
-  const firestore = useFirestore();
   const router = useRouter();
+  const { login } = useAuth();
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,77 +43,28 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      // 1. Sign in on the client with Firebase
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-
-      // 2. Get the ID Token
-      const idToken = await userCredential.user.getIdToken();
-
-      // 3. Send the token to the Go backend to create a session cookie
-      await fetchFromGoBackend('/auth/session-login', {
+      const { token, user } = await apiFetch<{token: string, user: any}>('/v1/auth/login', {
         method: 'POST',
-        body: JSON.stringify({ idToken }),
+        body: JSON.stringify({ email, password }),
       });
       
-      // 4. Redirect to the client area
-      router.push('/area-do-cliente');
+      login(token, user);
+      
+      if (user.role === 'admin') {
+        router.push('/admin');
+      } else {
+        router.push('/area-do-cliente');
+      }
 
     } catch (err: any) {
-      if (err.code === 'auth/invalid-credential') {
-        setError('Email ou senha inválidos. Por favor, tente novamente.');
-      } else {
-        console.error(err);
-        setError('Ocorreu um erro ao tentar fazer login. Tente novamente mais tarde.');
-      }
-      setIsLoading(false);
+        setError(err.message || 'Ocorreu um erro ao tentar fazer login.');
+        setIsLoading(false);
     }
   };
 
   const handleSocialLogin = async (providerName: 'google' | 'facebook') => {
-    setIsSocialLoading(true);
-    setError(null);
-    
-    const provider = providerName === 'google' ? new GoogleAuthProvider() : new FacebookAuthProvider();
-
-    try {
-        // 1. Sign in with popup
-        const result = await signInWithPopup(auth, provider);
-        const user = result.user;
-
-        // 2. Ensure user document exists in Firestore (for new social sign-ups)
-        const clientRef = doc(firestore, 'clients', user.uid);
-        const docSnap = await getDoc(clientRef);
-
-        if (!docSnap.exists()) {
-            const [firstName, ...lastNameParts] = user.displayName?.split(' ') || ['', ''];
-            const lastName = lastNameParts.join(' ');
-            const clientData = {
-                id: user.uid,
-                firstName: firstName || 'Usuário',
-                lastName: lastName || '',
-                email: user.email,
-                createdAt: new Date().toISOString(),
-                status: 'Ativo',
-            };
-            await setDoc(clientRef, clientData);
-        }
-
-        // 3. Get the ID token
-        const idToken = await user.getIdToken();
-        
-        // 4. Send token to backend to create session
-        await fetchFromGoBackend('/auth/session-login', {
-          method: 'POST',
-          body: JSON.stringify({ idToken }),
-        });
-
-        // 5. Redirect
-        router.push('/area-do-cliente');
-      } catch (err: any) {
-          console.error(err);
-          setError(`Ocorreu um erro com o login via ${providerName}. Tente novamente.`);
-          setIsSocialLoading(false);
-      }
+    // This would redirect to the backend to initiate OAuth flow
+    window.location.href = `${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/auth/login/${providerName}`;
   };
 
   return (
@@ -165,7 +107,7 @@ export default function LoginPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    disabled={isSocialLoading || isLoading}
+                    disabled={isLoading}
                   />
                 </div>
                 <div className="space-y-2">
@@ -176,18 +118,18 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    disabled={isSocialLoading || isLoading}
+                    disabled={isLoading}
                   />
                 </div>
                 <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
-                        <Checkbox id="remember-me" disabled={isLoading || isSocialLoading} />
+                        <Checkbox id="remember-me" disabled={isLoading} />
                         <Label htmlFor="remember-me" className="text-sm font-normal text-muted-foreground">Lembrar-me</Label>
                     </div>
                     <Link href="/forgot-password" className="text-sm text-primary hover:underline">Esqueceu a senha?</Link>
                 </div>
                 {error && <p className="text-sm text-destructive">{error}</p>}
-                <Button type="submit" className="w-full" disabled={isLoading || isSocialLoading}>
+                <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Entrar
                 </Button>
@@ -203,13 +145,11 @@ export default function LoginPage() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Button variant="outline" onClick={() => handleSocialLogin('google')} disabled={isLoading || isSocialLoading} className="w-full">
-                      {isSocialLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <GoogleIcon />}
-                      Google
+                  <Button variant="outline" onClick={() => handleSocialLogin('google')} disabled={isLoading} className="w-full">
+                      <GoogleIcon /> Google
                   </Button>
-                  <Button variant="outline" onClick={() => handleSocialLogin('facebook')} disabled={isLoading || isSocialLoading} className="w-full">
-                      {isSocialLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FacebookIcon />}
-                      Facebook
+                  <Button variant="outline" onClick={() => handleSocialLogin('facebook')} disabled={isLoading} className="w-full">
+                       <FacebookIcon /> Facebook
                   </Button>
               </div>
 

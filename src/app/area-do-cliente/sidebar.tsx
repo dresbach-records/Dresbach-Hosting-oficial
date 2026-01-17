@@ -1,8 +1,6 @@
 'use client';
 
 import Link from "next/link";
-import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, query, orderBy, limit } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,6 +17,8 @@ import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useEffect, useState } from "react";
+import { apiFetch } from "@/lib/api";
 
 function SidebarLink({ href, children, icon: Icon, active }: { href: string; children: React.ReactNode; icon: React.ElementType, active: boolean }) {
     return (
@@ -36,15 +36,27 @@ function SidebarLink({ href, children, icon: Icon, active }: { href: string; chi
 }
 
 export function ClientSidebar() {
-    const { user } = useUser();
-    const firestore = useFirestore();
     const pathname = usePathname();
     const searchParams = useSearchParams();
-
-    const latestTicketQuery = useMemoFirebase(() => user && query(collection(firestore, 'clients', user.uid, 'tickets'), orderBy('createdAt', 'desc'), limit(1)), [firestore, user]);
-    const { data: latestTicket, isLoading: isTicketLoading } = useCollection(latestTicketQuery);
-
-    const ticket = latestTicket?.[0];
+    const [latestTicket, setLatestTicket] = useState<any>(null);
+    const [isTicketLoading, setIsTicketLoading] = useState(true);
+    
+    useEffect(() => {
+        const fetchTicket = async () => {
+            setIsTicketLoading(true);
+            try {
+                const tickets = await apiFetch<any[]>('/v1/client/tickets?limit=1&sort=desc');
+                if (tickets && tickets.length > 0) {
+                    setLatestTicket(tickets[0]);
+                }
+            } catch (error) {
+                console.error("Failed to fetch latest ticket", error);
+            } finally {
+                setIsTicketLoading(false);
+            }
+        };
+        fetchTicket();
+    }, []);
 
     const supportLinks = [
         { href: '/area-do-cliente/tickets', icon: MessageSquare, label: 'Meus Tickets de Suporte' },
@@ -64,16 +76,16 @@ export function ClientSidebar() {
                 </CardHeader>
                 <CardContent className="p-3">
                     {isTicketLoading && <Skeleton className="h-10 w-full" />}
-                    {ticket && (
+                    {latestTicket && (
                         <Link href="/area-do-cliente/tickets" className="text-sm hover:underline">
-                            <p className="font-semibold truncate">#{ticket.id.slice(0,6)} - {ticket.subject}</p>
-                            <p className="text-primary">{ticket.status === 'Open' ? 'Aguardando Suporte' : 'Aguardando Cliente'}</p>
+                            <p className="font-semibold truncate">#{latestTicket.id.slice(0,6)} - {latestTicket.subject}</p>
+                            <p className="text-primary">{latestTicket.status === 'open' ? 'Aguardando Suporte' : 'Aguardando Cliente'}</p>
                             <p className="text-xs text-muted-foreground">
-                                {formatDistanceToNow(new Date(ticket.createdAt), { addSuffix: true, locale: ptBR })}
+                                {formatDistanceToNow(new Date(latestTicket.created_at), { addSuffix: true, locale: ptBR })}
                             </p>
                         </Link>
                     )}
-                     {!isTicketLoading && !ticket && (
+                     {!isTicketLoading && !latestTicket && (
                         <p className="text-sm text-center text-muted-foreground p-2">Nenhum ticket recente.</p>
                     )}
                 </CardContent>

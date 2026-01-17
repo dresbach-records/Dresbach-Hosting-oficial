@@ -1,7 +1,6 @@
 'use client';
 
-import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, limit, query, orderBy } from 'firebase/firestore';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,6 +10,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
+import { useAuth } from '@/providers/auth-provider';
+import { apiFetch } from '@/lib/api';
 
 const StatCard = ({ title, icon, count, colorClass, isLoading }: { title: string, icon: React.ReactNode, count: number, colorClass: string, isLoading: boolean }) => (
     <Card className="relative overflow-hidden shadow-sm">
@@ -30,35 +31,52 @@ const StatCard = ({ title, icon, count, colorClass, isLoading }: { title: string
 );
 
 function ServiceStatusBadge({ status }: { status: string }) {
-    const variant = status === 'Active' ? 'default' : 'secondary';
-    return <Badge variant={variant}>{status === 'Active' ? 'Ativo' : 'Inativo'}</Badge>;
+    const variant = status === 'active' ? 'default' : 'secondary';
+    return <Badge variant={variant}>{status === 'active' ? 'Ativo' : 'Inativo'}</Badge>;
 }
 
 function TicketStatusBadge({ status }: { status: string }) {
-    const variant = status === 'Open' ? 'default' : 'secondary';
-    return <Badge variant={variant}>{status === 'Open' ? 'Aberto' : 'Fechado'}</Badge>;
+    const variant = status === 'open' ? 'default' : 'secondary';
+    return <Badge variant={variant}>{status === 'open' ? 'Aberto' : 'Fechado'}</Badge>;
 }
 
 
 export default function ClientAreaDashboard() {
-  const { user } = useUser();
-  const firestore = useFirestore();
+  const { user } = useAuth();
+  const [services, setServices] = useState<any[]>([]);
+  const [domains, setDomains] = useState<any[]>([]);
+  const [invoices, setInvoices] = useState<any[]>([]);
+  const [tickets, setTickets] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const servicesQuery = useMemoFirebase(() => user && query(collection(firestore, 'clients', user.uid, 'services'), orderBy('startDate', 'desc'), limit(5)), [firestore, user]);
-  const domainsQuery = useMemoFirebase(() => user && collection(firestore, 'clients', user.uid, 'domains'), [firestore, user]);
-  const invoicesQuery = useMemoFirebase(() => user && collection(firestore, 'clients', user.uid, 'invoices'), [firestore, user]);
-  const ticketsQuery = useMemoFirebase(() => user && query(collection(firestore, 'clients', user.uid, 'tickets'), orderBy('createdAt', 'desc'), limit(5)), [firestore, user]);
-
-  const { data: services, isLoading: servicesLoading } = useCollection(servicesQuery);
-  const { data: domains, isLoading: domainsLoading } = useCollection(domainsQuery);
-  const { data: invoices, isLoading: invoicesLoading } = useCollection(invoicesQuery);
-  const { data: tickets, isLoading: ticketsLoading } = useCollection(ticketsQuery);
+  useEffect(() => {
+      const fetchData = async () => {
+          setIsLoading(true);
+          try {
+              const [servicesData, domainsData, invoicesData, ticketsData] = await Promise.all([
+                  apiFetch('/v1/client/services?limit=5'),
+                  apiFetch('/v1/client/domains'),
+                  apiFetch('/v1/client/invoices'),
+                  apiFetch('/v1/client/tickets?limit=5'),
+              ]);
+              setServices(servicesData || []);
+              setDomains(domainsData || []);
+              setInvoices(invoicesData || []);
+              setTickets(ticketsData || []);
+          } catch (error) {
+              console.error("Failed to fetch dashboard data", error);
+          } finally {
+              setIsLoading(false);
+          }
+      };
+      fetchData();
+  }, []);
   
   return (
     <div className="space-y-6">
         <div>
             <p className="text-sm text-muted-foreground">Início do Portal / Área do Cliente</p>
-            <h1 className="text-3xl font-light">Bem-vindo de volta, <span className="font-medium">{user?.displayName?.split(' ')[0] || 'Usuário'}</span></h1>
+            <h1 className="text-3xl font-light">Bem-vindo de volta, <span className="font-medium">{user?.name?.split(' ')[0] || 'Usuário'}</span></h1>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -67,28 +85,28 @@ export default function ClientAreaDashboard() {
                 icon={<Server className="h-10 w-10" />} 
                 count={services?.length || 0}
                 colorClass="bg-cyan-500"
-                isLoading={servicesLoading}
+                isLoading={isLoading}
             />
              <StatCard 
                 title="DOMÍNIOS" 
                 icon={<Globe className="h-10 w-10" />} 
                 count={domains?.length || 0}
                 colorClass="bg-green-500"
-                isLoading={domainsLoading}
+                isLoading={isLoading}
             />
              <StatCard 
                 title="TICKETS" 
                 icon={<MessageSquare className="h-10 w-10" />} 
-                count={tickets?.filter(t => t.status !== 'Closed').length || 0}
+                count={tickets?.filter(t => t.status !== 'closed').length || 0}
                 colorClass="bg-red-500"
-                isLoading={ticketsLoading}
+                isLoading={isLoading}
             />
             <StatCard 
                 title="FATURAS" 
                 icon={<CreditCard className="h-10 w-10" />} 
-                count={invoices?.filter(inv => inv.status !== 'Paid').length || 0}
+                count={invoices?.filter(inv => inv.status !== 'paid').length || 0}
                 colorClass="bg-orange-500"
-                isLoading={invoicesLoading}
+                isLoading={isLoading}
             />
         </div>
         
@@ -102,8 +120,8 @@ export default function ClientAreaDashboard() {
                 <CardTitle className="text-base font-semibold">Seus Produtos/Serviços Ativos</CardTitle>
             </CardHeader>
             <CardContent>
-                {servicesLoading && <Skeleton className="h-24 w-full" />}
-                {!servicesLoading && services && services.length > 0 ? (
+                {isLoading && <Skeleton className="h-24 w-full" />}
+                {!isLoading && services && services.length > 0 ? (
                      <Table>
                         <TableBody>
                         {services.map(service => (
@@ -115,7 +133,7 @@ export default function ClientAreaDashboard() {
                         </TableBody>
                     </Table>
                 ) : (
-                     !servicesLoading && <p className="text-muted-foreground text-center py-4">Parece que você ainda não tem nenhum produto/serviço conosco. <Link href="/planos-de-hospedagem" className="text-accent-600 font-semibold hover:underline">Faça um pedido para começar</Link>.</p>
+                     !isLoading && <p className="text-muted-foreground text-center py-4">Parece que você ainda não tem nenhum produto/serviço conosco. <Link href="/planos-de-hospedagem" className="text-accent-600 font-semibold hover:underline">Faça um pedido para começar</Link>.</p>
                 )}
             </CardContent>
             <CardFooter className="bg-muted/50 p-2 flex justify-end">
@@ -131,21 +149,21 @@ export default function ClientAreaDashboard() {
                     <CardTitle className="text-base font-semibold">Tickets de Suporte Recentes</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    {ticketsLoading && <Skeleton className="h-24 w-full" />}
-                    {!ticketsLoading && tickets && tickets.length > 0 ? (
+                    {isLoading && <Skeleton className="h-24 w-full" />}
+                    {!isLoading && tickets && tickets.length > 0 ? (
                         <Table>
                             <TableBody>
                             {tickets.map(ticket => (
                                 <TableRow key={ticket.id}>
                                     <TableCell>{ticket.subject}</TableCell>
                                     <TableCell><TicketStatusBadge status={ticket.status} /></TableCell>
-                                    <TableCell className="text-right">{format(new Date(ticket.createdAt), 'dd/MM/yy')}</TableCell>
+                                    <TableCell className="text-right">{format(new Date(ticket.created_at), 'dd/MM/yy')}</TableCell>
                                 </TableRow>
                             ))}
                             </TableBody>
                         </Table>
                     ) : (
-                         !ticketsLoading && <p className="text-muted-foreground text-center py-4">Nenhum ticket recente encontrado. Se precisar de ajuda, por favor <Link href="/area-do-cliente/tickets?new=true" className="text-accent-600 font-semibold hover:underline">abra um ticket</Link>.</p>
+                         !isLoading && <p className="text-muted-foreground text-center py-4">Nenhum ticket recente encontrado. Se precisar de ajuda, por favor <Link href="/area-do-cliente/tickets?new=true" className="text-accent-600 font-semibold hover:underline">abra um ticket</Link>.</p>
                     )}
                 </CardContent>
                  <CardFooter className="bg-muted/50 p-2 flex justify-end">

@@ -25,9 +25,6 @@ import {
   Cog,
   FileText,
 } from 'lucide-react';
-import { signOut } from 'firebase/auth';
-
-import { useUser, useAuth } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -44,6 +41,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/providers/auth-provider';
 
 
 function NavLink({ href, children, isActive, isMobile = false, badge = 0 }: { href: string; children: React.ReactNode; isActive: boolean, isMobile?: boolean, badge?: number }) {
@@ -71,15 +69,15 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const { user, isAdmin, isUserLoading } = useUser();
-  const auth = useAuth();
+  const { user, isLoading, logout } = useAuth();
+  const isAdmin = user?.role === 'admin';
 
   // Permite o acesso à página de login do admin sem autenticação
   if (pathname.startsWith('/admin/login')) {
       return <>{children}</>;
   }
 
-  if (isUserLoading) {
+  if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center bg-muted/40">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -88,12 +86,12 @@ export default function AdminLayout({
   }
 
   if (!user) {
-    redirect('/admin/login'); // Redireciona para o login de admin
+    redirect('/admin/login');
     return null;
   }
 
   if (!isAdmin) {
-      redirect('/area-do-cliente'); // Se logado mas não for admin, vai para a área do cliente
+      redirect('/area-do-cliente');
       return null;
   }
 
@@ -103,7 +101,8 @@ export default function AdminLayout({
   }
 
   const handleLogout = () => {
-    signOut(auth);
+    logout();
+    redirect('/admin/login');
   }
 
   const renderNavLinks = (isMobile = false) => {

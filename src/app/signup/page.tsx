@@ -7,18 +7,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useAuth } from '@/firebase';
-import {
-  createUserWithEmailAndPassword,
-  updateProfile,
-  GoogleAuthProvider,
-  FacebookAuthProvider,
-  signInWithPopup,
-} from 'firebase/auth';
 import { Loader2 } from 'lucide-react';
 import { Logo } from '@/components/logo';
 import { useToast } from '@/hooks/use-toast';
-import { fetchFromGoBackend } from '@/lib/go-api';
+import { apiFetch } from '@/lib/api';
 
 const GoogleIcon = () => (
   <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" className="mr-2 h-4 w-4">
@@ -36,16 +28,12 @@ const FacebookIcon = () => (
 
 
 export default function SignupPage() {
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isSocialLoading, setIsSocialLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-
-  const auth = useAuth();
   const router = useRouter();
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -54,16 +42,11 @@ export default function SignupPage() {
     setError(null);
 
     try {
-      // 1. Create user on the client using the Firebase SDK
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-
-      // 2. Update the new user's profile with their name
-      await updateProfile(userCredential.user, {
-        displayName: `${firstName} ${lastName}`.trim(),
+      await apiFetch('/v1/auth/register', {
+        method: 'POST',
+        body: JSON.stringify({ name, email, password }),
       });
       
-      // 3. Inform the user and redirect to login
-      // The user sync logic and session creation now happens on the login page.
       toast({
         title: "Conta criada com sucesso!",
         description: "Você será redirecionado para a página de login.",
@@ -72,45 +55,13 @@ export default function SignupPage() {
       router.push('/login');
 
     } catch (err: any) {
-      if (err.code === 'auth/email-already-in-use') {
-        setError('Este email já está em uso. Tente fazer login ou use um email diferente.');
-      } else {
-        setError(err.message || 'Falha ao criar conta. Verifique os dados e tente novamente.');
-      }
-      console.error(err);
+      setError(err.message || 'Falha ao criar conta. Verifique os dados e tente novamente.');
       setIsLoading(false);
     }
   };
 
   const handleSocialLogin = async (providerName: 'google' | 'facebook') => {
-    setIsSocialLoading(true);
-    setError(null);
-    
-    const provider = providerName === 'google' ? new GoogleAuthProvider() : new FacebookAuthProvider();
-
-    try {
-        const result = await signInWithPopup(auth, provider);
-        const user = result.user;
-        const idToken = await user.getIdToken();
-
-        // The backend's session-login will handle user creation in Firestore if they don't exist
-        const sessionData = await fetchFromGoBackend<{ isAdmin: boolean }>('/auth/session-login', {
-            method: 'POST',
-            body: JSON.stringify({ idToken }),
-        });
-        
-        // After session is created, redirect.
-        if (sessionData.isAdmin) {
-            router.push('/admin');
-        } else {
-            router.push('/area-do-cliente');
-        }
-
-    } catch (err: any) {
-        console.error(err);
-        setError(`Ocorreu um erro com o login via ${providerName}. Tente novamente.`);
-        setIsSocialLoading(false);
-    }
+    window.location.href = `${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/auth/login/${providerName}`;
   };
 
   return (
@@ -143,26 +94,20 @@ export default function SignupPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSignup} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="firstName">Nome</Label>
-                  <Input id="firstName" value={firstName} onChange={(e) => setFirstName(e.target.value)} required disabled={isSocialLoading || isLoading} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="lastName">Sobrenome</Label>
-                  <Input id="lastName" value={lastName} onChange={(e) => setLastName(e.target.value)} required disabled={isSocialLoading || isLoading} />
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="name">Nome Completo</Label>
+                <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required disabled={isLoading} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required disabled={isSocialLoading || isLoading} />
+                <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required disabled={isLoading} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">Senha</Label>
-                <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required disabled={isSocialLoading || isLoading} />
+                <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required disabled={isLoading} />
               </div>
               {error && <p className="text-sm text-destructive">{error}</p>}
-              <Button type="submit" className="w-full" disabled={isLoading || isSocialLoading}>
+              <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Criar Conta
               </Button>
@@ -177,13 +122,11 @@ export default function SignupPage() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Button variant="outline" onClick={() => handleSocialLogin('google')} disabled={isLoading || isSocialLoading} className="w-full">
-                    {isSocialLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <GoogleIcon />}
-                    Google
+                <Button variant="outline" onClick={() => handleSocialLogin('google')} disabled={isLoading} className="w-full">
+                    <GoogleIcon /> Google
                 </Button>
-                <Button variant="outline" onClick={() => handleSocialLogin('facebook')} disabled={isLoading || isSocialLoading} className="w-full">
-                    {isSocialLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FacebookIcon />}
-                    Facebook
+                <Button variant="outline" onClick={() => handleSocialLogin('facebook')} disabled={isLoading} className="w-full">
+                    <FacebookIcon /> Facebook
                 </Button>
             </div>
             <div className="mt-6 text-center text-sm">

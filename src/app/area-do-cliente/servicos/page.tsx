@@ -1,7 +1,5 @@
 'use client';
 
-import { useMemoFirebase, useCollection, useFirestore, useUser } from '@/firebase';
-import { collection, query as firestoreQuery, where } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -29,9 +27,11 @@ import {
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { apiFetch } from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
 
-// Mock data for prices and next due dates as they are not in the firestore document
+// Mock data for prices as they are not in the firestore document
 const serviceDetailsMock: { [key: string]: { price: number; isLocked: boolean } } = {
   'Solteiro': { price: 3.99, isLocked: false },
   'Profissional': { price: 59.90, isLocked: false },
@@ -43,13 +43,13 @@ function ServiceStatusBadge({ status }: { status: string }) {
     let variant: "success" | "destructive" | "warning" | "secondary" = "secondary";
     
     switch (status) {
-        case 'Active':
+        case 'active':
             variant = 'success';
             break;
-        case 'Suspended':
+        case 'suspended':
             variant = 'destructive';
             break;
-        case 'Pending':
+        case 'pending':
             variant = 'warning';
             break;
     }
@@ -72,23 +72,23 @@ function Sidebar({ statusCounts, onFilterChange }: { statusCounts: any, onFilter
               </div>
               <div className="flex items-center justify-between space-x-2">
                 <Label htmlFor="r-active" className="flex-grow cursor-pointer py-1">Ativo</Label>
-                <Badge variant="secondary">{statusCounts.Active}</Badge>
-                <RadioGroupItem value="Active" id="r-active" />
+                <Badge variant="secondary">{statusCounts.active}</Badge>
+                <RadioGroupItem value="active" id="r-active" />
               </div>
               <div className="flex items-center justify-between space-x-2">
                 <Label htmlFor="r-pending" className="flex-grow cursor-pointer py-1">Pendente</Label>
-                 <Badge variant="secondary">{statusCounts.Pending}</Badge>
-                <RadioGroupItem value="Pending" id="r-pending" />
+                 <Badge variant="secondary">{statusCounts.pending}</Badge>
+                <RadioGroupItem value="pending" id="r-pending" />
               </div>
               <div className="flex items-center justify-between space-x-2">
                 <Label htmlFor="r-suspended" className="flex-grow cursor-pointer py-1">Suspenso</Label>
-                 <Badge variant="secondary">{statusCounts.Suspended}</Badge>
-                <RadioGroupItem value="Suspended" id="r-suspended" />
+                 <Badge variant="secondary">{statusCounts.suspended}</Badge>
+                <RadioGroupItem value="suspended" id="r-suspended" />
               </div>
                <div className="flex items-center justify-between space-x-2">
                 <Label htmlFor="r-canceled" className="flex-grow cursor-pointer py-1">Cancelado</Label>
-                 <Badge variant="secondary">{statusCounts.Canceled}</Badge>
-                <RadioGroupItem value="Canceled" id="r-canceled" />
+                 <Badge variant="secondary">{statusCounts.canceled}</Badge>
+                <RadioGroupItem value="canceled" id="r-canceled" />
               </div>
             </RadioGroup>
           </AccordionContent>
@@ -107,35 +107,54 @@ function Sidebar({ statusCounts, onFilterChange }: { statusCounts: any, onFilter
 
 
 export default function ServicesPage() {
-    const { user } = useUser();
-    const firestore = useFirestore();
     const router = useRouter();
+    const { toast } = useToast();
     const [statusFilter, setStatusFilter] = useState('all');
+    const [allServices, setAllServices] = useState<any[]>([]);
+    const [filteredServices, setFilteredServices] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
 
-    const baseQuery = useMemoFirebase(() => user && collection(firestore, 'clients', user.uid, 'services'), [firestore, user]);
-    
-    const filteredQuery = useMemoFirebase(() => {
-        if (!baseQuery) return null;
-        if (statusFilter === 'all') return baseQuery;
-        return firestoreQuery(baseQuery, where('status', '==', statusFilter));
-    }, [baseQuery, statusFilter]);
+    useEffect(() => {
+        const fetchServices = async () => {
+            setIsLoading(true);
+            try {
+                const data = await apiFetch<any[]>('/v1/client/services');
+                setAllServices(data || []);
+                setFilteredServices(data || []);
+            } catch (error) {
+                toast({
+                    variant: 'destructive',
+                    title: 'Erro ao buscar serviços',
+                    description: 'Não foi possível carregar a lista de serviços.'
+                });
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchServices();
+    }, [toast]);
 
-    const { data: services, isLoading } = useCollection(filteredQuery);
-    const { data: allServices, isLoading: isAllLoading } = useCollection(baseQuery);
+    useEffect(() => {
+        if (statusFilter === 'all') {
+            setFilteredServices(allServices);
+        } else {
+            setFilteredServices(allServices.filter(s => s.status === statusFilter));
+        }
+    }, [statusFilter, allServices]);
 
     const handleRowClick = (serviceId: string) => {
         router.push(`/area-do-cliente/servicos/${serviceId}`);
     };
 
     const statusCounts = useMemo(() => {
-        if (isAllLoading || !allServices) return { Active: 0, Pending: 0, Suspended: 0, Canceled: 0, all: 0 };
+        if (isLoading || !allServices) return { active: 0, pending: 0, suspended: 0, canceled: 0, all: 0 };
         const counts = allServices.reduce((acc, service) => {
             acc[service.status] = (acc[service.status] || 0) + 1;
             return acc;
-        }, { Active: 0, Pending: 0, Suspended: 0, Canceled: 0, all: 0 } as any);
+        }, { active: 0, pending: 0, suspended: 0, canceled: 0, all: 0 } as any);
         counts.all = allServices.length;
         return counts;
-    }, [allServices, isAllLoading]);
+    }, [allServices, isLoading]);
 
     return (
       <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-8 items-start">
@@ -149,7 +168,7 @@ export default function ServicesPage() {
           </div>
           <Card>
             <CardHeader className="bg-muted/50 p-4 flex-row justify-between items-center">
-              <p className="text-sm">Mostrando {services?.length || 0} para {services?.length || 0} de {services?.length || 0} registros</p>
+              <p className="text-sm">Mostrando {filteredServices?.length || 0} para {filteredServices?.length || 0} de {allServices?.length || 0} registros</p>
                <div className="relative w-full max-w-sm">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input placeholder="Pesquisar..." className="pl-10" />
@@ -190,10 +209,10 @@ export default function ServicesPage() {
                                 <TableCell><Skeleton className="h-6 w-16 rounded-full" /></TableCell>
                             </TableRow>
                         ))}
-                        {services && services.length > 0 ? (
-                            services.map((service) => {
-                              const details = serviceDetailsMock[service.serviceType] || { price: 59.90, isLocked: Math.random() > 0.5 };
-                              const nextDueDate = addYears(new Date(service.startDate), 1);
+                        {filteredServices && filteredServices.length > 0 ? (
+                            filteredServices.map((service) => {
+                              const details = serviceDetailsMock[service.service_type] || { price: 59.90, isLocked: Math.random() > 0.5 };
+                              const nextDueDate = addYears(new Date(service.start_date), 1);
                               return (
                                 <TableRow key={service.id} onClick={() => handleRowClick(service.id)} className="cursor-pointer">
                                     <TableCell className="font-medium">
@@ -212,7 +231,7 @@ export default function ServicesPage() {
                                       <p>R$ {details.price.toFixed(2)}</p>
                                       <p className="text-xs text-muted-foreground">Mensal</p>
                                     </TableCell>
-                                    <TableCell>{format(nextDueDate, 'PPP', { timeZone: 'UTC' })}</TableCell>
+                                    <TableCell>{format(nextDueDate, 'PPP')}</TableCell>
                                     <TableCell><ServiceStatusBadge status={service.status} /></TableCell>
                                 </TableRow>
                             )})

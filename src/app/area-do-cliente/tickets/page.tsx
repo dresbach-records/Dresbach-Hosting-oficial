@@ -4,8 +4,6 @@ import { useState, useEffect, Suspense } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useMemoFirebase, useCollection, useFirestore, useUser } from '@/firebase';
-import { collection, doc, writeBatch, query, orderBy } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -20,12 +18,14 @@ import { Loader2, File, Plus } from 'lucide-react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
+import { useAuth } from '@/providers/auth-provider';
+import { apiFetch } from '@/lib/api';
 
 const newTicketSchema = z.object({
   subject: z.string().min(5, "O assunto deve ter pelo menos 5 caracteres."),
   department: z.enum(['Suporte', 'Financeiro', 'Vendas']),
-  relatedService: z.string().optional(),
-  priority: z.enum(['Low', 'Medium', 'High']),
+  related_service_id: z.string().optional(),
+  priority: z.enum(['low', 'medium', 'high']),
   description: z.string().min(20, "A descrição deve ter pelo menos 20 caracteres."),
 });
 
@@ -35,10 +35,10 @@ function TicketStatusBadge({ status }: { status: string }) {
     let variant: "success" | "secondary" | "outline" = "outline";
     
     switch (status) {
-        case 'Open':
+        case 'open':
             variant = 'success';
             break;
-        case 'In Progress':
+        case 'in-progress':
             variant = 'secondary';
             break;
     }
@@ -47,25 +47,38 @@ function TicketStatusBadge({ status }: { status: string }) {
 }
 
 const priorityMap: { [key: string]: { text: string; variant: "destructive" | "warning" | "secondary" } } = {
-    'Low': { text: 'Baixa', variant: 'secondary' },
-    'Medium': { text: 'Média', variant: 'warning' },
-    'High': { text: 'Alta', variant: 'destructive' },
+    'low': { text: 'Baixa', variant: 'secondary' },
+    'medium': { text: 'Média', variant: 'warning' },
+    'high': { text: 'Alta', variant: 'destructive' },
 };
 
 function TicketPriorityBadge({ priority }: { priority: string }) {
-    const priorityInfo = priorityMap[priority] || { text: priority, variant: 'secondary' };
+    const priorityInfo = priorityMap[priority.toLowerCase()] || { text: priority, variant: 'secondary' };
     return <Badge variant={priorityInfo.variant}>{priorityInfo.text}</Badge>
 }
 
 function NewTicketForm() {
-    const { user } = useUser();
-    const firestore = useFirestore();
+    const { user } = useAuth();
     const router = useRouter();
     const { toast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [services, setServices] = useState<any[]>([]);
+    const [isLoadingServices, setIsLoadingServices] = useState(true);
 
-    const servicesQuery = useMemoFirebase(() => user && query(collection(firestore, 'clients', user.uid, 'services'), orderBy('startDate', 'desc')), [firestore, user]);
-    const { data: services, isLoading: isLoadingServices } = useCollection(servicesQuery);
+    useEffect(() => {
+        const fetchServices = async () => {
+            setIsLoadingServices(true);
+            try {
+                const data = await apiFetch<any[]>('/v1/client/services');
+                setServices(data || []);
+            } catch (error) {
+                console.error("Failed to fetch services", error);
+            } finally {
+                setIsLoadingServices(false);
+            }
+        };
+        fetchServices();
+    }, []);
 
     const form = useForm<NewTicketForm>({
         resolver: zodResolver(newTicketSchema),
@@ -73,32 +86,20 @@ function NewTicketForm() {
             subject: '',
             description: '',
             department: 'Suporte',
-            priority: 'Medium',
-            relatedService: 'Nenhum',
+            priority: 'medium',
+            related_service_id: 'Nenhum',
         }
     });
 
     const onSubmit = async (values: NewTicketForm) => {
-        if (!user || !firestore) return;
+        if (!user) return;
         setIsSubmitting(true);
 
-        const newTicketRef = doc(collection(firestore, `clients/${user.uid}/tickets`));
-        const rootTicketRef = doc(firestore, 'tickets', newTicketRef.id);
-
-        const ticketData = {
-            ...values,
-            id: newTicketRef.id,
-            clientId: user.uid,
-            clientName: user.displayName || user.email,
-            status: 'Open',
-            createdAt: new Date().toISOString(),
-        };
-
         try {
-            const batch = writeBatch(firestore);
-            batch.set(newTicketRef, ticketData);
-            batch.set(rootTicketRef, ticketData);
-            await batch.commit();
+            await apiFetch('/v1/client/tickets', {
+                method: 'POST',
+                body: JSON.stringify(values),
+            });
 
             toast({
                 title: "Ticket Enviado!",
@@ -106,12 +107,12 @@ function NewTicketForm() {
             });
             setIsSubmitting(false);
             router.push('/area-do-cliente/tickets');
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error creating ticket:", error);
             toast({
                 variant: "destructive",
                 title: "Erro ao criar ticket",
-                description: "Ocorreu um erro ao enviar sua solicitação. Tente novamente.",
+                description: error.message || "Ocorreu um erro ao enviar sua solicitação. Tente novamente.",
             });
             setIsSubmitting(false);
         }
@@ -135,7 +136,7 @@ function NewTicketForm() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <FormItem>
                                     <FormLabel>Nome</FormLabel>
-                                    <FormControl><Input value={user?.displayName || ''} disabled /></FormControl>
+                                    <FormControl><Input value={user?.name || ''} disabled /></FormControl>
                                 </FormItem>
                                  <FormItem>
                                     <FormLabel>E-mail</FormLabel>
@@ -174,7 +175,7 @@ function NewTicketForm() {
                                 />
                                 <FormField
                                     control={form.control}
-                                    name="relatedService"
+                                    name="related_service_id"
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>Serviço Relacionado</FormLabel>
@@ -183,7 +184,7 @@ function NewTicketForm() {
                                                 <SelectContent>
                                                     <SelectItem value="Nenhum">Nenhum</SelectItem>
                                                     {services?.map(service => (
-                                                        <SelectItem key={service.id} value={service.domain}>{service.domain} ({service.serviceType})</SelectItem>
+                                                        <SelectItem key={service.id} value={service.id}>{service.domain} ({service.service_type})</SelectItem>
                                                     ))}
                                                 </SelectContent>
                                             </Select>
@@ -200,9 +201,9 @@ function NewTicketForm() {
                                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                                                 <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
                                                 <SelectContent>
-                                                    <SelectItem value="Low">Baixa</SelectItem>
-                                                    <SelectItem value="Medium">Média</SelectItem>
-                                                    <SelectItem value="High">Alta</SelectItem>
+                                                    <SelectItem value="low">Baixa</SelectItem>
+                                                    <SelectItem value="medium">Média</SelectItem>
+                                                    <SelectItem value="high">Alta</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                             <FormMessage />
@@ -249,12 +250,29 @@ function NewTicketForm() {
 }
 
 function TicketsList() {
-    const { user } = useUser();
-    const firestore = useFirestore();
     const router = useRouter();
+    const [tickets, setTickets] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const { toast } = useToast();
 
-    const ticketsQuery = useMemoFirebase(() => user && query(collection(firestore, 'clients', user.uid, 'tickets'), orderBy('createdAt', 'desc')), [firestore, user]);
-    const { data: tickets, isLoading } = useCollection(ticketsQuery);
+    useEffect(() => {
+        const fetchTickets = async () => {
+            setIsLoading(true);
+            try {
+                const data = await apiFetch<any[]>('/v1/client/tickets');
+                setTickets(data || []);
+            } catch (error) {
+                 toast({
+                    variant: 'destructive',
+                    title: 'Erro ao buscar tickets',
+                    description: 'Não foi possível carregar a lista de tickets.'
+                });
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchTickets();
+    }, [toast]);
     
     return (
         <Card>
@@ -287,7 +305,7 @@ function TicketsList() {
                                     <TableCell className="font-medium">{ticket.subject}</TableCell>
                                     <TableCell><TicketPriorityBadge priority={ticket.priority} /></TableCell>
                                     <TableCell><TicketStatusBadge status={ticket.status} /></TableCell>
-                                    <TableCell>{format(new Date(ticket.createdAt), 'dd/MM/yyyy HH:mm')}</TableCell>
+                                    <TableCell>{format(new Date(ticket.created_at), 'dd/MM/yyyy HH:mm')}</TableCell>
                                 </TableRow>
                             ))
                         ) : (

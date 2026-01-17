@@ -1,7 +1,6 @@
 'use client';
 
-import { useMemoFirebase, useCollection, useFirestore } from '@/firebase';
-import { collection, query, orderBy } from 'firebase/firestore';
+import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -10,43 +9,60 @@ import { PlusCircle, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
+import { apiFetch } from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
 
 
 function TicketStatusBadge({ status }: { status: string }) {
     let variant: "success" | "secondary" | "outline" = "outline";
     
     switch (status) {
-        case 'Open':
+        case 'open':
             variant = 'success';
             break;
-        case 'In Progress':
+        case 'in-progress':
             variant = 'secondary';
             break;
     }
-
+    
     return <Badge variant={variant}>{status}</Badge>;
 }
 
 const priorityMap: { [key: string]: { text: string; variant: "destructive" | "warning" | "secondary" } } = {
-    'Low': { text: 'Baixa', variant: 'secondary' },
-    'Medium': { text: 'Média', variant: 'warning' },
-    'High': { text: 'Alta', variant: 'destructive' },
+    'low': { text: 'Baixa', variant: 'secondary' },
+    'medium': { text: 'Média', variant: 'warning' },
+    'high': { text: 'Alta', variant: 'destructive' },
 };
 
 function PriorityBadge({ priority }: { priority: string }) {
-    const priorityInfo = priorityMap[priority] || { text: priority, variant: 'secondary' };
+    const priorityInfo = priorityMap[priority.toLowerCase()] || { text: priority, variant: 'secondary' };
     return <Badge variant={priorityInfo.variant}>{priorityInfo.text}</Badge>
 }
 
 
 export default function SupportAdminPage() {
-    const firestore = useFirestore();
+    const [tickets, setTickets] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const { toast } = useToast();
 
-    const ticketsQuery = useMemoFirebase(
-        () => query(collection(firestore, 'tickets'), orderBy('createdAt', 'desc')),
-        [firestore]
-    );
-    const { data: tickets, isLoading } = useCollection(ticketsQuery);
+    useEffect(() => {
+        const fetchTickets = async () => {
+            setIsLoading(true);
+            try {
+                const data = await apiFetch<any[]>('/v1/admin/tickets');
+                setTickets(data);
+            } catch (error) {
+                 toast({
+                    variant: 'destructive',
+                    title: 'Erro ao buscar tickets',
+                    description: 'Não foi possível carregar a lista de tickets.'
+                });
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchTickets();
+    }, [toast]);
 
     return (
         <Card>
@@ -94,10 +110,10 @@ export default function SupportAdminPage() {
                                 <TableRow key={ticket.id}>
                                     <TableCell className="font-medium">#{ticket.id.slice(0,5)}...</TableCell>
                                     <TableCell>{ticket.subject}</TableCell>
-                                    <TableCell>{ticket.clientName || ticket.clientId}</TableCell>
+                                    <TableCell>{ticket.client_name || ticket.client_id}</TableCell>
                                     <TableCell><PriorityBadge priority={ticket.priority} /></TableCell>
                                     <TableCell><TicketStatusBadge status={ticket.status} /></TableCell>
-                                    <TableCell>{format(new Date(ticket.createdAt), 'dd/MM/yyyy HH:mm')}</TableCell>
+                                    <TableCell>{format(new Date(ticket.created_at), 'dd/MM/yyyy HH:mm')}</TableCell>
                                 </TableRow>
                             ))
                         ) : (
