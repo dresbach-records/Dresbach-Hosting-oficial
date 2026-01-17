@@ -45,6 +45,8 @@ import {
   Reply,
   ReplyAll,
   Network,
+  Download,
+  TrendingUp,
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 
@@ -428,9 +430,49 @@ export default function AdminLayout({
             </AccordionItem>
         </Accordion>
 
-        <NavLink href="/admin/relatorios" isActive={isActive('/admin/relatorios')} isMobile={isMobile}>
-          <BarChart className={iconSize} /> Relatórios
-        </NavLink>
+        <Accordion type="multiple" className="w-full" defaultValue={['reports']}>
+          <AccordionItem value="reports" className="border-b-0">
+            <AccordionTrigger className={cn("rounded-lg px-3 py-2 hover:no-underline hover:text-primary", isActive('/admin/relatorios') && 'text-primary bg-muted')}>
+              <div className="flex w-full items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <BarChart className={iconSize} />
+                    Relatórios
+                </div>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className={cn("pt-1 space-y-1", isMobile ? "pl-10" : "pl-7")}>
+                <Link href={'/admin/relatorios'} className={cn(subLinkClass, isExactlyActive('/admin/relatorios') && 'bg-muted text-primary')}>
+                    <ListTodo className={iconSize} />
+                    Ver Todos
+                </Link>
+                <Link href={'/admin/relatorios/geral'} className={cn(subLinkClass, isExactlyActive('/admin/relatorios/geral') && 'bg-muted text-primary')}>
+                    <FileText className={iconSize} />
+                    Geral
+                </Link>
+                 <Link href={'/admin/relatorios/faturamento'} className={cn(subLinkClass, isExactlyActive('/admin/relatorios/faturamento') && 'bg-muted text-primary')}>
+                    <DollarSign className={iconSize} />
+                    Faturamento
+                </Link>
+                <Link href={'/admin/relatorios/receita'} className={cn(subLinkClass, isExactlyActive('/admin/relatorios/receita') && 'bg-muted text-primary')}>
+                    <TrendingUp className={iconSize} />
+                    Receita
+                </Link>
+                <Link href={'/admin/relatorios/clientes'} className={cn(subLinkClass, isExactlyActive('/admin/relatorios/clientes') && 'bg-muted text-primary')}>
+                    <Users className={iconSize} />
+                    Clientes
+                </Link>
+                <Link href={'/admin/relatorios/suporte'} className={cn(subLinkClass, isExactlyActive('/admin/relatorios/suporte') && 'bg-muted text-primary')}>
+                    <LifeBuoy className={iconSize} />
+                    Suporte
+                </Link>
+                <Link href={'/admin/relatorios/exportacoes'} className={cn(subLinkClass, isExactlyActive('/admin/relatorios/exportacoes') && 'bg-muted text-primary')}>
+                    <Download className={iconSize} />
+                    Exportações
+                </Link>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+
         <NavLink href="/admin/utilitarios" isActive={isActive('/admin/utilitarios')} isMobile={isMobile}>
           <Wrench className={iconSize} /> Utilitários
         </NavLink>
