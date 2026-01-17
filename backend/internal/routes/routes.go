@@ -18,19 +18,20 @@ func Register(r *gin.Engine) {
 	// Grupo principal da API v1
 	api := r.Group("/api/v1")
 	{
+		// --- ROTAS PÚBLICAS ---
+		// Endpoint público para criar o primeiro admin ou para fins de desenvolvimento.
+		// Em produção, isso deve ser protegido ou desativado.
+		api.POST("/make-admin", handlers.MakeAdminHandler)
+
 		// --- ROTAS PÚBLICAS DE AUTENTICAÇÃO ---
 		authRouter := api.Group("/auth")
 		{
-			// Cria o usuário e o promove a admin se for o primeiro
+			// Cria um usuário padrão. A promoção para admin é feita separadamente.
 			authRouter.POST("/register", handlers.RegisterHandler)
 			// Rota de login segura baseada em ID Token do Firebase
 			authRouter.POST("/session-login", handlers.SessionLoginHandler)
 			authRouter.POST("/logout", handlers.LogoutHandler)
-
-			// Rota de login legada, marcada como insegura.
-			// authRouter.POST("/login", handlers.LoginHandler) 
 		}
-
 
 		// --- ROTAS PÚBLICAS DIVERSAS ---
 		api.GET("/domains/lookup/:domain", handlers.DomainLookupHandler)
@@ -67,7 +68,6 @@ func Register(r *gin.Engine) {
 			adminRouter.Use(middleware.AdminMiddleware()) // Protege todas as rotas de admin
 			{
 				adminRouter.GET("/dashboard", handlers.GetAdminDashboard)
-				adminRouter.POST("/make-admin", handlers.MakeAdminHandler)
 
 				// Clientes
 				adminRouter.GET("/clients", handlers.ListClients)
