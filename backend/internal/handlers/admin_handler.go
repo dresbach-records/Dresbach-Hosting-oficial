@@ -5,68 +5,45 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"time"
 
 	"backend/internal/firebase"
 	"backend/internal/utils"
 
-	"firebase.google.com/go/v4/auth"
 	"github.com/gin-gonic/gin"
 )
 
-type CreateClientPayload struct {
-	Email     string `json:"email" binding:"required"`
-	Password  string `json:"password" binding:"required"`
-	FirstName string `json:"firstName" binding:"required"`
-	LastName  string `json:"lastName" binding:"required"`
+type MakeAdminPayload struct {
+	Email string `json:"email" binding:"required"`
 }
 
-// CreateClientHandler cria um novo usuário no Firebase Auth e um documento de cliente no Firestore.
-func CreateClientHandler(c *gin.Context) {
-	var p CreateClientPayload
+// MakeAdminHandler atribui a claim de administrador a um usuário.
+// Esta é uma rota de desenvolvimento/admin e deve ser protegida adequadamente.
+func MakeAdminHandler(c *gin.Context) {
+	var p MakeAdminPayload
 	if err := c.ShouldBindJSON(&p); err != nil {
-		utils.Error(c, http.StatusBadRequest, "Corpo da requisição inválido: "+err.Error())
+		utils.Error(c, http.StatusBadRequest, "Corpo da requisição inválido")
 		return
 	}
 
-	// 1. Criar usuário no Firebase Authentication
-	params := (&auth.UserToCreate{}).
-		Email(p.Email).
-		Password(p.Password).
-		DisplayName(fmt.Sprintf("%s %s", p.FirstName, p.LastName)).
-		EmailVerified(true). // Admin está criando, então podemos considerar verificado
-		Disabled(false)
-
-	userRecord, err := firebase.AuthClient.CreateUser(context.Background(), params)
+	user, err := firebase.AuthClient.GetUserByEmail(context.Background(), p.Email)
 	if err != nil {
-		if auth.IsEmailAlreadyExists(err) {
-			utils.Error(c, http.StatusConflict, "O email já está em uso")
-			return
-		}
-		log.Printf("Erro ao criar usuário no Auth: %v\n", err)
-		utils.Error(c, http.StatusInternalServerError, "Falha ao criar o usuário no sistema de autenticação")
+		log.Printf("Erro ao obter usuário por email '%s': %v", p.Email, err)
+		utils.Error(c, http.StatusNotFound, "Usuário não encontrado")
 		return
 	}
 
-	// 2. Criar documento do cliente no Firestore
-	clientData := map[string]interface{}{
-		"id":          userRecord.UID,
-		"firstName":   p.FirstName,
-		"lastName":    p.LastName,
-		"email":       p.Email,
-		"createdAt":   time.Now().Format(time.RFC3339),
-		"status":      "Ativo",
-		"phoneNumber": "",
-		"address":     "",
+	claims := user.CustomClaims
+	if claims == nil {
+		claims = make(map[string]interface{})
 	}
+	claims["admin"] = true
 
-	_, err = firebase.FirestoreClient.Collection("clients").Doc(userRecord.UID).Set(context.Background(), clientData)
+	err = firebase.AuthClient.SetCustomUserClaims(context.Background(), user.UID, claims)
 	if err != nil {
-		log.Printf("Erro ao criar documento do cliente no Firestore para UID %s: %v", userRecord.UID, err)
-		// Opcional: deletar o usuário do Auth para consistência, ou lidar com isso manualmente.
-		utils.Error(c, http.StatusInternalServerError, "Falha ao salvar os dados do cliente")
+		log.Printf("Erro ao definir custom claims para UID %s: %v", user.UID, err)
+		utils.Error(c, http.StatusInternalServerError, "Falha ao definir a claim de admin")
 		return
 	}
 
-	utils.Success(c, http.StatusCreated, gin.H{"message": "Cliente criado com sucesso", "clientId": userRecord.UID})
+	utils.Success(c, http.StatusOK, gin.H{"message": fmt.Sprintf("Usuário %s agora é um administrador.", p.Email)})
 }

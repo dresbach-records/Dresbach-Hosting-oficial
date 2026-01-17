@@ -237,6 +237,35 @@
         "priority",
         "createdAt"
       ]
+    },
+    "Server": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Server",
+      "type": "object",
+      "description": "Represents a WHM server connected to the system.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the server."
+        },
+        "name": {
+          "type": "string",
+          "description": "Friendly name for the server."
+        },
+        "hostname": {
+          "type": "string",
+          "description": "Hostname or IP address of the WHM server."
+        },
+        "status": {
+          "type": "string",
+          "description": "Status of the server (e.g., Active, Disabled)."
+        },
+        "activeAccounts": {
+          "type": "number",
+          "description": "Number of active accounts on the server."
+        }
+      },
+      "required": ["id", "name", "hostname", "status"]
     }
   },
   "auth": {
