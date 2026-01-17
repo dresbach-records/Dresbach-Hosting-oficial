@@ -18,13 +18,13 @@ export default function AdminLoginPage() {
   const [error, setError] = useState<string | null>(null);
   const auth = useAuth();
   const router = useRouter();
-  const { user, isUserLoading } = useUser();
+  const { user, isAdmin, isUserLoading } = useUser();
 
   useEffect(() => {
-    if (!isUserLoading && user && user.email === 'dmgproductionsoficial@gmail.com') {
+    if (!isUserLoading && user && isAdmin) {
       router.replace('/admin');
     }
-  }, [user, isUserLoading, router]);
+  }, [user, isAdmin, isUserLoading, router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,13 +33,13 @@ export default function AdminLoginPage() {
 
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      if (userCredential.user.email !== 'dmgproductionsoficial@gmail.com') {
+      const idTokenResult = await userCredential.user.getIdTokenResult();
+      
+      if (!idTokenResult.claims.admin) {
           await auth.signOut();
           setError('Acesso negado. Este usuário não é um administrador.');
-          setIsLoading(false);
-          return;
       }
-      // The useEffect will handle the redirect on state change
+      // The useEffect will handle the redirect on successful admin login
     } catch (err: any) {
       if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
         setError('Credenciais inválidas.');
@@ -47,11 +47,12 @@ export default function AdminLoginPage() {
         console.error(err);
         setError('Ocorreu um erro ao fazer login. Tente novamente.');
       }
-      setIsLoading(false);
+    } finally {
+        setIsLoading(false);
     }
   };
 
-  if (isUserLoading || (!isUserLoading && user && user.email === 'dmgproductionsoficial@gmail.com')) {
+  if (isUserLoading || (!isUserLoading && user && isAdmin)) {
     return (
         <div className="flex h-screen items-center justify-center bg-muted/40">
             <Loader2 className="h-12 w-12 animate-spin text-primary" />

@@ -75,7 +75,7 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const { user, isUserLoading } = useUser();
+  const { user, isAdmin, isUserLoading } = useUser();
   const auth = useAuth();
 
   if (pathname.startsWith('/admin/login')) {
@@ -95,7 +95,7 @@ export default function AdminLayout({
     return null;
   }
 
-  if (user.email !== 'dmgproductionsoficial@gmail.com') {
+  if (!isAdmin) {
       redirect('/area-do-cliente');
       return null;
   }
@@ -180,7 +180,7 @@ export default function AdminLayout({
             </SheetTrigger>
             <SheetContent side="left" className="flex flex-col">
               <SheetHeader>
-                <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+                <SheetTitle>Menu de Navegação</SheetTitle>
               </SheetHeader>
               {mobileNav}
               <div className="mt-auto">
