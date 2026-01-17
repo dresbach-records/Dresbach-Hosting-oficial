@@ -68,7 +68,7 @@ export default function AdminDashboard() {
     const fetchData = async () => {
         setIsLoading(true);
         try {
-            const dashboardData = await fetchFromGoBackend<DashboardData>('/api/v1/admin/dashboard');
+            const dashboardData = await fetchFromGoBackend<DashboardData>('/admin/dashboard');
             setData(dashboardData);
         } catch (error: any) {
             console.error("Error fetching dashboard data:", error);

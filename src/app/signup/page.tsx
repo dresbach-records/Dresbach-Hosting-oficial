@@ -94,7 +94,7 @@ export default function SignupPage() {
         const idToken = await user.getIdToken();
 
         // The backend's session-login will handle user creation in Firestore if they don't exist
-        const sessionData = await fetchFromGoBackend<{ isAdmin: boolean }>('/api/v1/auth/session-login', {
+        const sessionData = await fetchFromGoBackend<{ isAdmin: boolean }>('/auth/session-login', {
             method: 'POST',
             body: JSON.stringify({ idToken }),
         });

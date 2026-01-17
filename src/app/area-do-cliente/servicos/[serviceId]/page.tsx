@@ -157,7 +157,7 @@ export default function ServiceDetailPage() {
         const fetchSummary = async () => {
             setIsSummaryLoading(true);
             try {
-                const data = await fetchFromGoBackend<SummaryData>(`/api/v1/client/services/${serviceId}/summary`);
+                const data = await fetchFromGoBackend<SummaryData>(`/client/services/${serviceId}/summary`);
                 setSummary(data);
             } catch (error: any) {
                 console.error("Failed to fetch account summary:", error);
@@ -181,7 +181,7 @@ export default function ServiceDetailPage() {
 
         try {
             const response = await fetchFromGoBackend<{ url: string }>(
-                `/api/v1/client/services/${serviceId}/sso`, 
+                `/client/services/${serviceId}/sso`, 
                 { method: 'POST' }
             );
             window.open(response.url, '_blank');

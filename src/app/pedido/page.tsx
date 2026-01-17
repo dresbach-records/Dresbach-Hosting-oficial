@@ -177,7 +177,7 @@ function OrderPageContent() {
         setIsSearchingDomain(true);
         setDomainSearchResult(null);
         try {
-            const result = await fetchFromGoBackend<{ available: boolean }>(`/api/v1/domains/lookup/${domain}`);
+            const result = await fetchFromGoBackend<{ available: boolean }>(`/domains/lookup/${domain}`);
             if (result.available) {
                  setDomainSearchResult({ available: true, message: `Parabéns! O domínio ${domain} está disponível.` });
             } else {
@@ -204,7 +204,7 @@ function OrderPageContent() {
         const currentPlanDetails = planDetails[selectedPlan];
         
         try {
-            const response = await fetchFromGoBackend<{ clientSecret: string, amount: number }>('/api/v1/payments/create-intent', {
+            const response = await fetchFromGoBackend<{ clientSecret: string, amount: number }>('/payments/create-intent', {
                 method: 'POST',
                 body: JSON.stringify({ plan: currentPlanDetails.name, cycle: selectedCycle }),
             });
@@ -223,7 +223,7 @@ function OrderPageContent() {
 
     const handleProvisionAccount = async (orderDetails: { plan: string, cycle: string, domain: string, price: number }) => {
         try {
-            await fetchFromGoBackend('/api/v1/provision-account', {
+            await fetchFromGoBackend('/provision-account', {
                 method: 'POST',
                 body: JSON.stringify({
                     plan: orderDetails.plan,

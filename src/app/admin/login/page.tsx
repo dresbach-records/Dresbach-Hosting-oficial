@@ -42,7 +42,7 @@ export default function AdminLoginPage() {
 
       // 3. Call the backend to create the session and bootstrap the role if necessary.
       // The backend is the source of truth for the user's role.
-      const sessionData = await fetchFromGoBackend<{ isAdmin: boolean, role: string }>('/api/v1/auth/session-login', {
+      const sessionData = await fetchFromGoBackend<{ isAdmin: boolean, role: string }>('/auth/session-login', {
         method: 'POST',
         body: JSON.stringify({ idToken: idToken }),
       });

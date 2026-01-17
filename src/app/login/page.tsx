@@ -59,7 +59,7 @@ export default function LoginPage() {
       const idToken = await userCredential.user.getIdToken();
 
       // 3. Send the token to the Go backend to create a session cookie
-      await fetchFromGoBackend('/api/v1/auth/session-login', {
+      await fetchFromGoBackend('/auth/session-login', {
         method: 'POST',
         body: JSON.stringify({ idToken }),
       });
@@ -111,7 +111,7 @@ export default function LoginPage() {
         const idToken = await user.getIdToken();
         
         // 4. Send token to backend to create session
-        await fetchFromGoBackend('/api/v1/auth/session-login', {
+        await fetchFromGoBackend('/auth/session-login', {
           method: 'POST',
           body: JSON.stringify({ idToken }),
         });
