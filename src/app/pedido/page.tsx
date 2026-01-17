@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter, redirect } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, redirect, useSearchParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { fetchFromGoBackend } from '@/lib/go-api';
 import { Button } from '@/components/ui/button';
@@ -129,9 +129,10 @@ const BillingCycleCard = ({ id, name, price, originalPrice, discount, selected, 
 
 // --- Página Principal ---
 
-export default function OrderPage() {
+function OrderPageContent() {
     const { user, isUserLoading } = useUser();
     const router = useRouter();
+    const searchParams = useSearchParams();
     const { toast } = useToast();
 
     // Estados da configuração do pedido
@@ -144,14 +145,50 @@ export default function OrderPage() {
     const [clientSecret, setClientSecret] = useState<string | null>(null);
     const [total, setTotal] = useState(0);
 
+    // Novos estados para busca de domínio
+    const [isSearchingDomain, setIsSearchingDomain] = useState(false);
+    const [domainSearchResult, setDomainSearchResult] = useState<{ available: boolean; message: string; } | null>(null);
+
     const currentCycleDetails = billingCycles.find(c => c.id === selectedCycle);
     const calculatedTotal = currentCycleDetails?.price || 0;
+
+    useEffect(() => {
+        const initialDomain = searchParams.get('domain');
+        if (initialDomain) {
+            setDomain(initialDomain);
+        }
+    }, [searchParams]);
 
     useEffect(() => {
         if (!isUserLoading && !user) {
             redirect('/login?redirect=/pedido');
         }
-    }, [isUserLoading, user]);
+    }, [isUserLoading, user, router]);
+
+    const handleDomainSearch = async () => {
+        if (!domain.trim() || !domain.includes('.')) {
+            toast({
+                variant: 'destructive',
+                title: 'Domínio inválido',
+                description: 'Por favor, insira um domínio válido para pesquisar.',
+            });
+            return;
+        }
+        setIsSearchingDomain(true);
+        setDomainSearchResult(null);
+        try {
+            const result = await fetchFromGoBackend<{ available: boolean }>(`/api/v1/domains/lookup/${domain}`);
+            if (result.available) {
+                 setDomainSearchResult({ available: true, message: `Parabéns! O domínio ${domain} está disponível.` });
+            } else {
+                 setDomainSearchResult({ available: false, message: `O domínio ${domain} já está em uso. Tente outro.` });
+            }
+        } catch (error: any) {
+            setDomainSearchResult({ available: false, message: `Erro ao verificar o domínio: ${error.message}` });
+        } finally {
+            setIsSearchingDomain(false);
+        }
+    };
     
     const handleProceedToPayment = async () => {
         if (!domain) {
@@ -317,11 +354,29 @@ export default function OrderPage() {
                                             value={domain}
                                             onChange={(e) => setDomain(e.target.value)}
                                             disabled={isProcessing}
+                                            onKeyDown={(e) => e.key === 'Enter' && handleDomainSearch()}
                                         />
                                     </div>
-                                    <Button size="lg" className="h-11" disabled={isProcessing}>Pesquisar</Button>
+                                    <Button size="lg" className="h-11" onClick={handleDomainSearch} disabled={isProcessing || isSearchingDomain}>
+                                        {isSearchingDomain ? <Loader2 className="h-5 w-5 animate-spin"/> : 'Pesquisar'}
+                                    </Button>
                                 </div>
-                                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+                                {isSearchingDomain && (
+                                    <div className="p-4 text-center text-muted-foreground flex items-center justify-center">
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin"/> Verificando...
+                                    </div>
+                                )}
+                                {domainSearchResult && (
+                                    <div className={cn(
+                                        "p-3 mt-4 rounded-md text-sm font-medium flex items-center gap-2",
+                                        domainSearchResult.available ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300" : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
+                                    )}>
+                                        {domainSearchResult.available ? <Check className="h-5 w-5"/> : <Info className="h-5 w-5"/>}
+                                        {domainSearchResult.message}
+                                    </div>
+                                )}
+
+                                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 mt-4">
                                     {tlds.map(tld => (
                                         <Button key={tld.tld} variant="outline" className="flex-col h-auto py-2" disabled={isProcessing}>
                                             <span className="font-bold">{tld.tld}</span>
@@ -378,7 +433,7 @@ export default function OrderPage() {
                                         <p className="text-sm text-muted-foreground">Total do pedido devido hoje</p>
                                         <p className="text-3xl font-bold">R$ {calculatedTotal.toFixed(2).replace('.', ',')}</p>
                                     </div>
-                                    <Button className="w-full" size="lg" onClick={handleProceedToPayment} disabled={isProcessing || !domain}>
+                                    <Button className="w-full" size="lg" onClick={handleProceedToPayment} disabled={isProcessing || !domain || !domainSearchResult?.available}>
                                         {isProcessing ? (
                                             <>
                                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -404,4 +459,18 @@ export default function OrderPage() {
             </div>
         </div>
     );
+}
+
+export default function OrderPageWrapper() {
+    return (
+        <Suspense fallback={
+            <div className="bg-muted/30 py-12">
+                <div className="flex h-[50vh] items-center justify-center">
+                    <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                </div>
+            </div>
+        }>
+            <OrderPageContent />
+        </Suspense>
+    )
 }

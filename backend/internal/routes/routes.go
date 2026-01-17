@@ -27,6 +27,9 @@ func Register(r *gin.Engine) {
 			authRouter.POST("/verify-token", handlers.VerifyTokenHandler)
 		}
 
+		// --- ROTAS PÚBLICAS DIVERSAS ---
+		api.GET("/domains/lookup/:domain", handlers.DomainLookupHandler)
+
 		// --- GRUPO DE ROTAS AUTENTICADAS ---
 		// O middleware AuthMiddleware() será aplicado a todos os grupos aninhados.
 		authenticated := api.Group("/")

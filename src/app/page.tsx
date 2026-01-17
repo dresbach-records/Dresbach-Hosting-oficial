@@ -10,7 +10,7 @@ import {
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { DomainSearchHome } from "@/components/domain-search-home";
 
 const heroImage = PlaceHolderImages.find((img) => img.id === "hero-background");
 const featureGraphic = PlaceHolderImages.find((img) => img.id === "feature-graphic");
@@ -117,20 +117,7 @@ export default function Home() {
             </p>
           </div>
           <div className="mt-10 max-w-xl mx-auto">
-            <form action="/pedido" method="GET">
-              <div className="flex gap-2">
-                <input type="hidden" name="a" value="checkDomain" />
-                <Input
-                  type="text"
-                  name="domain"
-                  className="h-12 text-base flex-grow"
-                  placeholder="Encontre o seu novo domínio"
-                />
-                <Button type="submit" size="lg" className="h-12">
-                  Procurar
-                </Button>
-              </div>
-            </form>
+            <DomainSearchHome />
           </div>
         </div>
       </section>
