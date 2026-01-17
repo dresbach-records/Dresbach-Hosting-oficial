@@ -1,68 +1,262 @@
-# Backend Go para Dresbach Hosting (Arquitetura Escalável)
+# DRESBACH HOSTING - Documentação Oficial da Plataforma (Equipe)
 
-Este diretório contém o código-fonte para o servidor de API Go, construído com uma arquitetura modular e escalável usando o framework Gin.
+**Versão:** 1.0
+**Status:** Produção
+**Produto:** Plataforma de Hosting & Domínios (nível WHMCS)
 
-## Visão Geral da Arquitetura
+## 1. VISÃO GERAL DO PRODUTO
 
-- **`cmd/api/main.go`**: O ponto de entrada da aplicação. Responsável por carregar configurações, inicializar serviços (Firebase, Sessão, WHM) e iniciar o servidor web.
-- **`internal/`**: Contém toda a lógica de negócio, estritamente separada da camada de apresentação.
-  - **`config/`**: Carregamento de variáveis de ambiente.
-  - **`firebase/`**: Inicialização e configuração do Firebase Admin SDK.
-  - **`handlers/`**: A lógica principal para cada rota da API (ex: `RegisterHandler`, `LoginHandler`, `ProvisionAccountHandler`).
-  - **`middleware/`**: Middlewares para o Gin, como o `AuthMiddleware` para proteger rotas.
-  - **`routes/`**: Definição e agrupamento de todas as rotas da API.
-  - **`session/`**: Configuração do gerenciamento de sessão baseado em cookies.
-  - **`utils/`**: Funções auxiliares, como padronização de respostas JSON (`Success`, `Error`).
-  - **`whm/`**: Cliente da API para interagir com o servidor WHM/cPanel.
+A plataforma Dresbach Hosting é um sistema enterprise, API-first, para:
 
-## Como Executar Localmente
+- Gestão de clientes
+- Provisionamento automático de hosting (WHM/cPanel)
+- Billing recorrente
+- Suporte (tickets)
+- Automação
+- RBAC (admin, staff, client)
+- Integração com domínios (.br via RDAP / EPP futuro)
 
-1.  **Pré-requisitos**:
-    - [Go](https://go.dev/doc/install) (versão 1.21 ou superior).
-    - Um arquivo `serviceAccountKey.json` do seu projeto Firebase.
-    - Chave do site reCAPTCHA Enterprise.
-    - Acesso à API de um servidor WHM/cPanel.
+O sistema não depende de WHMCS e foi projetado para escala, auditoria e operação profissional.
 
-2.  **Configurar Variáveis de Ambiente**:
-    - Renomeie ou copie `../../.env.example` para `../../.env` na raiz do projeto.
-    - Preencha as seguintes variáveis no arquivo `.env`:
-      ```env
-      # Chave secreta para criptografar cookies de sessão. Gere com: openssl rand -base64 32
-      SESSION_KEY="SUA_CHAVE_SECRETA_SUPER_LONGA_E_ALEATORIA"
+## 2. ARQUITETURA (ALTO NÍVEL)
 
-      # Caminho para sua chave de conta de serviço do Firebase
-      GOOGLE_APPLICATION_CREDENTIALS="./serviceAccountKey.json"
+```
+Frontend (Admin / Client)
+        ↓
+Backend Go (API v1)
+        ↓
+┌─────────────┬─────────────┬─────────────┐
+│Firebase Auth│  Firestore  │ WHM / APIs  │
+│(JWT futuro) │ (SQL futuro)│ Pagamentos  │
+└─────────────┴─────────────┴─────────────┘
+```
 
-      # O ID do seu projeto Google Cloud (o mesmo do Firebase)
-      GOOGLE_CLOUD_PROJECT="seu-firebase-project-id"
-      
-      # A chave do *site* reCAPTCHA Enterprise
-      RECAPTCHA_SITE_KEY="sua-chave-de-site-recaptcha"
+**Princípios:**
 
-      # Credenciais da API WHM/cPanel
-      WHM_HOST="IP_OU_HOSTNAME_DO_SEU_SERVIDOR_WHM"
-      WHM_USER="SEU_USUARIO_WHM_RESELLER"
-      WHM_TOKEN="SEU_TOKEN_DE_API_WHM"
-      ```
+- Frontend não tem regra de negócio
+- Backend é stateless
+- Tudo passa por API versionada
+- Segurança > Conveniência
 
-3.  **Coloque a Chave de Serviço**:
-    - Coloque seu arquivo `serviceAccountKey.json` na **raiz do projeto** (um nível acima do diretório `backend`).
+## 3. AMBIENTES
 
-4.  **Instalar Dependências**:
-    - Navegue até este diretório (`backend/`) e execute:
-      ```sh
-      go mod tidy
-      ```
+| Ambiente | Uso                 |
+| :------- | :------------------ |
+| `dev`      | Desenvolvimento local |
+| `staging`  | Testes reais        |
+| `prod`     | Produção            |
 
-5.  **Executar o Servidor**:
-    - Navegue até o diretório `backend/` e execute:
-      ```sh
-      go run ./cmd/api
-      ```
-    - O servidor será iniciado em `http://localhost:8080`.
+> ❗ Nunca testar direto em produção.
 
-## Implantação (Deploy) no Firebase
+## 4. AUTENTICAÇÃO & ACESSO
 
-Este backend está preparado para ser implantado no Firebase App Hosting (que usa Cloud Run por baixo dos panos). O `firebase.json` na raiz do projeto já está configurado para direcionar as requisições de `/api/**` para este serviço Go.
+**Modelo atual:**
 
-Para implantar, você normalmente executaria o comando `firebase deploy` a partir da raiz do projeto.
+- Firebase Auth (login)
+- Backend valida token
+- Primeiro login → admin automático
+- Depois disso, RBAC governa tudo
+
+**Roles:**
+
+- `admin` → tudo
+- `staff` → operação
+- `client` → área própria
+
+> ⚠️ Frontend não define role.
+
+## 5. RBAC (PERMISSÕES)
+
+**Formato:**
+`recurso.ação`
+
+**Exemplos:**
+
+- `clients.read`
+- `services.suspend`
+- `tickets.reply`
+- `settings.update`
+
+**Regra:**
+Se não tiver permissão explícita → 403
+
+## 6. MÓDULOS DO SISTEMA
+
+### 6.1 Clientes
+
+- Cadastro
+- Status
+- Serviços
+- Faturas
+- Tickets
+- Notas internas
+
+### 6.2 Produtos
+
+- Planos de hosting
+- Addons
+- Preços mensais/anuais
+- Mapeamento WHM
+
+### 6.3 Serviços (Hosting)
+
+**Estados:**
+
+- `pending_provision`
+- `active`
+- `suspended`
+- `terminated`
+
+**Ações:**
+
+- Provisionar (WHM)
+- Suspender
+- Reativar
+- Encerrar
+
+### 6.4 Billing & Faturas
+
+**Estados:**
+
+- `draft`
+- `unpaid`
+- `paid`
+- `overdue`
+- `cancelled`
+
+**Funcionalidades:**
+
+- Faturas recorrentes
+- Pagamentos via gateway
+- Webhooks
+- Idempotência obrigatória
+
+### 6.5 Suporte (Tickets)
+
+- Departamentos
+- Prioridade
+- SLA (futuro)
+- Histórico imutável
+- Notas internas (staff)
+
+### 6.6 Automação
+
+**Jobs:**
+
+- Gerar faturas
+- Suspender inadimplentes
+- Avisos de vencimento
+- Sync WHM
+- Limpeza de logs
+
+### 6.7 Domínios
+
+- Consulta RDAP (.br)
+- Registro EPP (futuro)
+- Domínio tratado como serviço
+
+## 7. API (REGRAS PARA DEVS)
+
+**Base:**
+`/api/v1`
+
+**Headers obrigatórios:**
+`Authorization: Bearer <token>`
+
+**Respostas:**
+
+- `2xx` → sucesso
+- `4xx` → erro cliente
+- `5xx` → erro sistema
+
+**Nunca:**
+
+- quebrar contrato OpenAPI
+- alterar resposta sem versionar
+
+## 8. SEGURANÇA (OBRIGATÓRIO)
+
+- Secrets via ENV
+- Rate limit ativo
+- Logs de auditoria
+- Sem endpoints perigosos
+- Sem dados sensíveis no frontend
+
+## 9. LOGS & AUDITORIA
+
+Tudo que é sensível gera:
+
+- `user_id`
+- `ação`
+- `recurso`
+- `timestamp`
+- `ip`
+
+Esses logs não são apagados.
+
+## 10. OPERAÇÃO & SUPORTE
+
+**Healthcheck:**
+`GET /health`
+
+**Em caso de erro:**
+
+1.  Ver logs
+2.  Ver auditoria
+3.  Reproduzir em staging
+4.  Só então corrigir
+
+## 11. DEPLOY & CI/CD
+
+- Deploy automático via GitHub Actions
+- Firebase ou VPS
+- Rollback possível
+- Feature flags controlam risco
+
+## 12. BOAS PRÁTICAS PARA A EQUIPE
+
+**Dev:**
+
+- Não pular RBAC
+- Não criar endpoints ad-hoc
+- Testar em staging
+
+**Suporte:**
+
+- Nunca mexer direto no banco
+- Usar painel admin
+- Registrar tudo em ticket
+
+**Gestão:**
+
+- Ativar features por flag
+- Monitorar métricas
+- Planejar EPP com cuidado
+
+## 13. O QUE NÃO FAZER
+
+- ❌ Criar admin manual no banco
+- ❌ Alterar role via frontend
+- ❌ Usar produção para teste
+- ❌ Ignorar logs
+- ❌ Quebrar OpenAPI
+
+## 14. REFERÊNCIAS INTERNAS
+
+- **OpenAPI:** `openapi.yaml`
+- **CI/CD:** `.github/workflows/`
+- **Infra:** `firebase.json`, `Dockerfile`
+- **Código:** `backend/internal/`
+
+---
+
+✅ **CONCLUSÃO**
+
+Esta documentação define:
+
+- Como o sistema funciona
+- Como operar
+- Como evoluir sem quebrar
+- Como manter padrão enterprise
+
+Ela é o manual oficial da plataforma.
