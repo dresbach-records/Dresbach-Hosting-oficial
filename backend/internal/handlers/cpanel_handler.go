@@ -15,7 +15,7 @@ import (
 	"backend/internal/utils"
 	"backend/internal/whm"
 
-	"github.comcom/gin-gonic/gin"
+	"github.com/gin-gonic/gin"
 )
 
 // verifyServiceOwner é uma função helper para verificar se o usuário logado é o dono do serviço
