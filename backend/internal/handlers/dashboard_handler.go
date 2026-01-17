@@ -4,7 +4,10 @@ import (
 	"backend/internal/firebase"
 	"backend/internal/session"
 	"backend/internal/utils"
+	"backend/internal/whm"
 	"context"
+	"encoding/json"
+	"io"
 	"log"
 	"net/http"
 	"sync"
@@ -18,13 +21,14 @@ func GetAdminDashboard(c *gin.Context) {
 	ctx := context.Background()
 	var wg sync.WaitGroup
 	var mu sync.Mutex
-	
+
 	dashboardData := gin.H{
-		"clients":       0,
-		"services":      0,
-		"invoices_open": 0,
-		"tickets_open":  0,
-		"revenue":       18970.50, // Placeholder
+		"clients":            0,
+		"services":           0,
+		"invoices_open":      0,
+		"tickets_open":       0,
+		"revenue":            18970.50, // Placeholder
+		"whm_total_accounts": 0,
 	}
 
 	// Função para obter contagem de uma coleção
@@ -40,17 +44,49 @@ func GetAdminDashboard(c *gin.Context) {
 			log.Printf("Campo 'all' não encontrado na agregação para %s", collectionName)
 			return
 		}
-		
+
 		mu.Lock()
 		dashboardData[key] = count.Value()
 		mu.Unlock()
 	}
 
-	wg.Add(4)
+	// Goroutine for WHM data
+	getWhmCount := func() {
+		defer wg.Done()
+		if whm.WhmClient == nil {
+			log.Println("Cliente WHM não configurado, pulando busca de contas.")
+			return
+		}
+
+		resp, err := whm.WhmClient.ListAccounts()
+		if err != nil {
+			log.Printf("Erro ao buscar contas do WHM: %v", err)
+			return
+		}
+		defer resp.Body.Close()
+
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		var whmResponse map[string]interface{}
+		if err := json.Unmarshal(bodyBytes, &whmResponse); err != nil {
+			log.Printf("Erro ao decodificar resposta de lista de contas do WHM: %v", err)
+			return
+		}
+
+		if data, ok := whmResponse["data"].(map[string]interface{}); ok {
+			if acct, ok := data["acct"].([]interface{}); ok {
+				mu.Lock()
+				dashboardData["whm_total_accounts"] = len(acct)
+				mu.Unlock()
+			}
+		}
+	}
+
+	wg.Add(5)
 	go getCount("clients", firebase.FirestoreClient.Collection("clients"), "clients")
 	go getCount("services", firebase.FirestoreClient.Collection("services").Where("status", "==", "Active"), "services")
 	go getCount("invoices", firebase.FirestoreClient.Collection("invoices").Where("status", "!=", "Paid"), "invoices_open")
 	go getCount("tickets", firebase.FirestoreClient.Collection("tickets").Where("status", "==", "Open"), "tickets_open")
+	go getWhmCount()
 
 	wg.Wait()
 
@@ -89,12 +125,12 @@ func GetClientDashboard(c *gin.Context) {
 		if !ok {
 			return
 		}
-		
+
 		mu.Lock()
 		dashboardData[key] = count.Value()
 		mu.Unlock()
 	}
-	
+
 	wg.Add(4)
 	go getCount("services", clientBase.Collection("services"), "services")
 	go getCount("domains", clientBase.Collection("domains"), "domains")
@@ -105,4 +141,3 @@ func GetClientDashboard(c *gin.Context) {
 
 	utils.Success(c, http.StatusOK, dashboardData)
 }
-

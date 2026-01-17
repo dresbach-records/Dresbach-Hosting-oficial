@@ -1,18 +1,18 @@
 'use client';
 
+import React from 'react';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Activity, ShoppingCart, Users, LifeBuoy, AlertTriangle, Briefcase, FileX, CreditCard } from 'lucide-react';
+import { Activity, ShoppingCart, Users, LifeBuoy, AlertTriangle, Briefcase, FileX, CreditCard, Server } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, where, getCountFromServer } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
-import React from 'react';
+import { fetchFromGoBackend } from '@/lib/go-api';
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import { useToast } from '@/hooks/use-toast';
 
 const chartData = [
   { month: 'Jan', revenue: 1860, newClients: 12 },
@@ -49,38 +49,39 @@ const StatCard = ({ title, icon, value, description, isLoading }: { title: strin
     </Card>
 );
 
+type DashboardData = {
+    clients: number;
+    services: number;
+    invoices_open: number;
+    tickets_open: number;
+    revenue: number;
+    whm_total_accounts: number;
+};
+
+
 export default function AdminDashboard() {
-  const firestore = useFirestore();
-  const [counts, setCounts] = React.useState({
-      clients: 0,
-      services: 0,
-      openInvoices: 0,
-      openTickets: 0
-  });
+  const { toast } = useToast();
+  const [data, setData] = React.useState<Partial<DashboardData>>({});
   const [isLoading, setIsLoading] = React.useState(true);
 
   React.useEffect(() => {
     const fetchData = async () => {
         setIsLoading(true);
         try {
-            const clientsSnap = await getCountFromServer(collection(firestore, 'clients'));
-            const servicesSnap = await getCountFromServer(query(collection(firestore, 'services'), where('status', '==', 'Active')));
-            const invoicesSnap = await getCountFromServer(query(collection(firestore, 'invoices'), where('status', '!=', 'Paid')));
-            const ticketsSnap = await getCountFromServer(query(collection(firestore, 'tickets'), where('status', '==', 'Open')));
-
-            setCounts({
-                clients: clientsSnap.data().count,
-                services: servicesSnap.data().count,
-                openInvoices: invoicesSnap.data().count,
-                openTickets: ticketsSnap.data().count,
-            });
-        } catch (error) {
-            console.error("Error fetching dashboard counts:", error);
+            const dashboardData = await fetchFromGoBackend<DashboardData>('/api/v1/admin/dashboard');
+            setData(dashboardData);
+        } catch (error: any) {
+            console.error("Error fetching dashboard data:", error);
+            toast({
+                variant: 'destructive',
+                title: 'Falha ao carregar dados do dashboard',
+                description: error.message || 'Não foi possível buscar os dados do servidor.',
+            })
         }
         setIsLoading(false);
     }
     fetchData();
-  }, [firestore]);
+  }, [toast]);
     
   return (
     <div className="space-y-6">
@@ -88,51 +89,58 @@ export default function AdminDashboard() {
              <StatCard 
                 title="Clientes Ativos"
                 icon={<Users className="h-4 w-4 text-muted-foreground" />}
-                value={counts.clients}
+                value={data.clients ?? 0}
                 isLoading={isLoading}
                 description="Total de clientes no sistema"
              />
              <StatCard 
                 title="Serviços Ativos"
                 icon={<Briefcase className="h-4 w-4 text-muted-foreground" />}
-                value={counts.services}
+                value={data.services ?? 0}
                 isLoading={isLoading}
                 description="Total de serviços provisionados"
              />
              <StatCard 
-                title="Receita Mensal (MRR)"
-                icon={<CreditCard className="h-4 w-4 text-muted-foreground" />}
-                value={"R$ 18.9k"} // Placeholder
-                isLoading={false}
-                description="+20.1% do último mês"
+                title="Contas WHM"
+                icon={<Server className="h-4 w-4 text-muted-foreground" />}
+                value={data.whm_total_accounts ?? 0}
+                isLoading={isLoading}
+                description="Total de contas no servidor"
              />
              <StatCard 
                 title="Tickets Abertos"
                 icon={<LifeBuoy className="h-4 w-4 text-muted-foreground" />}
-                value={counts.openTickets}
+                value={data.tickets_open ?? 0}
                 isLoading={isLoading}
                 description="Aguardando resposta do suporte"
              />
         </div>
 
-        <div className="grid gap-6 grid-cols-1 lg:grid-cols-3">
+        <div className="grid gap-6 grid-cols-1 lg:grid-cols-4">
+             <StatCard 
+                title="Receita Mensal (MRR)"
+                icon={<CreditCard className="h-4 w-4 text-muted-foreground" />}
+                value={data.revenue ? `R$ ${(data.revenue / 1000).toFixed(1)}k` : 'R$ 0.0k'}
+                isLoading={isLoading}
+                description="+20.1% do último mês"
+             />
              <StatCard 
                 title="Serviços Suspensos"
                 icon={<AlertTriangle className="h-4 w-4 text-muted-foreground" />}
-                value={5} // Placeholder
-                isLoading={false}
+                value={0} // Placeholder
+                isLoading={isLoading}
              />
              <StatCard 
                 title="Faturas Vencidas"
                 icon={<FileX className="h-4 w-4 text-muted-foreground" />}
-                value={counts.openInvoices}
+                value={data.invoices_open ?? 0}
                 isLoading={isLoading}
              />
               <StatCard 
                 title="Pedidos Pendentes"
                 icon={<ShoppingCart className="h-4 w-4 text-muted-foreground" />}
                 value={3} // Placeholder
-                isLoading={false}
+                isLoading={isLoading}
              />
         </div>
 
