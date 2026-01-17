@@ -2,6 +2,25 @@ package models
 
 import "time"
 
+// User representa a estrutura de um usuário no sistema, armazenado na coleção 'users'.
+// Este modelo é central para o sistema de autenticação e RBAC.
+type User struct {
+	ID        string    `firestore:"id"`
+	Email     string    `firestore:"email"`
+	FirstName string    `firestore:"firstName"`
+	LastName  string    `firestore:"lastName"`
+	Role      string    `firestore:"role"` // Ex: "admin", "staff", "client"
+	CreatedAt time.Time `firestore:"createdAt"`
+}
+
+// Role representa um papel no sistema, com um conjunto de permissões.
+// Armazenado na coleção 'roles'.
+type Role struct {
+	Name        string   `firestore:"name"`
+	Permissions []string `firestore:"permissions"` // Ex: ["clients.read", "services.write"]
+}
+
+
 // Ticket representa a estrutura de um ticket de suporte.
 type Ticket struct {
 	ID             string    `json:"id" firestore:"id"`

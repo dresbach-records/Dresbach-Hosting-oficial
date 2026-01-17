@@ -13,55 +13,6 @@ import { Logo } from '@/components/logo';
 import { fetchFromGoBackend } from '@/lib/go-api';
 
 
-function MakeAdminForm() {
-    const [email, setEmail] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [success, setSuccess] = useState<string | null>(null);
-
-    const handleMakeAdmin = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsLoading(true);
-        setError(null);
-        setSuccess(null);
-
-        try {
-            const response = await fetchFromGoBackend<{ message: string }>('/api/v1/make-admin', {
-                method: 'POST',
-                body: JSON.stringify({ email }),
-            });
-            setSuccess(response.message + " Você pode agora tentar fazer o login novamente.");
-        } catch (err: any) {
-            setError(err.message || 'Erro desconhecido. Verifique se o e-mail está correto e se o usuário já existe.');
-        } finally {
-            setIsLoading(false);
-        }
-    };
-    
-    return (
-        <form onSubmit={handleMakeAdmin} className="space-y-4">
-            <div className="space-y-2">
-                <Label htmlFor="admin-email">Email do Usuário</Label>
-                <Input
-                    id="admin-email"
-                    type="email"
-                    placeholder="usuario@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                />
-            </div>
-            {success && <p className="text-sm text-green-600">{success}</p>}
-            {error && <p className="text-sm text-destructive">{error}</p>}
-            <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Tornar Administrador
-            </Button>
-        </form>
-    )
-}
-
-
 export default function AdminLoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -83,27 +34,24 @@ export default function AdminLoginPage() {
     setError(null);
 
     try {
-      // 1. Sign in on the client with Firebase
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       
-      // 2. Get ID token and check for admin claim on the client-side first for a quick check
-      const idTokenResult = await userCredential.user.getIdTokenResult(true); // Force refresh
-      if (!idTokenResult.claims.admin) {
-        await auth.signOut(); // Log out user who is not an admin
+      const idTokenResult = await userCredential.user.getIdTokenResult(true);
+      const role = idTokenResult.claims.role;
+
+      if (role !== 'admin') {
+        await auth.signOut();
         setError('Acesso negado. Este usuário não é um administrador.');
         setIsLoading(false);
         return;
       }
       
-      // 3. Send the token to the Go backend to create a session cookie
       await fetchFromGoBackend('/api/v1/auth/session-login', {
         method: 'POST',
         body: JSON.stringify({ idToken: idTokenResult.token }),
       });
       
-      // 4. The useEffect will handle the redirect to /admin
-      // No need for setIsLoading(false) here as the page will redirect.
-
+      // The useEffect will handle the redirect to /admin
     } catch (err: any) {
       if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
         setError('Credenciais inválidas.');
@@ -167,18 +115,6 @@ export default function AdminLoginPage() {
                   </form>
               </CardContent>
           </Card>
-          
-          <Card className="w-full max-w-sm mt-8 border-dashed border-amber-500">
-            <CardHeader>
-                <CardTitle className="text-lg">Ferramenta de Desenvolvedor</CardTitle>
-                <CardDescription>
-                    Use esta ferramenta para definir o primeiro administrador. Insira o e-mail do usuário que você já registrou.
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <MakeAdminForm />
-            </CardContent>
-        </Card>
       </div>
     </>
   );

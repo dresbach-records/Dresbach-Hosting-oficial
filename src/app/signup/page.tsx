@@ -7,14 +7,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useAuth, useFirestore } from '@/firebase';
+import { useAuth } from '@/firebase';
 import {
   GoogleAuthProvider,
   FacebookAuthProvider,
   signInWithPopup,
   signInWithEmailAndPassword
 } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 import { Logo } from '@/components/logo';
 import { fetchFromGoBackend } from '@/lib/go-api';
@@ -44,7 +43,6 @@ export default function SignupPage() {
   const [error, setError] = useState<string | null>(null);
 
   const auth = useAuth();
-  const firestore = useFirestore();
   const router = useRouter();
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -53,17 +51,32 @@ export default function SignupPage() {
     setError(null);
 
     try {
-      // Use the backend endpoint for registration.
-      // This creates the user in Firebase Auth and the client document in Firestore atomically.
+      // 1. Use the backend endpoint for registration.
+      // This creates the user in Firebase Auth and the user document in Firestore.
+      // The first user registered is automatically made an admin by the backend.
       await fetchFromGoBackend('/api/v1/auth/register', {
         method: 'POST',
         body: JSON.stringify({ email, password, firstName, lastName }),
       });
 
-      // After successful registration, sign the user in to establish a client-side session.
-      await signInWithEmailAndPassword(auth, email, password);
+      // 2. After successful registration, sign the user in to establish a client-side session,
+      // then call the session-login endpoint to create the backend session cookie.
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const idToken = await userCredential.user.getIdToken();
 
-      router.push('/area-do-cliente');
+      await fetchFromGoBackend('/api/v1/auth/session-login', {
+        method: 'POST',
+        body: JSON.stringify({ idToken }),
+      });
+      
+      // 3. Redirect to the appropriate area.
+      const idTokenResult = await userCredential.user.getIdTokenResult(true);
+      if (idTokenResult.claims.role === 'admin') {
+        router.push('/admin');
+      } else {
+        router.push('/area-do-cliente');
+      }
+
     } catch (err: any) {
       setError(err.message || 'Falha ao criar conta. Verifique se o e-mail já está em uso e tente novamente.');
       console.error(err);
@@ -80,25 +93,22 @@ export default function SignupPage() {
     try {
         const result = await signInWithPopup(auth, provider);
         const user = result.user;
+        const idToken = await user.getIdToken();
 
-        const clientRef = doc(firestore, 'clients', user.uid);
-        const docSnap = await getDoc(clientRef);
-
-        if (!docSnap.exists()) {
-            const [firstName, ...lastNameParts] = user.displayName?.split(' ') || ['', ''];
-            const lastName = lastNameParts.join(' ');
-            const clientData = {
-                id: user.uid,
-                firstName: firstName || 'Usuário',
-                lastName: lastName || '',
-                email: user.email,
-                createdAt: new Date().toISOString(),
-                status: 'Ativo',
-            };
-            await setDoc(clientRef, clientData);
+        // The backend's session-login will handle user creation in Firestore if they don't exist
+        await fetchFromGoBackend('/api/v1/auth/session-login', {
+            method: 'POST',
+            body: JSON.stringify({ idToken }),
+        });
+        
+        // After session is created, redirect. The backend determined the role.
+        const idTokenResult = await user.getIdTokenResult(true);
+        if (idTokenResult.claims.role === 'admin') {
+            router.push('/admin');
+        } else {
+            router.push('/area-do-cliente');
         }
 
-        router.push('/area-do-cliente');
     } catch (err: any) {
         console.error(err);
         setError(`Ocorreu um erro com o login via ${providerName}. Tente novamente.`);
@@ -139,20 +149,20 @@ export default function SignupPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="firstName">Nome</Label>
-                  <Input id="firstName" value={firstName} onChange={(e) => setFirstName(e.target.value)} required disabled={isSocialLoading} />
+                  <Input id="firstName" value={firstName} onChange={(e) => setFirstName(e.target.value)} required disabled={isSocialLoading || isLoading} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="lastName">Sobrenome</Label>
-                  <Input id="lastName" value={lastName} onChange={(e) => setLastName(e.target.value)} required disabled={isSocialLoading} />
+                  <Input id="lastName" value={lastName} onChange={(e) => setLastName(e.target.value)} required disabled={isSocialLoading || isLoading} />
                 </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required disabled={isSocialLoading} />
+                <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required disabled={isSocialLoading || isLoading} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">Senha</Label>
-                <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required disabled={isSocialLoading} />
+                <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required disabled={isSocialLoading || isLoading} />
               </div>
               {error && <p className="text-sm text-destructive">{error}</p>}
               <Button type="submit" className="w-full" disabled={isLoading || isSocialLoading}>

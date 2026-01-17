@@ -9,7 +9,7 @@ import (
 	"backend/internal/firebase"
 	"backend/internal/routes"
 	"backend/internal/session"
-	"backend/internal/stripe" // Importa o novo pacote Stripe
+	"backend/internal/stripe"
 	"backend/internal/whm"
 
 	"github.com/gin-gonic/gin"
@@ -18,9 +18,8 @@ import (
 func main() {
 	log.Println("Backend server starting up...")
 
-	// Carrega as variáveis de ambiente do arquivo .env
 	log.Println("Loading environment variables from root .env file...")
-	err := config.LoadEnv("../..") // Carrega a partir da raiz do projeto
+	err := config.LoadEnv("../..")
 	if err != nil {
 		log.Println("WARNING: Could not load .env file. Using system environment variables only.")
 	} else {
@@ -28,36 +27,32 @@ func main() {
 	}
 
 	log.Println("Initializing Firebase services...")
-	// Inicializa os serviços do Firebase
 	firebase.InitFirebase()
 	log.Println("Firebase services initialized.")
 
 	log.Println("Initializing WHM client...")
-	// Inicializa o cliente WHM
 	whm.InitWhmClient()
 	log.Println("WHM client initialized.")
 
 	log.Println("Initializing Stripe client...")
-	// Inicializa o cliente Stripe
 	stripe.InitStripe()
 	log.Println("Stripe client initialized.")
 
 	log.Println("Initializing session store...")
-	// Inicializa a store de sessão
 	session.InitSessionStore()
 	log.Println("Session store initialized.")
 
 	log.Println("Configuring Gin router...")
-	// Configura o roteador Gin
 	router := gin.Default()
 
-	// Configura CORS (essencial para desenvolvimento local com `firebase emulators:start`)
 	router.Use(func(c *gin.Context) {
-		// As URLs do emulador do Firebase seguem um padrão, ex: http://localhost:9002
-		// Em produção, o App Hosting serve o frontend e o backend da mesma origem, então CORS não é um problema.
-		c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:9002")
+		// Em um ambiente de desenvolvimento com emuladores, o frontend e o backend podem ter origens diferentes.
+		// Em produção, com o App Hosting, eles compartilham a mesma origem, então isso é menos crítico.
+		// A URL do emulador do Firebase para Hosting é geralmente `http://localhost:XXXX`.
+		// Permita a origem do seu frontend de desenvolvimento.
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:9002") // Ajuste se a porta do seu frontend for diferente
 		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
-		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, Authorization, accept, origin, Cache-Control, X-Requested-With")
 		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE")
 
 		if c.Request.Method == "OPTIONS" {
@@ -69,12 +64,9 @@ func main() {
 	log.Println("CORS middleware configured.")
 
 
-	// Registra todas as rotas da aplicação
 	routes.Register(router)
 	log.Println("API routes registered.")
 
-
-	// Inicia o servidor. Cloud Run (usado pelo App Hosting e Functions) define a porta via variável de ambiente PORT.
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"

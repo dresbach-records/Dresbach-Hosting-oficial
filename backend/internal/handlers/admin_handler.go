@@ -16,8 +16,8 @@ type MakeAdminPayload struct {
 	Email string `json:"email" binding:"required"`
 }
 
-// MakeAdminHandler atribui a claim de administrador a um usuário.
-// Esta é uma rota de desenvolvimento/admin e deve ser protegida adequadamente.
+// MakeAdminHandler atribui o papel de administrador a um usuário.
+// Esta rota deve ser protegida para ser acessível apenas por outros administradores.
 func MakeAdminHandler(c *gin.Context) {
 	var p MakeAdminPayload
 	if err := c.ShouldBindJSON(&p); err != nil {
@@ -32,16 +32,25 @@ func MakeAdminHandler(c *gin.Context) {
 		return
 	}
 
-	claims := user.CustomClaims
-	if claims == nil {
-		claims = make(map[string]interface{})
-	}
-	claims["admin"] = true
-
+	// 1. Atualizar Custom Claims no Firebase Auth
+	claims := map[string]interface{}{"role": "admin"}
 	err = firebase.AuthClient.SetCustomUserClaims(context.Background(), user.UID, claims)
 	if err != nil {
 		log.Printf("Erro ao definir custom claims para UID %s: %v", user.UID, err)
-		utils.Error(c, http.StatusInternalServerError, "Falha ao definir a claim de admin")
+		utils.Error(c, http.StatusInternalServerError, "Falha ao definir a claim de admin no Auth")
+		return
+	}
+
+	// 2. Atualizar o papel no documento do usuário no Firestore
+	userRef := firebase.FirestoreClient.Collection("users").Doc(user.UID)
+	_, err = userRef.Update(context.Background(), []firestore.Update{
+		{Path: "role", Value: "admin"},
+	})
+	if err != nil {
+		log.Printf("Erro ao atualizar o papel do usuário no Firestore para UID %s: %v", user.UID, err)
+		// Neste ponto, o Auth foi atualizado, mas o Firestore não.
+		// É importante logar isso para uma possível correção manual.
+		utils.Error(c, http.StatusInternalServerError, "Falha ao atualizar o papel do usuário no banco de dados.")
 		return
 	}
 
