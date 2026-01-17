@@ -10,7 +10,6 @@ import { useAuth, useUser } from '@/firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { Loader2 } from 'lucide-react';
 import { Logo } from '@/components/logo';
-import Script from 'next/script';
 import { fetchFromGoBackend } from '@/lib/go-api';
 
 
@@ -22,8 +21,7 @@ export default function AdminLoginPage() {
   const auth = useAuth();
   const router = useRouter();
   const { user, isAdmin, isUserLoading } = useUser();
-  const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || '6LdZHk0sAAAAAPSnAIbpdQ6wXthwbzGEcdFQiGOD';
-
+  
   // New state for the dev tool
   const [adminEmail, setAdminEmail] = useState('');
   const [isMakingAdmin, setIsMakingAdmin] = useState(false);
@@ -40,47 +38,37 @@ export default function AdminLoginPage() {
     setIsLoading(true);
     setError(null);
 
-    if (!(window as any).grecaptcha) {
-      setError("Falha ao carregar reCAPTCHA. Tente recarregar a página.");
-      setIsLoading(false);
-      return;
-    }
-
-    (window as any).grecaptcha.enterprise.ready(async () => {
-      try {
-        const recaptchaToken = await (window as any).grecaptcha.enterprise.execute(siteKey, { action: 'LOGIN' });
-
-        // Primeiro, o backend Go cria a sessão baseada em cookie.
-        // A API de login do Go agora verifica se o usuário é admin.
-        const loginResponse = await fetchFromGoBackend('/api/v1/auth/login', {
-            method: 'POST',
-            body: JSON.stringify({ email, password, recaptchaToken }), // recaptchaToken é validado pelo backend
-        });
-
-        // O backend retorna um erro se o login falhar ou se o usuário não for admin
-        // mas aqui no frontend, também precisamos fazer o login no Firebase para ter o contexto do usuário.
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        const idTokenResult = await userCredential.user.getIdTokenResult(true); // Força a atualização do token
-
-        if (!idTokenResult.claims.admin) {
-            await auth.signOut();
-            setError('Acesso negado. Este usuário não é um administrador.');
-            setIsLoading(false);
-        } else {
-             // O useEffect cuidará do redirecionamento
-        }
-      } catch (err: any) {
-        if (err.message) {
-            setError(err.message);
-        } else if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
-          setError('Credenciais inválidas.');
-        } else {
-          console.error(err);
-          setError('Ocorreu um erro ao fazer login. Tente novamente.');
-        }
+    try {
+      // 1. Sign in on the client with Firebase
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      
+      // 2. Get ID token and check for admin claim on the client-side first for a quick check
+      const idTokenResult = await userCredential.user.getIdTokenResult(true); // Force refresh
+      if (!idTokenResult.claims.admin) {
+        await auth.signOut(); // Log out user who is not an admin
+        setError('Acesso negado. Este usuário não é um administrador.');
         setIsLoading(false);
+        return;
       }
-    });
+      
+      // 3. Send the token to the Go backend to create a session cookie
+      await fetchFromGoBackend('/api/v1/auth/session-login', {
+        method: 'POST',
+        body: JSON.stringify({ idToken: idTokenResult.token }),
+      });
+      
+      // 4. The useEffect will handle the redirect to /admin
+      // No need for setIsLoading(false) here as the page will redirect.
+
+    } catch (err: any) {
+      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+        setError('Credenciais inválidas.');
+      } else {
+        console.error(err);
+        setError('Ocorreu um erro ao fazer login. Tente novamente.');
+      }
+      setIsLoading(false);
+    }
   };
 
     // New handler for the dev tool
@@ -113,7 +101,6 @@ export default function AdminLoginPage() {
 
   return (
     <>
-      <Script src={`https://www.google.com/recaptcha/enterprise.js?render=${siteKey}`} />
       <div className="flex min-h-screen flex-col items-center justify-center p-6 bg-muted/40">
           <Card className="w-full max-w-sm">
               <CardHeader className="text-center">

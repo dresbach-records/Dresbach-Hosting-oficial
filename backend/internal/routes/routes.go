@@ -22,9 +22,11 @@ func Register(r *gin.Engine) {
 		authRouter := api.Group("/auth")
 		{
 			authRouter.POST("/register", handlers.RegisterHandler)
+			// A rota /login é insegura e mantida para compatibilidade temporária
 			authRouter.POST("/login", handlers.LoginHandler)
+			// Rota de login segura baseada em ID Token do Firebase
+			authRouter.POST("/session-login", handlers.SessionLoginHandler)
 			authRouter.POST("/logout", handlers.LogoutHandler)
-			authRouter.POST("/verify-token", handlers.VerifyTokenHandler)
 		}
 
 		// --- ROTAS PÚBLICAS DIVERSAS ---

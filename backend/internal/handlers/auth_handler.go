@@ -5,16 +5,12 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
 	"backend/internal/firebase"
 	"backend/internal/session"
 	"backend/internal/utils"
-
-	recaptcha "cloud.google.com/go/recaptchaenterprise/v2"
-	recaptchapb "cloud.google.com/go/recaptchaenterprise/v2/apiv1/recaptchaenterprisepb"
 
 	"firebase.google.com/go/v4/auth"
 	"github.com/gin-gonic/gin"
@@ -33,8 +29,8 @@ type LoginPayload struct {
 	Password string `json:"password" binding:"required"`
 }
 
-type VerifyTokenPayload struct {
-	RecaptchaToken string `json:"recaptchaToken" binding:"required"`
+type SessionLoginPayload struct {
+	IdToken string `json:"idToken" binding:"required"`
 }
 
 // RegisterHandler lida com o registro de novos usuários.
@@ -98,7 +94,53 @@ func RegisterHandler(c *gin.Context) {
 	utils.Success(c, http.StatusCreated, gin.H{"message": "Usuário criado com sucesso", "userId": userRecord.UID})
 }
 
-// LoginHandler lida com o login e criação de sessão.
+// SessionLoginHandler verifica um Firebase ID token e cria uma sessão cookie. Este é o método de login seguro preferencial.
+func SessionLoginHandler(c *gin.Context) {
+	var p SessionLoginPayload
+	if err := c.ShouldBindJSON(&p); err != nil {
+		utils.Error(c, http.StatusBadRequest, "Corpo da requisição inválido: o token de ID é obrigatório.")
+		return
+	}
+
+	token, err := firebase.AuthClient.VerifyIDToken(context.Background(), p.IdToken)
+	if err != nil {
+		log.Printf("Erro ao verificar o ID Token: %v", err)
+		utils.Error(c, http.StatusUnauthorized, "Token de autenticação inválido ou expirado.")
+		return
+	}
+
+	userRecord, err := firebase.AuthClient.GetUser(context.Background(), token.UID)
+	if err != nil {
+		log.Printf("Erro ao obter registro do usuário para UID %s: %v", token.UID, err)
+		utils.Error(c, http.StatusInternalServerError, "Não foi possível obter os dados do usuário.")
+		return
+	}
+
+	isAdmin := false
+	if claims := userRecord.CustomClaims; claims != nil {
+		if val, ok := claims["admin"]; ok {
+			isAdmin, _ = val.(bool)
+		}
+	}
+
+	sess, _ := session.Store.Get(c.Request, session.Name)
+	sess.Values["userID"] = userRecord.UID
+	sess.Values["email"] = userRecord.Email
+	sess.Values["isAdmin"] = isAdmin
+	sess.Options.MaxAge = 86400 // 24 horas
+	sess.Options.HttpOnly = true
+	sess.Options.SameSite = http.SameSiteLaxMode
+
+	if err := sess.Save(c.Request, c.Writer); err != nil {
+		log.Printf("Erro ao salvar a sessão: %v", err)
+		utils.Error(c, http.StatusInternalServerError, "Falha ao criar a sessão")
+		return
+	}
+
+	utils.Success(c, http.StatusOK, gin.H{"message": "Sessão criada com sucesso", "isAdmin": isAdmin})
+}
+
+// LoginHandler lida com o login e criação de sessão. **DEPRECATED E INSEGURO**. Usar SessionLoginHandler.
 func LoginHandler(c *gin.Context) {
 	var p LoginPayload
 	if err := c.ShouldBindJSON(&p); err != nil {
@@ -150,79 +192,4 @@ func LogoutHandler(c *gin.Context) {
 		return
 	}
 	utils.Success(c, http.StatusOK, gin.H{"message": "Logout bem-sucedido"})
-}
-
-// VerifyTokenHandler valida um token reCAPTCHA.
-func VerifyTokenHandler(c *gin.Context) {
-	var p VerifyTokenPayload
-	if err := c.ShouldBindJSON(&p); err != nil {
-		utils.Error(c, http.StatusBadRequest, "Corpo da requisição inválido")
-		return
-	}
-
-	projectID := os.Getenv("GOOGLE_CLOUD_PROJECT")
-	recaptchaSiteKey := os.Getenv("RECAPTCHA_SITE_KEY")
-
-	if projectID == "" || recaptchaSiteKey == "" || p.RecaptchaToken == "" {
-		log.Println("Aviso: Faltando projectID, siteKey ou token para validação reCAPTCHA")
-		utils.Error(c, http.StatusBadRequest, "Informação faltando para validação reCAPTCHA")
-		return
-	}
-
-	isValid, err := createAssessment(projectID, recaptchaSiteKey, p.RecaptchaToken, "LOGIN")
-	if err != nil {
-		utils.Error(c, http.StatusInternalServerError, "Erro durante a validação reCAPTCHA")
-		return
-	}
-	if !isValid {
-		utils.Error(c, http.StatusUnauthorized, "Validação reCAPTCHA falhou. Tente novamente.")
-		return
-	}
-
-	utils.Success(c, http.StatusOK, gin.H{"success": true})
-}
-
-// createAssessment é uma função helper para a API reCAPTCHA.
-func createAssessment(projectID string, recaptchaKey string, token string, recaptchaAction string) (bool, error) {
-	ctx := context.Background()
-	client, err := recaptcha.NewClient(ctx)
-	if err != nil {
-		log.Printf("Erro ao criar cliente reCAPTCHA: %v", err)
-		return false, fmt.Errorf("não foi possível criar o cliente recaptcha")
-	}
-	defer client.Close()
-
-	request := &recaptchapb.CreateAssessmentRequest{
-		Assessment: &recaptchapb.Assessment{
-			Event: &recaptchapb.Event{
-				Token:   token,
-				SiteKey: recaptchaKey,
-			},
-		},
-		Parent: fmt.Sprintf("projects/%s", projectID),
-	}
-
-	response, err := client.CreateAssessment(ctx, request)
-	if err != nil {
-		log.Printf("Erro ao chamar CreateAssessment: %v", err)
-		return false, fmt.Errorf("não foi possível criar a avaliação")
-	}
-
-	if !response.TokenProperties.Valid {
-		log.Printf("A chamada CreateAssessment() falhou porque o token era inválido: %v", response.TokenProperties.InvalidReason)
-		return false, nil
-	}
-
-	if response.TokenProperties.Action != recaptchaAction {
-		log.Printf("O atributo de ação na sua tag reCAPTCHA não corresponde à ação que você espera pontuar")
-		return false, nil
-	}
-
-	log.Printf("A pontuação reCAPTCHA para este token é: %v", response.RiskAnalysis.Score)
-	if response.RiskAnalysis.Score < 0.5 {
-		log.Printf("Pontuação reCAPTCHA baixa: %v", response.RiskAnalysis.Score)
-		return false, nil
-	}
-
-	return true, nil
 }

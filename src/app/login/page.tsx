@@ -18,7 +18,6 @@ import { setDoc, doc, getDoc } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 import { Logo } from '@/components/logo';
 import { Checkbox } from '@/components/ui/checkbox';
-import Script from 'next/script';
 import { fetchFromGoBackend } from '@/lib/go-api';
 
 
@@ -46,70 +45,51 @@ export default function LoginPage() {
   const auth = useAuth();
   const firestore = useFirestore();
   const router = useRouter();
-  const siteKey = '6LdZHk0sAAAAAPSnAIbpdQ6wXthwbzGEcdFQiGOD';
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
 
-    if (!(window as any).grecaptcha) {
-      setError("Falha ao carregar reCAPTCHA. Tente recarregar a página.");
-      setIsLoading(false);
-      return;
-    }
+    try {
+      // 1. Sign in on the client with Firebase
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
 
-    (window as any).grecaptcha.enterprise.ready(async () => {
-      try {
-        const recaptchaToken = await (window as any).grecaptcha.enterprise.execute(siteKey, { action: 'LOGIN' });
-        
-        // First, verify the token with our Go backend
-        await fetchFromGoBackend('/api/v1/auth/verify-token', {
-            method: 'POST',
-            body: JSON.stringify({ recaptchaToken }),
-        });
+      // 2. Get the ID Token
+      const idToken = await userCredential.user.getIdToken();
 
-        // If reCAPTCHA is valid, proceed with Firebase login
-        await signInWithEmailAndPassword(auth, email, password);
-        router.push('/area-do-cliente');
+      // 3. Send the token to the Go backend to create a session cookie
+      await fetchFromGoBackend('/api/v1/auth/session-login', {
+        method: 'POST',
+        body: JSON.stringify({ idToken }),
+      });
+      
+      // 4. Redirect to the client area
+      router.push('/area-do-cliente');
 
-      } catch (err: any) {
-        if (err.message?.includes('reCAPTCHA')) {
-            setError(err.message);
-        } else if (err.code === 'auth/invalid-credential') {
-          setError('Email ou senha inválidos. Por favor, tente novamente.');
-        } else {
-          console.error(err);
-          setError('Ocorreu um erro ao tentar fazer login. Tente novamente mais tarde.');
-        }
-        setIsLoading(false);
+    } catch (err: any) {
+      if (err.code === 'auth/invalid-credential') {
+        setError('Email ou senha inválidos. Por favor, tente novamente.');
+      } else {
+        console.error(err);
+        setError('Ocorreu um erro ao tentar fazer login. Tente novamente mais tarde.');
       }
-    });
+      setIsLoading(false);
+    }
   };
 
   const handleSocialLogin = async (providerName: 'google' | 'facebook') => {
     setIsSocialLoading(true);
     setError(null);
     
-    if (!(window as any).grecaptcha) {
-      setError("Falha ao carregar reCAPTCHA. Tente recarregar a página.");
-      setIsSocialLoading(false);
-      return;
-    }
+    const provider = providerName === 'google' ? new GoogleAuthProvider() : new FacebookAuthProvider();
 
-    (window as any).grecaptcha.enterprise.ready(async () => {
-      try {
-        const recaptchaToken = await (window as any).grecaptcha.enterprise.execute(siteKey, { action: 'LOGIN' });
-
-        await fetchFromGoBackend('/api/v1/auth/verify-token', {
-            method: 'POST',
-            body: JSON.stringify({ recaptchaToken }),
-        });
-
-        const provider = providerName === 'google' ? new GoogleAuthProvider() : new FacebookAuthProvider();
+    try {
+        // 1. Sign in with popup
         const result = await signInWithPopup(auth, provider);
         const user = result.user;
 
+        // 2. Ensure user document exists in Firestore (for new social sign-ups)
         const clientRef = doc(firestore, 'clients', user.uid);
         const docSnap = await getDoc(clientRef);
 
@@ -127,18 +107,26 @@ export default function LoginPage() {
             await setDoc(clientRef, clientData);
         }
 
+        // 3. Get the ID token
+        const idToken = await user.getIdToken();
+        
+        // 4. Send token to backend to create session
+        await fetchFromGoBackend('/api/v1/auth/session-login', {
+          method: 'POST',
+          body: JSON.stringify({ idToken }),
+        });
+
+        // 5. Redirect
         router.push('/area-do-cliente');
       } catch (err: any) {
           console.error(err);
           setError(`Ocorreu um erro com o login via ${providerName}. Tente novamente.`);
           setIsSocialLoading(false);
       }
-    });
   };
 
   return (
     <>
-      <Script src={`https://www.google.com/recaptcha/enterprise.js?render=${siteKey}`} />
       <div className="flex min-h-screen bg-background">
         <div className="hidden lg:flex lg:w-1/2 bg-primary text-primary-foreground p-12 flex-col justify-between">
           <div>
