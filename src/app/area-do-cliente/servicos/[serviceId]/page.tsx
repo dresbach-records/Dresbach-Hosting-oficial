@@ -1,11 +1,9 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import { useMemoFirebase, useDoc, useFirestore, useUser } from '@/firebase';
-import { doc } from 'firebase/firestore';
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { fetchFromGoBackend } from '@/lib/go-api';
+import { apiFetch } from '@/lib/api';
 import {
   Card,
   CardHeader,
@@ -138,26 +136,39 @@ const ActionButton = ({ icon: Icon, label }: { icon: React.ElementType, label: s
 export default function ServiceDetailPage() {
     const params = useParams();
     const router = useRouter();
-    const { user } = useUser();
-    const firestore = useFirestore();
     const serviceId = params.serviceId as string;
     const { toast } = useToast();
 
     const [isSsoLoading, setIsSsoLoading] = useState(false);
     const [summary, setSummary] = useState<SummaryData | null>(null);
     const [isSummaryLoading, setIsSummaryLoading] = useState(true);
-
-
-    const serviceDocRef = useMemoFirebase(() => user && serviceId ? doc(firestore, 'clients', user.uid, 'services', serviceId) : null, [firestore, user, serviceId]);
-    const { data: service, isLoading } = useDoc(serviceDocRef);
+    const [service, setService] = useState<any>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         if (!serviceId) return;
 
+        const fetchServiceData = async () => {
+            setIsLoading(true);
+            try {
+                const data = await apiFetch<any>(`/v1/client/services/${serviceId}`);
+                setService(data);
+            } catch (error: any) {
+                console.error("Failed to fetch service data:", error);
+                 toast({
+                    variant: 'destructive',
+                    title: 'Falha ao buscar detalhes do serviço',
+                    description: error.message || 'Não foi possível carregar os dados do serviço.',
+                });
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        
         const fetchSummary = async () => {
             setIsSummaryLoading(true);
             try {
-                const data = await fetchFromGoBackend<SummaryData>(`/client/services/${serviceId}/summary`);
+                const data = await apiFetch<SummaryData>(`/v1/client/services/${serviceId}/summary`);
                 setSummary(data);
             } catch (error: any) {
                 console.error("Failed to fetch account summary:", error);
@@ -171,6 +182,7 @@ export default function ServiceDetailPage() {
             }
         };
 
+        fetchServiceData();
         fetchSummary();
     }, [serviceId, toast]);
 
@@ -180,8 +192,8 @@ export default function ServiceDetailPage() {
         setIsSsoLoading(true);
 
         try {
-            const response = await fetchFromGoBackend<{ url: string }>(
-                `/client/services/${serviceId}/sso`, 
+            const response = await apiFetch<{ url: string }>(
+                `/v1/client/services/${serviceId}/sso`, 
                 { method: 'POST' }
             );
             window.open(response.url, '_blank');

@@ -3,9 +3,6 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Menu, MessageCircle, LogOut } from "lucide-react";
-import { useAuth, useUser } from "@/firebase";
-import { signOut } from "firebase/auth";
-
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,6 +13,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Logo } from "@/components/logo";
+import { useAuth } from "@/providers/auth-provider";
 
 const navLinks = [
   { href: "/", label: "Início" },
@@ -27,12 +25,11 @@ const navLinks = [
 
 export function Header() {
   const pathname = usePathname();
-  const { user, isUserLoading } = useUser();
-  const auth = useAuth();
+  const { user, isLoading, logout } = useAuth();
   const router = useRouter();
 
-  const handleLogout = async () => {
-    await signOut(auth);
+  const handleLogout = () => {
+    logout();
     router.push('/login');
   };
 
@@ -100,7 +97,7 @@ export function Header() {
                 WhatsApp
               </a>
             </Button>
-            {!isUserLoading && (
+            {!isLoading && (
               <>
                 {user ? (
                   <>
