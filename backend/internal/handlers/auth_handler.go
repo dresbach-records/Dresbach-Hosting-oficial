@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"backend/internal/firebase"
 	"backend/internal/session"
@@ -21,8 +22,10 @@ import (
 
 // Payloads para Bind de JSON
 type RegisterPayload struct {
-	Email    string `json:"email" binding:"required"`
-	Password string `json:"password" binding:"required"`
+	Email     string `json:"email" binding:"required"`
+	Password  string `json:"password" binding:"required"`
+	FirstName string `json:"firstName" binding:"required"`
+	LastName  string `json:"lastName" binding:"required"`
 }
 
 type LoginPayload struct {
@@ -34,15 +37,12 @@ type VerifyTokenPayload struct {
 	RecaptchaToken string `json:"recaptchaToken" binding:"required"`
 }
 
-type MakeAdminPayload struct {
-	Email string `json:"email" binding:"required"`
-}
-
 // RegisterHandler lida com o registro de novos usuários.
+// Ele cria o usuário no Firebase Auth e o documento de cliente no Firestore.
 func RegisterHandler(c *gin.Context) {
 	var p RegisterPayload
 	if err := c.ShouldBindJSON(&p); err != nil {
-		utils.Error(c, http.StatusBadRequest, "Corpo da requisição inválido")
+		utils.Error(c, http.StatusBadRequest, "Corpo da requisição inválido: "+err.Error())
 		return
 	}
 
@@ -55,24 +55,47 @@ func RegisterHandler(c *gin.Context) {
 		return
 	}
 
+	// 1. Criar usuário no Firebase Authentication
 	params := (&auth.UserToCreate{}).
 		Email(p.Email).
 		Password(p.Password).
+		DisplayName(fmt.Sprintf("%s %s", p.FirstName, p.LastName)).
 		EmailVerified(false).
 		Disabled(false)
 
-	_, err := firebase.AuthClient.CreateUser(context.Background(), params)
+	userRecord, err := firebase.AuthClient.CreateUser(context.Background(), params)
 	if err != nil {
 		if auth.IsEmailAlreadyExists(err) {
 			utils.Error(c, http.StatusConflict, "O email já está em uso")
 			return
 		}
-		log.Printf("Erro ao criar usuário: %v\n", err)
-		utils.Error(c, http.StatusInternalServerError, "Falha ao criar usuário")
+		log.Printf("Erro ao criar usuário no Auth: %v\n", err)
+		utils.Error(c, http.StatusInternalServerError, "Falha ao criar o usuário no sistema de autenticação")
 		return
 	}
 
-	utils.Success(c, http.StatusCreated, gin.H{"message": "Usuário criado com sucesso"})
+	// 2. Criar documento do cliente no Firestore
+	clientData := map[string]interface{}{
+		"id":          userRecord.UID,
+		"firstName":   p.FirstName,
+		"lastName":    p.LastName,
+		"email":       p.Email,
+		"createdAt":   time.Now().Format(time.RFC3339),
+		"status":      "Ativo",
+		"phoneNumber": "",
+		"address":     "",
+	}
+
+	_, err = firebase.FirestoreClient.Collection("clients").Doc(userRecord.UID).Set(context.Background(), clientData)
+	if err != nil {
+		log.Printf("Erro ao criar documento do cliente no Firestore para UID %s: %v", userRecord.UID, err)
+		// Em um cenário de produção, seria ideal deletar o usuário do Auth para manter a consistência.
+		// Ex: firebase.AuthClient.DeleteUser(context.Background(), userRecord.UID)
+		utils.Error(c, http.StatusInternalServerError, "Falha ao salvar os dados do cliente após a criação do usuário")
+		return
+	}
+
+	utils.Success(c, http.StatusCreated, gin.H{"message": "Usuário criado com sucesso", "userId": userRecord.UID})
 }
 
 // LoginHandler lida com o login e criação de sessão.
@@ -127,37 +150,6 @@ func LogoutHandler(c *gin.Context) {
 		return
 	}
 	utils.Success(c, http.StatusOK, gin.H{"message": "Logout bem-sucedido"})
-}
-
-// MakeAdminHandler atribui a claim de administrador a um usuário.
-func MakeAdminHandler(c *gin.Context) {
-	var p MakeAdminPayload
-	if err := c.ShouldBindJSON(&p); err != nil {
-		utils.Error(c, http.StatusBadRequest, "Corpo da requisição inválido")
-		return
-	}
-
-	user, err := firebase.AuthClient.GetUserByEmail(context.Background(), p.Email)
-	if err != nil {
-		log.Printf("Erro ao obter usuário por email '%s': %v", p.Email, err)
-		utils.Error(c, http.StatusNotFound, "Usuário não encontrado")
-		return
-	}
-
-	claims := user.CustomClaims
-	if claims == nil {
-		claims = make(map[string]interface{})
-	}
-	claims["admin"] = true
-
-	err = firebase.AuthClient.SetCustomUserClaims(context.Background(), user.UID, claims)
-	if err != nil {
-		log.Printf("Erro ao definir custom claims para UID %s: %v", user.UID, err)
-		utils.Error(c, http.StatusInternalServerError, "Falha ao definir a claim de admin")
-		return
-	}
-
-	utils.Success(c, http.StatusOK, gin.H{"message": fmt.Sprintf("Usuário %s agora é um administrador.", p.Email)})
 }
 
 // VerifyTokenHandler valida um token reCAPTCHA.

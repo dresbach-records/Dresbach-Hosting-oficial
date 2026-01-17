@@ -64,7 +64,7 @@ export default function LoginPage() {
         const recaptchaToken = await (window as any).grecaptcha.enterprise.execute(siteKey, { action: 'LOGIN' });
         
         // First, verify the token with our Go backend
-        await fetchFromGoBackend('/auth/verify-token', {
+        await fetchFromGoBackend('/api/auth/verify-token', {
             method: 'POST',
             body: JSON.stringify({ recaptchaToken }),
         });
@@ -101,7 +101,7 @@ export default function LoginPage() {
       try {
         const recaptchaToken = await (window as any).grecaptcha.enterprise.execute(siteKey, { action: 'LOGIN' });
 
-        await fetchFromGoBackend('/auth/verify-token', {
+        await fetchFromGoBackend('/api/auth/verify-token', {
             method: 'POST',
             body: JSON.stringify({ recaptchaToken }),
         });
@@ -196,7 +196,7 @@ export default function LoginPage() {
                         <Checkbox id="remember-me" disabled={isLoading || isSocialLoading} />
                         <Label htmlFor="remember-me" className="text-sm font-normal text-muted-foreground">Lembrar-me</Label>
                     </div>
-                    <Link href="#" className="text-sm text-primary hover:underline">Esqueceu a senha?</Link>
+                    <Link href="/forgot-password" className="text-sm text-primary hover:underline">Esqueceu a senha?</Link>
                 </div>
                 {error && <p className="text-sm text-destructive">{error}</p>}
                 <Button type="submit" className="w-full" disabled={isLoading || isSocialLoading}>

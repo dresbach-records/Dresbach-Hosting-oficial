@@ -14,8 +14,8 @@ type ProfileResponse struct {
 	Email  string `json:"email"`
 }
 
-// GetProfileHandler retorna o perfil do usuário logado.
-func GetProfileHandler(c *gin.Context) {
+// MeHandler retorna o perfil do usuário logado.
+func MeHandler(c *gin.Context) {
 	// O middleware já validou a sessão. Podemos acessar os valores com segurança.
 	sess, _ := session.Store.Get(c.Request, session.Name)
 	userID, ok1 := sess.Values["userID"].(string)

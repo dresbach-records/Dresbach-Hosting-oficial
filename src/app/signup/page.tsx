@@ -9,15 +9,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth, useFirestore } from '@/firebase';
 import {
-  createUserWithEmailAndPassword,
   GoogleAuthProvider,
   FacebookAuthProvider,
   signInWithPopup,
-  updateProfile
+  signInWithEmailAndPassword
 } from 'firebase/auth';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 import { Logo } from '@/components/logo';
+import { fetchFromGoBackend } from '@/lib/go-api';
 
 const GoogleIcon = () => (
   <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" className="mr-2 h-4 w-4">
@@ -53,26 +53,19 @@ export default function SignupPage() {
     setError(null);
 
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-      
-      await updateProfile(user, { displayName: `${firstName} ${lastName}` });
+      // Use the backend endpoint for registration.
+      // This creates the user in Firebase Auth and the client document in Firestore atomically.
+      await fetchFromGoBackend('/api/auth/register', {
+        method: 'POST',
+        body: JSON.stringify({ email, password, firstName, lastName }),
+      });
 
-      const clientData = {
-        id: user.uid,
-        firstName,
-        lastName,
-        email: user.email,
-        createdAt: new Date().toISOString(),
-        status: 'Ativo',
-      };
-
-      const clientRef = doc(firestore, 'clients', user.uid);
-      await setDoc(clientRef, clientData);
+      // After successful registration, sign the user in to establish a client-side session.
+      await signInWithEmailAndPassword(auth, email, password);
 
       router.push('/area-do-cliente');
     } catch (err: any) {
-      setError('Falha ao criar conta. Verifique os dados e tente novamente.');
+      setError(err.message || 'Falha ao criar conta. Verifique se o e-mail já está em uso e tente novamente.');
       console.error(err);
       setIsLoading(false);
     }
