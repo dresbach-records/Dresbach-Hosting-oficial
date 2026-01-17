@@ -1,0 +1,365 @@
+openapi: 3.0.3
+info:
+  title: Dresbach Hosting Core API
+  description: >
+    API enterprise para gestão completa de hosting, billing, automação,
+    RBAC, integração WHM, domínios e auditoria. Substituto funcional de WHMCS.
+  version: 1.0.0
+servers:
+  - url: https://api.dresbach.com/api/v1
+  - url: http://localhost:8080/api/v1
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Auth
+  - name: Users
+  - name: RBAC
+  - name: Admin
+  - name: Clients
+  - name: Products
+  - name: Orders
+  - name: Services
+  - name: Invoices
+  - name: Payments
+  - name: Tickets
+  - name: Domains
+  - name: Servers
+  - name: Automation
+  - name: Audit
+  - name: System
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error: { type: string }
+        code: { type: string }
+
+    User:
+      type: object
+      properties:
+        id: { type: string }
+        email: { type: string }
+        role: { type: string, enum: [admin, staff, client] }
+        created_at: { type: string, format: date-time }
+
+    Client:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        email: { type: string }
+        status: { type: string, enum: [active, suspended] }
+
+    Product:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        type: { type: string, enum: [hosting, addon, domain] }
+        price_monthly: { type: number }
+        price_annual: { type: number }
+        whm_package: { type: string }
+        active: { type: boolean }
+
+    Order:
+      type: object
+      properties:
+        id: { type: string }
+        client_id: { type: string }
+        status: { type: string, enum: [pending, approved, rejected, completed] }
+        total: { type: number }
+
+    Service:
+      type: object
+      properties:
+        id: { type: string }
+        client_id: { type: string }
+        product_id: { type: string }
+        domain: { type: string }
+        status:
+          type: string
+          enum: [pending_provision, active, suspended, terminated]
+        next_due_date: { type: string, format: date }
+
+    Invoice:
+      type: object
+      properties:
+        id: { type: string }
+        client_id: { type: string }
+        status:
+          type: string
+          enum: [draft, unpaid, paid, overdue, cancelled]
+        total: { type: number }
+        due_date: { type: string, format: date }
+
+    Ticket:
+      type: object
+      properties:
+        id: { type: string }
+        client_id: { type: string }
+        subject: { type: string }
+        status: { type: string, enum: [open, answered, closed] }
+        priority: { type: string, enum: [low, medium, high] }
+
+    DomainLookup:
+      type: object
+      properties:
+        domain: { type: string }
+        available: { type: boolean }
+        status: { type: string }
+        expires_at: { type: string, format: date }
+
+paths:
+
+  # ---------------- AUTH ----------------
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Retorna usuário autenticado
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+
+  # ---------------- USERS / RBAC ----------------
+  /admin/users:
+    get:
+      tags: [Users]
+      summary: Listar usuários
+      responses: { '200': { description: OK } }
+
+  /admin/users/{id}/role:
+    put:
+      tags: [RBAC]
+      summary: Alterar role de usuário
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                role: { type: string }
+      responses: { '200': { description: Atualizado } }
+
+  # ---------------- ADMIN DASHBOARD ----------------
+  /admin/dashboard:
+    get:
+      tags: [Admin]
+      summary: KPIs administrativos
+      responses: { '200': { description: OK } }
+
+  # ---------------- CLIENTS ----------------
+  /admin/clients:
+    get:
+      tags: [Clients]
+      summary: Listar clientes
+      responses: { '200': { description: OK } }
+    post:
+      tags: [Clients]
+      summary: Criar cliente
+      responses: { '201': { description: Criado } }
+
+  /admin/clients/{id}:
+    get:
+      tags: [Clients]
+      summary: Detalhes do cliente
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses: { '200': { description: OK } }
+
+  # ---------------- PRODUCTS ----------------
+  /admin/products:
+    get:
+      tags: [Products]
+      summary: Listar produtos
+      responses: { '200': { description: OK } }
+    post:
+      tags: [Products]
+      summary: Criar produto
+      responses: { '201': { description: Criado } }
+
+  /admin/products/{id}:
+    put:
+      tags: [Products]
+      summary: Atualizar produto
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses: { '200': { description: Atualizado } }
+
+  # ---------------- ORDERS ----------------
+  /orders:
+    post:
+      tags: [Orders]
+      summary: Criar pedido
+      responses: { '201': { description: Criado } }
+
+  /admin/orders:
+    get:
+      tags: [Orders]
+      summary: Listar pedidos
+      responses: { '200': { description: OK } }
+
+  # ---------------- SERVICES / WHM ----------------
+  /admin/services:
+    get:
+      tags: [Services]
+      summary: Listar serviços
+      responses: { '200': { description: OK } }
+
+  /admin/services/provision:
+    post:
+      tags: [Services]
+      summary: Provisionar serviço no WHM
+      responses: { '200': { description: Provisionado } }
+
+  /admin/services/{id}/suspend:
+    post:
+      tags: [Services]
+      summary: Suspender serviço
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Suspenso
+
+  /client/services:
+    get:
+      tags: [Services]
+      summary: Serviços do cliente
+      responses:
+        '200':
+          description: OK
+
+  # ---------------- INVOICES ----------------
+  /admin/invoices:
+    get:
+      tags: [Invoices]
+      summary: Listar faturas
+      responses: { '200': { description: OK } }
+
+  /admin/invoices/generate:
+    post:
+      tags: [Invoices]
+      summary: Gerar faturas recorrentes
+      responses: { '200': { description: Geradas } }
+
+  /client/invoices/{id}/pay:
+    post:
+      tags: [Invoices]
+      summary: Pagar fatura
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses: { '200': { description: Pago } }
+
+  # ---------------- PAYMENTS ----------------
+  /payments/webhook:
+    post:
+      tags: [Payments]
+      summary: Webhook de pagamento
+      security: []
+      responses: { '200': { description: OK } }
+
+  # ---------------- TICKETS ----------------
+  /tickets:
+    post:
+      tags: [Tickets]
+      summary: Abrir ticket
+      responses: { '201': { description: Criado } }
+
+  /admin/tickets:
+    get:
+      tags: [Tickets]
+      summary: Listar tickets
+      responses: { '200': { description: OK } }
+
+  /tickets/{id}/reply:
+    post:
+      tags: [Tickets]
+      summary: Responder ticket
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses: { '200': { description: Respondido } }
+
+  # ---------------- DOMAINS (RDAP / FUTURO EPP) ----------------
+  /domains/lookup:
+    get:
+      tags: [Domains]
+      summary: Consulta domínio (RDAP)
+      parameters:
+        - in: query
+          name: domain
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Resultado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DomainLookup' }
+
+  # ---------------- SERVERS / WHM ----------------
+  /admin/servers:
+    get:
+      tags: [Servers]
+      summary: Listar servidores WHM
+      responses: { '200': { description: OK } }
+    post:
+      tags: [Servers]
+      summary: Cadastrar servidor WHM
+      responses: { '201': { description: Criado } }
+
+  # ---------------- AUTOMATION ----------------
+  /admin/automation/run:
+    post:
+      tags: [Automation]
+      summary: Executar job manual
+      responses: { '200': { description: Executado } }
+
+  # ---------------- AUDIT ----------------
+  /admin/audit-logs:
+    get:
+      tags: [Audit]
+      summary: Listar logs de auditoria
+      responses: { '200': { description: OK } }
+
+  # ---------------- SYSTEM ----------------
+  /health:
+    get:
+      tags: [System]
+      summary: Healthcheck
+      security: []
+      responses:
+        '200':
+          description: OK

@@ -10,75 +10,124 @@ import (
 
 // Register registra todas as rotas da aplicação.
 func Register(r *gin.Engine) {
+	// Rota de health check pública
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	})
 
 	api := r.Group("/api/v1")
 	{
-		authRouter := api.Group("/auth")
+		// --- ROTAS PÚBLICAS ---
+		public := api.Group("/")
 		{
-			// Cria um usuário. O primeiro se torna admin automaticamente.
-			authRouter.POST("/register", handlers.RegisterHandler)
-			// Rota de login segura que cria uma sessão cookie a partir de um ID Token do Firebase.
-			authRouter.POST("/session-login", handlers.SessionLoginHandler)
-			authRouter.POST("/logout", handlers.LogoutHandler)
+			// Autenticação
+			auth := public.Group("/auth")
+			auth.POST("/register", handlers.RegisterHandler)
+			auth.POST("/session-login", handlers.SessionLoginHandler)
+			auth.POST("/logout", handlers.LogoutHandler)
+
+			// Domínios
+			public.GET("/domains/lookup/:domain", handlers.DomainLookupHandler)
+			
+			// A rota /make-admin pública foi removida permanentemente.
+			// O primeiro usuário a se registrar torna-se admin automaticamente.
 		}
 
-		api.GET("/domains/lookup/:domain", handlers.DomainLookupHandler)
-		
-		// A rota para criar admin foi removida. O primeiro usuário registrado é promovido automaticamente.
-		// api.POST("/make-admin", handlers.MakeAdminHandler)
-
-
+		// --- ROTAS AUTENTICADAS ---
 		authenticated := api.Group("/")
 		authenticated.Use(middleware.AuthMiddleware())
 		{
 			authenticated.GET("/auth/me", handlers.MeHandler)
+
+			// Pagamentos e Provisionamento para o cliente logado
 			authenticated.POST("/payments/create-intent", handlers.CreatePaymentIntentHandler)
 			authenticated.POST("/provision-account", handlers.ProvisionAccountHandler)
 
-			clientRouter := authenticated.Group("/client")
+			// --- ROTAS DA ÁREA DO CLIENTE ---
+			client := authenticated.Group("/client")
 			{
-				clientRouter.GET("/dashboard", handlers.GetClientDashboard)
-				clientRouter.GET("/services", handlers.ListClientServices)
-				clientRouter.GET("/services/:id", handlers.GetClientService)
-				clientRouter.POST("/services/:id/sso", handlers.CreateCPanelSessionHandler)
-				clientRouter.GET("/services/:id/summary", handlers.GetAccountSummaryHandler)
-				clientRouter.GET("/invoices", handlers.ListClientInvoices)
-				clientRouter.POST("/invoices/:id/pay", handlers.PayClientInvoice)
-				clientRouter.GET("/tickets", handlers.ListClientTickets)
-				clientRouter.POST("/tickets", handlers.CreateClientTicket)
-				clientRouter.POST("/tickets/:id/reply", handlers.ReplyClientTicket)
+				client.GET("/dashboard", handlers.GetClientDashboard)
+
+				services := client.Group("/services")
+				{
+					services.GET("/", handlers.ListClientServices)
+					services.GET("/:id", handlers.GetClientService)
+					services.POST("/:id/sso", handlers.CreateCPanelSessionHandler)
+					services.GET("/:id/summary", handlers.GetAccountSummaryHandler)
+				}
+				
+				invoices := client.Group("/invoices")
+				{
+					invoices.GET("/", handlers.ListClientInvoices)
+					invoices.POST("/:id/pay", handlers.PayClientInvoice)
+				}
+
+				tickets := client.Group("/tickets")
+				{
+					tickets.GET("/", handlers.ListClientTickets)
+					tickets.POST("/", handlers.CreateClientTicket)
+					tickets.POST("/:id/reply", handlers.ReplyClientTicket)
+				}
 			}
 
-			adminRouter := authenticated.Group("/admin")
-			adminRouter.Use(middleware.AdminMiddleware())
+			// --- ROTAS DO PAINEL DE ADMIN ---
+			admin := authenticated.Group("/admin")
+			admin.Use(middleware.AdminMiddleware())
 			{
-				// Endpoint para atribuir papel de admin a um usuário existente (para uso pós-bootstrap)
-				adminRouter.POST("/make-admin", handlers.MakeAdminHandler)
+				admin.GET("/dashboard", handlers.GetAdminDashboard)
+				
+				// Gestão de Usuários e Permissões (pós-bootstrap)
+				admin.POST("/make-admin", handlers.MakeAdminHandler)
 
-				adminRouter.GET("/dashboard", handlers.GetAdminDashboard)
-				adminRouter.GET("/clients", handlers.ListClients)
-				adminRouter.POST("/clients", handlers.CreateClientHandler)
-				adminRouter.GET("/clients/:id", handlers.GetClient)
-				adminRouter.PUT("/clients/:id", handlers.UpdateClient)
-				adminRouter.PUT("/clients/:id/suspend", handlers.SuspendClient)
-				adminRouter.GET("/products", handlers.ListProducts)
-				adminRouter.POST("/products", handlers.CreateProduct)
-				adminRouter.PUT("/products/:id", handlers.UpdateProduct)
-				adminRouter.GET("/services", handlers.ListServices)
-				adminRouter.PUT("/services/:id/suspend", handlers.SuspendService)
-				adminRouter.PUT("/services/:id/unsuspend", handlers.UnsuspendService)
-				adminRouter.DELETE("/services/:id", handlers.TerminateService)
-				adminRouter.GET("/invoices", handlers.ListInvoices)
-				adminRouter.POST("/invoices", handlers.CreateInvoice)
-				adminRouter.PUT("/invoices/:id/pay", handlers.MarkInvoiceAsPaid)
-				adminRouter.GET("/tickets", handlers.ListTickets)
-				adminRouter.POST("/tickets/:id/reply", handlers.ReplyToTicket)
-				adminRouter.PUT("/tickets/:id/status", handlers.UpdateTicketStatus)
-				adminRouter.GET("/servers", handlers.ListServers)
-				adminRouter.POST("/servers", handlers.CreateServer)
+				// Gestão de Clientes
+				clients := admin.Group("/clients")
+				{
+					clients.GET("/", handlers.ListClients)
+					clients.POST("/", handlers.CreateClientHandler)
+					clients.GET("/:id", handlers.GetClient)
+					clients.PUT("/:id", handlers.UpdateClient)
+					clients.PUT("/:id/suspend", handlers.SuspendClient)
+				}
+
+				// Gestão de Produtos/Planos
+				products := admin.Group("/products")
+				{
+					products.GET("/", handlers.ListProducts)
+					products.POST("/", handlers.CreateProduct)
+					products.PUT("/:id", handlers.UpdateProduct)
+				}
+
+				// Gestão de Serviços
+				services := admin.Group("/services")
+				{
+					services.GET("/", handlers.ListServices)
+					services.PUT("/:id/suspend", handlers.SuspendService)
+					services.PUT("/:id/unsuspend", handlers.UnsuspendService)
+					services.DELETE("/:id", handlers.TerminateService)
+				}
+
+				// Gestão de Faturas
+				invoices := admin.Group("/invoices")
+				{
+					invoices.GET("/", handlers.ListInvoices)
+					invoices.POST("/", handlers.CreateInvoice)
+					invoices.PUT("/:id/pay", handlers.MarkInvoiceAsPaid)
+				}
+				
+				// Gestão de Tickets
+				tickets := admin.Group("/tickets")
+				{
+					tickets.GET("/", handlers.ListTickets)
+					tickets.POST("/:id/reply", handlers.ReplyToTicket)
+					tickets.PUT("/:id/status", handlers.UpdateTicketStatus)
+				}
+
+				// Gestão de Servidores WHM
+				servers := admin.Group("/servers")
+				{
+					servers.GET("/", handlers.ListServers)
+					servers.POST("/", handlers.CreateServer)
+				}
 			}
 		}
 	}
