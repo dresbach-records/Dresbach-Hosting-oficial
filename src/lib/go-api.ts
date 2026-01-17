@@ -5,14 +5,14 @@
 
 // The base URL for your Go backend API.
 // It's recommended to set this in your .env file for flexibility between environments.
-const GO_BACKEND_URL = process.env.NEXT_PUBLIC_GO_BACKEND_URL || 'http://localhost:8080/api';
+const GO_BACKEND_URL = process.env.NEXT_PUBLIC_GO_BACKEND_URL || 'http://localhost:8080';
 
 /**
  * A generic and reusable function to make API requests to your Go backend.
  * It handles setting JSON headers, and basic success/error responses.
  *
  * @template T The expected type of the data in the successful response.
- * @param endpoint The specific API endpoint to call (e.g., '/clients' or '/tickets').
+ * @param endpoint The specific API endpoint to call (e.g., '/auth/login' or '/user/profile').
  * @param options The standard options for the `fetch` request (e.g., method, body).
  * @returns A promise that resolves to the JSON data of type T from the backend.
  * @throws An error if the network request fails or if the API returns a non-ok status.
@@ -43,8 +43,13 @@ export async function fetchFromGoBackend<T>(endpoint: string, options: RequestIn
     throw new Error(errorMessage);
   }
 
-  // If the request was successful, parse and return the JSON body.
-  return response.json();
+  // If the request was successful and the response has content, parse and return it.
+  // Otherwise, for responses like 200 OK with no body, return an empty object.
+  const contentType = response.headers.get('content-type');
+  if (contentType && contentType.includes('application/json')) {
+      return response.json();
+  }
+  return {} as T;
 }
 
 /**
@@ -52,34 +57,34 @@ export async function fetchFromGoBackend<T>(endpoint: string, options: RequestIn
  *
  * 1.  **Configure your backend URL:**
  *     In your `.env` file, add the following line with the correct URL for your Go backend:
- *     `NEXT_PUBLIC_GO_BACKEND_URL=http://localhost:8080/api`
+ *     `NEXT_PUBLIC_GO_BACKEND_URL=http://localhost:8080`
  *
  * 2.  **Use in a component or Server Action:**
  *     Import the function and call it to interact with your backend.
  *
- *     Example (fetching clients in a React component):
+ *     Example (fetching a user profile in a React component):
  *
  *     ```jsx
  *     import { useEffect, useState } from 'react';
  *     import { fetchFromGoBackend } from '@/lib/go-api';
  *
- *     function ClientList() {
- *       const [clients, setClients] = useState([]);
+ *     function UserProfile() {
+ *       const [profile, setProfile] = useState(null);
  *
  *       useEffect(() => {
- *         const loadClients = async () => {
+ *         const loadProfile = async () => {
  *           try {
- *             // Assuming your Go backend has a GET /clients endpoint
- *             const data = await fetchFromGoBackend('/clients');
- *             setClients(data);
+ *             // Assuming your Go backend has a GET /user/profile endpoint
+ *             const data = await fetchFromGoBackend('/user/profile');
+ *             setProfile(data);
  *           } catch (error) {
- *             console.error("Failed to fetch clients:", error);
+ *             console.error("Failed to fetch profile:", error);
  *           }
  *         };
- *         loadClients();
+ *         loadProfile();
  *       }, []);
  *
- *       // ... render your clients
+ *       // ... render your profile
  *     }
  *     ```
  */

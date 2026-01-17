@@ -18,6 +18,9 @@ import { setDoc, doc, getDoc } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 import { Logo } from '@/components/logo';
 import { Checkbox } from '@/components/ui/checkbox';
+import Script from 'next/script';
+import { fetchFromGoBackend } from '@/lib/go-api';
+
 
 const GoogleIcon = () => (
   <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" className="mr-2 h-4 w-4">
@@ -43,32 +46,67 @@ export default function LoginPage() {
   const auth = useAuth();
   const firestore = useFirestore();
   const router = useRouter();
+  const siteKey = '6LdZHk0sAAAAAPSnAIbpdQ6wXthwbzGEcdFQiGOD';
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-      router.push('/area-do-cliente');
-    } catch (err: any) {
-      if (err.code === 'auth/invalid-credential') {
-        setError('Email ou senha inválidos. Por favor, tente novamente.');
-      } else {
-        console.error(err);
-        setError('Ocorreu um erro ao tentar fazer login. Tente novamente mais tarde.');
-      }
+
+    if (!(window as any).grecaptcha) {
+      setError("Falha ao carregar reCAPTCHA. Tente recarregar a página.");
       setIsLoading(false);
+      return;
     }
+
+    (window as any).grecaptcha.enterprise.ready(async () => {
+      try {
+        const recaptchaToken = await (window as any).grecaptcha.enterprise.execute(siteKey, { action: 'LOGIN' });
+        
+        // First, verify the token with our Go backend
+        await fetchFromGoBackend('/auth/verify-token', {
+            method: 'POST',
+            body: JSON.stringify({ recaptchaToken }),
+        });
+
+        // If reCAPTCHA is valid, proceed with Firebase login
+        await signInWithEmailAndPassword(auth, email, password);
+        router.push('/area-do-cliente');
+
+      } catch (err: any) {
+        if (err.message?.includes('reCAPTCHA')) {
+            setError(err.message);
+        } else if (err.code === 'auth/invalid-credential') {
+          setError('Email ou senha inválidos. Por favor, tente novamente.');
+        } else {
+          console.error(err);
+          setError('Ocorreu um erro ao tentar fazer login. Tente novamente mais tarde.');
+        }
+        setIsLoading(false);
+      }
+    });
   };
 
   const handleSocialLogin = async (providerName: 'google' | 'facebook') => {
     setIsSocialLoading(true);
     setError(null);
     
-    const provider = providerName === 'google' ? new GoogleAuthProvider() : new FacebookAuthProvider();
+    if (!(window as any).grecaptcha) {
+      setError("Falha ao carregar reCAPTCHA. Tente recarregar a página.");
+      setIsSocialLoading(false);
+      return;
+    }
 
-    try {
+    (window as any).grecaptcha.enterprise.ready(async () => {
+      try {
+        const recaptchaToken = await (window as any).grecaptcha.enterprise.execute(siteKey, { action: 'LOGIN' });
+
+        await fetchFromGoBackend('/auth/verify-token', {
+            method: 'POST',
+            body: JSON.stringify({ recaptchaToken }),
+        });
+
+        const provider = providerName === 'google' ? new GoogleAuthProvider() : new FacebookAuthProvider();
         const result = await signInWithPopup(auth, provider);
         const user = result.user;
 
@@ -90,109 +128,113 @@ export default function LoginPage() {
         }
 
         router.push('/area-do-cliente');
-    } catch (err: any) {
-        console.error(err);
-        setError(`Ocorreu um erro com o login via ${providerName}. Tente novamente.`);
-        setIsSocialLoading(false);
-    }
+      } catch (err: any) {
+          console.error(err);
+          setError(`Ocorreu um erro com o login via ${providerName}. Tente novamente.`);
+          setIsSocialLoading(false);
+      }
+    });
   };
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <div className="hidden lg:flex lg:w-1/2 bg-primary text-primary-foreground p-12 flex-col justify-between">
-        <div>
-          <Logo className="invert brightness-0" />
+    <>
+      <Script src={`https://www.google.com/recaptcha/enterprise.js?render=${siteKey}`} />
+      <div className="flex min-h-screen bg-background">
+        <div className="hidden lg:flex lg:w-1/2 bg-primary text-primary-foreground p-12 flex-col justify-between">
+          <div>
+            <Logo className="invert brightness-0" />
+          </div>
+          <div className="max-w-md">
+            <p className="text-sm uppercase tracking-wider text-primary-foreground/80 mb-2">Novidades</p>
+            <h2 className="text-3xl font-bold leading-tight">Lançamento do Novo Servidor Cloud Dinâmico</h2>
+            <p className="mt-4 text-primary-foreground/80">
+              Performance, escalabilidade e controle total para sua aplicação decolar. Pague apenas pelo que usar e gerencie tudo em nosso novo painel intuitivo.
+            </p>
+          </div>
+          <div className="text-sm text-primary-foreground/60">
+              Copyright © {new Date().getFullYear()} Dresbach hosting do brasil.ltda
+          </div>
         </div>
-        <div className="max-w-md">
-          <p className="text-sm uppercase tracking-wider text-primary-foreground/80 mb-2">Novidades</p>
-          <h2 className="text-3xl font-bold leading-tight">Lançamento do Novo Servidor Cloud Dinâmico</h2>
-          <p className="mt-4 text-primary-foreground/80">
-            Performance, escalabilidade e controle total para sua aplicação decolar. Pague apenas pelo que usar e gerencie tudo em nosso novo painel intuitivo.
-          </p>
-        </div>
-        <div className="text-sm text-primary-foreground/60">
-            Copyright © {new Date().getFullYear()} Dresbach hosting do brasil.ltda
-        </div>
-      </div>
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12">
-        <Card className="w-full max-w-md border-0 shadow-none">
-          <CardHeader className="text-center">
-            <div className="mb-4 flex justify-center">
-              <Logo />
-            </div>
-            <CardTitle className="text-2xl font-headline">Acesse sua Conta</CardTitle>
-            <CardDescription>
-              Bem-vindo de volta! Faça login para continuar.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleEmailLogin} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="seu@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  disabled={isSocialLoading}
-                />
+        <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12">
+          <Card className="w-full max-w-md border-0 shadow-none">
+            <CardHeader className="text-center">
+              <div className="mb-4 flex justify-center">
+                <Logo />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Senha</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  disabled={isSocialLoading}
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                      <Checkbox id="remember-me" disabled={isLoading || isSocialLoading} />
-                      <Label htmlFor="remember-me" className="text-sm font-normal text-muted-foreground">Lembrar-me</Label>
+              <CardTitle className="text-2xl font-headline">Acesse sua Conta</CardTitle>
+              <CardDescription>
+                Bem-vindo de volta! Faça login para continuar.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleEmailLogin} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="seu@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    disabled={isSocialLoading || isLoading}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password">Senha</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    disabled={isSocialLoading || isLoading}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                        <Checkbox id="remember-me" disabled={isLoading || isSocialLoading} />
+                        <Label htmlFor="remember-me" className="text-sm font-normal text-muted-foreground">Lembrar-me</Label>
+                    </div>
+                    <Link href="#" className="text-sm text-primary hover:underline">Esqueceu a senha?</Link>
+                </div>
+                {error && <p className="text-sm text-destructive">{error}</p>}
+                <Button type="submit" className="w-full" disabled={isLoading || isSocialLoading}>
+                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Entrar
+                </Button>
+              </form>
+
+               <div className="relative my-6">
+                  <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t" />
                   </div>
-                  <Link href="#" className="text-sm text-primary hover:underline">Esqueceu a senha?</Link>
+                  <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-background px-2 text-muted-foreground">Ou continue com</span>
+                  </div>
               </div>
-              {error && <p className="text-sm text-destructive">{error}</p>}
-              <Button type="submit" className="w-full" disabled={isLoading || isSocialLoading}>
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Entrar
-              </Button>
-            </form>
 
-             <div className="relative my-6">
-                <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-background px-2 text-muted-foreground">Ou continue com</span>
-                </div>
-            </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Button variant="outline" onClick={() => handleSocialLogin('google')} disabled={isLoading || isSocialLoading} className="w-full">
+                      {isSocialLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <GoogleIcon />}
+                      Google
+                  </Button>
+                  <Button variant="outline" onClick={() => handleSocialLogin('facebook')} disabled={isLoading || isSocialLoading} className="w-full">
+                      {isSocialLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FacebookIcon />}
+                      Facebook
+                  </Button>
+              </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Button variant="outline" onClick={() => handleSocialLogin('google')} disabled={isLoading || isSocialLoading} className="w-full">
-                    {isSocialLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <GoogleIcon />}
-                    Google
-                </Button>
-                <Button variant="outline" onClick={() => handleSocialLogin('facebook')} disabled={isLoading || isSocialLoading} className="w-full">
-                    {isSocialLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FacebookIcon />}
-                    Facebook
-                </Button>
-            </div>
-
-            <div className="mt-6 text-center text-sm">
-              Não tem uma conta?{' '}
-              <Link href="/signup" className="font-semibold text-primary hover:underline">
-                Crie uma agora
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
+              <div className="mt-6 text-center text-sm">
+                Não tem uma conta?{' '}
+                <Link href="/signup" className="font-semibold text-primary hover:underline">
+                  Crie uma agora
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

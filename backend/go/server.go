@@ -3,11 +3,15 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"strings"
 	"time"
+
+	recaptcha "cloud.google.com/go/recaptchaenterprise/apiv1"
+	recaptchapb "google.golang.org/genproto/googleapis/cloud/recaptchaenterprise/v1"
 
 	firebase "firebase.google.com/go/v4"
 	"firebase.google.com/go/v4/auth"
@@ -43,6 +47,10 @@ type ProfileResponse struct {
 
 type ErrorResponse struct {
 	Error string `json:"error"`
+}
+
+type VerifyTokenPayload struct {
+	RecaptchaToken string `json:"recaptchaToken"`
 }
 
 // respondWithError is a helper function to write a JSON error response.
@@ -100,6 +108,108 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusCreated, map[string]string{"message": "User created successfully"})
 }
 
+/**
+ * Crie uma avaliação para analisar o risco de uma ação da interface.
+ *
+ * @param projectID: O ID do seu projeto do Google Cloud.
+ * @param recaptchaKey: A chave reCAPTCHA associada ao site/app
+ * @param token: O token gerado obtido do cliente.
+ * @param recaptchaAction: Nome da ação correspondente ao token.
+ */
+func createAssessment(projectID string, recaptchaKey string, token string, recaptchaAction string) (bool, error) {
+
+	// Crie o cliente reCAPTCHA.
+	ctx := context.Background()
+	client, err := recaptcha.NewClient(ctx)
+	if err != nil {
+		log.Printf("Error creating reCAPTCHA client: %v", err)
+		return false, fmt.Errorf("could not create recaptcha client")
+	}
+	defer client.Close()
+
+	// Defina as propriedades do evento que será monitorado.
+	event := &recaptchapb.Event{
+		Token:   token,
+		SiteKey: recaptchaKey,
+	}
+
+	assessment := &recaptchapb.Assessment{
+		Event: event,
+	}
+
+	// Crie a solicitação de avaliação.
+	request := &recaptchapb.CreateAssessmentRequest{
+		Assessment: assessment,
+		Parent:     fmt.Sprintf("projects/%s", projectID),
+	}
+
+	response, err := client.CreateAssessment(
+		ctx,
+		request)
+
+	if err != nil {
+		log.Printf("Error calling CreateAssessment: %v", err)
+		return false, fmt.Errorf("could not create assessment")
+	}
+
+	// Verifique se o token é válido.
+	if !response.TokenProperties.Valid {
+		log.Printf("The CreateAssessment() call failed because the token was invalid for the following reasons: %v",
+			response.TokenProperties.InvalidReason)
+		return false, nil
+	}
+
+	// Verifique se a ação esperada foi executada.
+	if response.TokenProperties.Action != recaptchaAction {
+		log.Printf("The action attribute in your reCAPTCHA tag does not match the action you are expecting to score")
+		return false, nil
+	}
+
+	// Consulte a pontuação de risco e os motivos.
+	// Para mais informações sobre como interpretar a avaliação, acesse:
+	// https://cloud.google.com/recaptcha-enterprise/docs/interpret-assessment
+	log.Printf("The reCAPTCHA score for this token is:  %v", response.RiskAnalysis.Score)
+	if response.RiskAnalysis.Score < 0.5 {
+		log.Printf("Low reCAPTCHA score: %v", response.RiskAnalysis.Score)
+		return false, nil
+	}
+
+	for _, reason := range response.RiskAnalysis.Reasons {
+		log.Printf(reason.String() + "\n")
+	}
+	return true, nil
+}
+
+// verifyTokenHandler validates a reCAPTCHA token.
+func verifyTokenHandler(w http.ResponseWriter, r *http.Request) {
+	var p VerifyTokenPayload
+	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	projectID := os.Getenv("GOOGLE_CLOUD_PROJECT")
+	recaptchaSiteKey := os.Getenv("RECAPTCHA_SITE_KEY")
+
+	if projectID == "" || recaptchaSiteKey == "" || p.RecaptchaToken == "" {
+		log.Println("Warning: Missing projectID, siteKey, or token for reCAPTCHA validation")
+		respondWithError(w, http.StatusBadRequest, "Missing information for reCAPTCHA validation")
+		return
+	}
+
+	isValid, err := createAssessment(projectID, recaptchaSiteKey, p.RecaptchaToken, "LOGIN")
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Error during reCAPTCHA validation")
+		return
+	}
+	if !isValid {
+		respondWithError(w, http.StatusUnauthorized, "reCAPTCHA validation failed. Please try again.")
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, map[string]bool{"success": true})
+}
+
 // loginHandler handles user login and session creation.
 func loginHandler(w http.ResponseWriter, r *http.Request) {
 	var p LoginPayload
@@ -133,7 +243,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	session.Options.MaxAge = 86400 // 24 hours
 	session.Options.HttpOnly = true
 	// Use SameSite=Lax for SPAs. You might need SameSite=None and Secure=true if front/back are on different domains.
-	session.Options.SameSite = http.SameSiteLaxMode 
+	session.Options.SameSite = http.SameSiteLaxMode
 
 	if err := session.Save(r, w); err != nil {
 		log.Printf("Error saving session: %v\n", err)
@@ -241,18 +351,18 @@ func main() {
 	authRouter.HandleFunc("/register", registerHandler).Methods("POST")
 	authRouter.HandleFunc("/login", loginHandler).Methods("POST")
 	authRouter.HandleFunc("/logout", logoutHandler).Methods("POST")
+	authRouter.HandleFunc("/verify-token", verifyTokenHandler).Methods("POST")
 
 	// Protected routes
 	userRouter := r.PathPrefix("/user").Subrouter()
 	userRouter.Use(authMiddleware)
 	userRouter.HandleFunc("/profile", getProfileHandler).Methods("GET")
-	
+
 	// Serve frontend files
 	// This assumes your Go binary is run from the project root.
 	// It will serve the existing Next.js build output.
 	fs := http.FileServer(http.Dir("./public/"))
 	r.PathPrefix("/").Handler(fs)
-
 
 	// Start Server
 	port := "8080"
