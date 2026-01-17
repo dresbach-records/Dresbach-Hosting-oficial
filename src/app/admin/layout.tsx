@@ -25,6 +25,8 @@ import {
   ListTodo,
   DollarSign,
   Globe,
+  Server,
+  FileX,
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 
@@ -45,31 +47,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
-
-
-const quickAccessItems = [
-    { href: '#', label: 'Add New Client', icon: UserPlus },
-    { href: '/admin/pedidos', label: 'Add New Order', icon: ShoppingCart },
-    { href: '#', label: 'Create New Quote', icon: FileText },
-    { href: '/admin/suporte', label: 'Open New Ticket', icon: Ticket },
-    { href: '/admin/faturamento', label: 'New Invoice', icon: FilePlus2 },
-    { href: '#', label: 'Create New To-Do Entry', icon: ListTodo },
-    { href: '#', label: 'WHOIS Lookup', icon: Globe },
-    { href: '#', label: 'Generate Due Invoices', icon: DollarSign },
-    { href: '#', label: 'Attempt CC Captures', icon: CreditCard },
-];
-
-const menuItems = [
-  { href: '/admin/clientes', label: 'Clientes', icon: Users, badge: 0 },
-  { href: '/admin/pedidos', label: 'Pedidos', icon: ShoppingCart, badge: 2 },
-  { href: '/admin/faturamento', label: 'Faturamento', icon: CreditCard, badge: 2 },
-  { href: '/admin/suporte', label: 'Suporte', icon: LifeBuoy, badge: 1 },
-  { href: '/admin/relatorios', label: 'Relatórios', icon: BarChart, badge: 0 },
-  { href: '/admin/utilitarios', label: 'Utilitários', icon: Wrench, badge: 0 },
-  { href: '/admin/addons', label: 'Addons', icon: Puzzle, badge: 0 },
-  { href: '/admin/configuracoes', label: 'Configurações', icon: Settings, badge: 0 },
-  { href: '/admin/ajuda', label: 'Ajuda', icon: HelpCircle, badge: 0 },
-];
 
 
 function NavLink({ href, children, isActive, isMobile = false, badge = 0 }: { href: string; children: React.ReactNode; isActive: boolean, isMobile?: boolean, badge?: number }) {
@@ -126,34 +103,111 @@ export default function AdminLayout({
     signOut(auth);
   }
 
+  const renderNavLinks = (isMobile = false) => {
+    const linkClass = cn(
+        'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary',
+        isMobile && 'text-lg'
+    );
+    const subLinkClass = cn('flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary', isMobile && 'text-base');
+    const iconSize = isMobile ? 'h-5 w-5' : 'h-4 w-4';
+
+    const isActive = (href: string) => pathname.startsWith(href) && href !== '/admin';
+    const isExactlyActive = (href: string) => pathname === href;
+
+    return (
+      <>
+        <NavLink href="/admin" isActive={pathname === '/admin'} isMobile={isMobile}>
+          <Home className={iconSize} />
+          Home
+        </NavLink>
+        
+        <Accordion type="multiple" defaultValue={['clientes']} className="w-full">
+          <AccordionItem value="clientes" className="border-b-0">
+            <AccordionTrigger className={cn("rounded-lg px-3 py-2 hover:no-underline hover:text-primary", isActive('/admin/clientes') && 'text-primary bg-muted')}>
+              <div className="flex items-center gap-3">
+                <Users className={iconSize} />
+                Clientes
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className={cn("pt-1 space-y-1", isMobile ? "pl-10" : "pl-7")}>
+              
+                <Link href={'/admin/clientes?new=true'} className={cn(subLinkClass, isExactlyActive('/admin/clientes?new=true') && 'bg-muted text-primary')}>
+                  <UserPlus className={iconSize} />
+                  Adicionar Novo Cliente
+                </Link>
+                <Link href={'/admin/clientes'} className={cn(subLinkClass, isExactlyActive('/admin/clientes') && 'bg-muted text-primary')}>
+                  <Search className={iconSize} />
+                  Ver/Buscar Clientes
+                </Link>
+
+              <Accordion type="multiple" defaultValue={['produtos-servicos']} className="w-full">
+                <AccordionItem value="produtos-servicos" className="border-b-0">
+                  <AccordionTrigger className={cn("rounded-lg px-3 py-2 hover:no-underline hover:text-primary", isActive('/admin/servicos') && 'text-primary')}>
+                     <div className="flex items-center gap-3">
+                      <Server className={iconSize} />
+                      Produtos/Serviços
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className={cn("pt-1 space-y-1", isMobile ? "pl-10" : "pl-7")}>
+                    <Link href="/admin/servicos" className={cn(subLinkClass, isExactlyActive('/admin/servicos') && 'bg-muted text-primary')}>
+                      <ListTodo className={iconSize} /> Ver Todos
+                    </Link>
+                    <Link href="#" className={subLinkClass}><Server className={iconSize} /> Hospedagem Compartilhada</Link>
+                    <Link href="#" className={subLinkClass}><Users className={iconSize} /> Contas de Revenda</Link>
+                    <Link href="#" className={subLinkClass}><Server className={iconSize} /> VPS/Servidores</Link>
+                    <Link href="#" className={subLinkClass}><Wrench className={iconSize} /> Outros Serviços</Link>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+              
+              <Link href="/admin/addons" className={cn(subLinkClass, isExactlyActive('/admin/addons') && 'bg-muted text-primary')}>
+                <Puzzle className={iconSize} /> Addons de Serviço
+              </Link>
+              <Link href="/admin/dominios" className={cn(subLinkClass, isExactlyActive('/admin/dominios') && 'bg-muted text-primary')}>
+                <Globe className={iconSize} /> Registros de Domínio
+              </Link>
+              <Link href="#" className={subLinkClass}>
+                <FileX className={iconSize} /> Pedidos de Cancelamento
+              </Link>
+              <Link href="#" className={subLinkClass}>
+                <Users className={iconSize} /> Gerenciar Afiliados
+              </Link>
+
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+        
+        <NavLink href="/admin/pedidos" isActive={isActive('/admin/pedidos')} badge={2} isMobile={isMobile}>
+          <ShoppingCart className={iconSize} /> Pedidos
+        </NavLink>
+        <NavLink href="/admin/faturamento" isActive={isActive('/admin/faturamento')} badge={2} isMobile={isMobile}>
+          <DollarSign className={iconSize} /> Faturamento
+        </NavLink>
+        <NavLink href="/admin/suporte" isActive={isActive('/admin/suporte')} badge={1} isMobile={isMobile}>
+          <LifeBuoy className={iconSize} /> Suporte
+        </NavLink>
+        <NavLink href="/admin/relatorios" isActive={isActive('/admin/relatorios')} isMobile={isMobile}>
+          <BarChart className={iconSize} /> Relatórios
+        </NavLink>
+        <NavLink href="/admin/utilitarios" isActive={isActive('/admin/utilitarios')} isMobile={isMobile}>
+          <Wrench className={iconSize} /> Utilitários
+        </NavLink>
+        <NavLink href="/admin/addons" isActive={isActive('/admin/addons')} isMobile={isMobile}>
+          <Puzzle className={iconSize} /> Addons
+        </NavLink>
+        <NavLink href="/admin/configuracoes" isActive={isActive('/admin/configuracoes')} isMobile={isMobile}>
+          <Settings className={iconSize} /> Configurações
+        </NavLink>
+        <NavLink href="/admin/ajuda" isActive={isActive('/admin/ajuda')} isMobile={isMobile}>
+          <HelpCircle className={iconSize} /> Ajuda
+        </NavLink>
+      </>
+    );
+  }
+
   const desktopNav = (
       <nav className="grid items-start px-2 text-sm font-medium">
-         <Accordion type="single" collapsible defaultValue="item-1" className="w-full">
-            <AccordionItem value="item-1" className="border-b-0">
-                <AccordionTrigger className="px-3 py-2 text-muted-foreground transition-all hover:text-primary hover:no-underline [&[data-state=open]]:text-primary [&[data-state=open]]:bg-muted">
-                    <Link href="/admin" className="flex items-center gap-3">
-                        <Home className="h-4 w-4" />
-                        Home
-                    </Link>
-                </AccordionTrigger>
-                <AccordionContent className="pl-7 pt-1">
-                    <div className="flex flex-col gap-1">
-                        {quickAccessItems.map(item => (
-                            <Link key={item.label} href={item.href} className="flex items-center gap-2 py-1.5 text-muted-foreground hover:text-primary text-xs">
-                                <item.icon className="h-4 w-4" />
-                                {item.label}
-                            </Link>
-                        ))}
-                    </div>
-                </AccordionContent>
-            </AccordionItem>
-        </Accordion>
-        {menuItems.map((item) => (
-          <NavLink key={item.href} href={item.href} isActive={pathname.startsWith(item.href) && item.href !== '/admin'} badge={item.badge}>
-            <item.icon className="h-4 w-4" />
-            {item.label}
-          </NavLink>
-        ))}
+        {renderNavLinks()}
       </nav>
   );
 
@@ -166,32 +220,7 @@ export default function AdminLayout({
             <Logo />
             <span className="sr-only">Dresbach Hosting</span>
         </Link>
-         <Accordion type="single" collapsible defaultValue="item-1" className="w-full">
-            <AccordionItem value="item-1" className="border-b-0">
-                <AccordionTrigger className="px-3 py-2 text-muted-foreground transition-all hover:text-primary hover:no-underline [&[data-state=open]]:text-primary [&[data-state=open]]:bg-muted">
-                    <Link href="/admin" className="flex items-center gap-3 text-lg">
-                        <Home className="h-5 w-5" />
-                        Home
-                    </Link>
-                </AccordionTrigger>
-                <AccordionContent className="pl-8 pt-1">
-                    <div className="flex flex-col gap-2">
-                        {quickAccessItems.map(item => (
-                            <Link key={item.label} href={item.href} className="flex items-center gap-3 py-1 text-muted-foreground hover:text-primary text-base">
-                                <item.icon className="h-4 w-4" />
-                                {item.label}
-                            </Link>
-                        ))}
-                    </div>
-                </AccordionContent>
-            </AccordionItem>
-        </Accordion>
-        {menuItems.map((item) => (
-          <NavLink key={item.href} href={item.href} isActive={pathname.startsWith(item.href) && item.href !== '/admin'} isMobile badge={item.badge}>
-            <item.icon className="h-5 w-5" />
-            {item.label}
-          </NavLink>
-        ))}
+        {renderNavLinks(true)}
      </nav>
   );
 
@@ -199,7 +228,7 @@ export default function AdminLayout({
     <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
       <div className="hidden border-r bg-card md:block">
         <div className="flex h-full max-h-screen flex-col gap-2">
-          <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
+          <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6 sticky top-0 bg-card z-10">
             <Link href="/admin" className="flex items-center gap-2 font-semibold">
               <Logo />
             </Link>
@@ -240,7 +269,14 @@ export default function AdminLayout({
             </SheetTrigger>
             <SheetContent side="left" className="flex flex-col">
               <SheetHeader>
-                <SheetTitle>Menu de Navegação</SheetTitle>
+                 <SheetTitle>
+                    <Link
+                      href="/admin"
+                      className="flex items-center gap-2 text-lg font-semibold"
+                    >
+                      <Logo />
+                    </Link>
+                 </SheetTitle>
               </SheetHeader>
               {mobileNav}
             </SheetContent>
