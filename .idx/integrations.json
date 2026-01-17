@@ -1,5 +1,7 @@
 {
-  "firebase_hosting": {},
+  "firebase_hosting": {
+    "deploymentHostingUrl": "https://studio-3513285477-702dc.web.app"
+  },
   "gemini_api": {},
   "secrets_manager": {}
 }
