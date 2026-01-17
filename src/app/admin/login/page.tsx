@@ -21,11 +21,6 @@ export default function AdminLoginPage() {
   const auth = useAuth();
   const router = useRouter();
   const { user, isAdmin, isUserLoading } = useUser();
-  
-  // New state for the dev tool
-  const [adminEmail, setAdminEmail] = useState('');
-  const [isMakingAdmin, setIsMakingAdmin] = useState(false);
-  const [makeAdminMessage, setMakeAdminMessage] = useState('');
 
   useEffect(() => {
     if (!isUserLoading && user && isAdmin) {
@@ -70,26 +65,6 @@ export default function AdminLoginPage() {
       setIsLoading(false);
     }
   };
-
-    // New handler for the dev tool
-  const handleMakeAdmin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsMakingAdmin(true);
-    setMakeAdminMessage('');
-    try {
-        // Este endpoint está publicamente acessível para criar o primeiro admin.
-        await fetchFromGoBackend('/api/v1/make-admin', {
-            method: 'POST',
-            body: JSON.stringify({ email: adminEmail }),
-        });
-        setMakeAdminMessage(`Sucesso! ${adminEmail} agora é um administrador. Tente fazer login novamente.`);
-    } catch(err: any) {
-        setMakeAdminMessage(`Erro: ${err.message}. Verifique se o e-mail está correto e se o usuário já existe.`);
-    } finally {
-        setIsMakingAdmin(false);
-    }
-  };
-
 
   if (isUserLoading || (!isUserLoading && user && isAdmin)) {
     return (
@@ -143,34 +118,6 @@ export default function AdminLoginPage() {
                   </form>
               </CardContent>
           </Card>
-          
-          {/* New Dev Tool Card */}
-          <Card className="w-full max-w-sm mt-6 border-dashed">
-            <CardHeader>
-                <CardTitle className="text-lg">Ferramenta de Desenvolvedor</CardTitle>
-                <CardDescription>Use esta ferramenta para transformar um usuário existente em administrador. Digite o e-mail do usuário e clique no botão.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <form onSubmit={handleMakeAdmin} className="space-y-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="admin-email">Email do Usuário</Label>
-                        <Input
-                            id="admin-email"
-                            type="email"
-                            placeholder="usuario@email.com"
-                            value={adminEmail}
-                            onChange={(e) => setAdminEmail(e.target.value)}
-                            required
-                        />
-                    </div>
-                    {makeAdminMessage && <p className="text-sm text-muted-foreground">{makeAdminMessage}</p>}
-                    <Button type="submit" className="w-full" variant="secondary" disabled={isMakingAdmin}>
-                        {isMakingAdmin && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Tornar Administrador
-                    </Button>
-                </form>
-            </CardContent>
-        </Card>
       </div>
     </>
   );

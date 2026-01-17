@@ -35,6 +35,7 @@ type SessionLoginPayload struct {
 
 // RegisterHandler lida com o registro de novos usuários.
 // Ele cria o usuário no Firebase Auth e o documento de cliente no Firestore.
+// O primeiro usuário a se registrar é automaticamente promovido a administrador.
 func RegisterHandler(c *gin.Context) {
 	var p RegisterPayload
 	if err := c.ShouldBindJSON(&p); err != nil {
@@ -69,6 +70,28 @@ func RegisterHandler(c *gin.Context) {
 		utils.Error(c, http.StatusInternalServerError, "Falha ao criar o usuário no sistema de autenticação")
 		return
 	}
+
+	// Lógica para tornar o primeiro usuário um administrador
+	isFirstUser := false
+	// Verificamos se a coleção 'clients' está vazia. Limit(1) é para eficiência.
+	docs, err := firebase.FirestoreClient.Collection("clients").Limit(1).Documents(context.Background()).GetAll()
+	if err != nil {
+		// Se não conseguirmos consultar, registramos o erro mas continuamos o processo sem promover.
+		log.Printf("Não foi possível consultar a coleção de clientes para verificar o primeiro usuário: %v", err)
+	} else if len(docs) == 0 {
+		isFirstUser = true
+	}
+
+	if isFirstUser {
+		log.Printf("Este é o primeiro usuário (%s). Promovendo para administrador.", p.Email)
+		claims := map[string]interface{}{"admin": true}
+		err = firebase.AuthClient.SetCustomUserClaims(context.Background(), userRecord.UID, claims)
+		if err != nil {
+			// Não falha o registro, mas registra um erro crítico para que a promoção possa ser feita manualmente se necessário.
+			log.Printf("CRÍTICO: Falha ao promover automaticamente o primeiro usuário '%s' para admin: %v", p.Email, err)
+		}
+	}
+
 
 	// 2. Criar documento do cliente no Firestore
 	clientData := map[string]interface{}{
