@@ -39,6 +39,9 @@ func Register(r *gin.Engine) {
 		// Rota para provisionamento de conta (agora protegida)
 		api.POST("/provision-account", handlers.ProvisionAccountHandler)
 
+		// Rota para pagamentos
+		api.POST("/payments/create-intent", handlers.CreatePaymentIntentHandler)
+
 		// Rotas de administrador
 		adminRouter := api.Group("/admin")
 		adminRouter.Use(middleware.AdminMiddleware()) // Middleware extra para checar se é admin

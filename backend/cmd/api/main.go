@@ -9,7 +9,8 @@ import (
 	"backend/internal/firebase"
 	"backend/internal/routes"
 	"backend/internal/session"
-	"backend/internal/whm" // Import the new WHM package
+	"backend/internal/stripe" // Importa o novo pacote Stripe
+	"backend/internal/whm"
 
 	"github.com/gin-gonic/gin"
 )
@@ -26,6 +27,9 @@ func main() {
 
 	// Inicializa o cliente WHM
 	whm.InitWhmClient()
+
+	// Inicializa o cliente Stripe
+	stripe.InitStripe()
 
 	// Inicializa a store de sessão
 	session.InitSessionStore()

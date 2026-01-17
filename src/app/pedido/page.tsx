@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, redirect } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { fetchFromGoBackend } from '@/lib/go-api';
@@ -14,6 +14,16 @@ import { Separator } from '@/components/ui/separator';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import { useUser } from '@/firebase';
+import { loadStripe, Stripe } from '@stripe/stripe-js';
+import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
+
+// --- Configurações e Dados Mock ---
+
+const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+if (!stripePublishableKey) {
+  console.error("Aviso: Chave publicável do Stripe não definida. O pagamento falhará. Defina NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY.");
+}
+const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
 
 
 const billingCycles = [
@@ -30,6 +40,57 @@ const tlds = [
     { tld: '.online', price: 'R$ 29,99/ano' },
     { tld: '.dev', price: 'R$ 99,99/ano' },
 ];
+
+const planDetails: { [key: string]: { name: string, price: number } } = {
+    solteiro: { name: 'Solteiro', price: 2.99 },
+    profissional: { name: 'Profissional', price: 4.99 },
+    negocios: { name: 'Negócios', price: 9.99 },
+};
+
+// --- Componentes ---
+
+const CheckoutForm = ({ orderDetails, onPaymentSuccess }: { orderDetails: { plan: string, cycle: string, domain: string, price: number }, onPaymentSuccess: (details: any) => void }) => {
+    const stripe = useStripe();
+    const elements = useElements();
+    const [isProcessing, setIsProcessing] = useState(false);
+    const [message, setMessage] = useState<string | null>(null);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        if (!stripe || !elements) {
+            return;
+        }
+
+        setIsProcessing(true);
+
+        const { error, paymentIntent } = await stripe.confirmPayment({
+            elements,
+            redirect: 'if_required' 
+        });
+
+        if (error) {
+            setMessage(error.message || 'Ocorreu um erro inesperado.');
+        } else if (paymentIntent && paymentIntent.status === 'succeeded') {
+            setMessage('Pagamento bem-sucedido! Provisionando seu serviço...');
+            onPaymentSuccess(orderDetails);
+        } else {
+             setMessage('O estado do pagamento é inesperado: ' + paymentIntent?.status);
+        }
+
+        setIsProcessing(false);
+    };
+    
+    return (
+        <form id="payment-form" onSubmit={handleSubmit}>
+            <PaymentElement id="payment-element" />
+            <Button disabled={isProcessing || !stripe || !elements} className="w-full mt-6" size="lg">
+                {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : `Pagar R$ ${orderDetails.price.toFixed(2).replace('.', ',')}`}
+            </Button>
+            {message && <div id="payment-message" className="text-sm text-center mt-2 font-medium">{message}</div>}
+        </form>
+    )
+}
 
 const PlanCard = ({ name, price, features, selected, onClick, disabled }: { name: string, price: string, features: string[], selected: boolean, onClick: () => void, disabled: boolean }) => (
     <Card className={cn("text-center cursor-pointer transition-all", selected && "border-primary ring-2 ring-primary", disabled && "opacity-50 cursor-not-allowed")} onClick={disabled ? undefined : onClick}>
@@ -66,45 +127,33 @@ const BillingCycleCard = ({ id, name, price, originalPrice, discount, selected, 
     </Card>
 )
 
+// --- Página Principal ---
 
 export default function OrderPage() {
     const { user, isUserLoading } = useUser();
-    const [selectedPlan, setSelectedPlan] = useState('profissional');
-    const [selectedCycle, setSelectedCycle] = useState('annually');
-    const [domain, setDomain] = useState('');
-    const [isProcessing, setIsProcessing] = useState(false);
-    
     const router = useRouter();
     const { toast } = useToast();
 
-    if (isUserLoading) {
-        return (
-            <div className="flex h-[50vh] items-center justify-center">
-                <Loader2 className="h-12 w-12 animate-spin text-primary" />
-            </div>
-        );
-    }
+    // Estados da configuração do pedido
+    const [selectedPlan, setSelectedPlan] = useState('profissional');
+    const [selectedCycle, setSelectedCycle] = useState('annually');
+    const [domain, setDomain] = useState('');
+    
+    // Estados do fluxo de checkout
+    const [isProcessing, setIsProcessing] = useState(false);
+    const [clientSecret, setClientSecret] = useState<string | null>(null);
+    const [total, setTotal] = useState(0);
 
-    if (!user) {
-        redirect('/login?redirect=/pedido');
-        return null;
-    }
+    const currentCycleDetails = billingCycles.find(c => c.id === selectedCycle);
+    const calculatedTotal = currentCycleDetails?.price || 0;
 
-    const planDetails: { [key: string]: { name: string, price: number } } = {
-        solteiro: { name: 'Solteiro', price: 2.99 },
-        profissional: { name: 'Profissional', price: 4.99 },
-        negocios: { name: 'Negócios', price: 9.99 },
-    }
-
-    const billingCyclesMap: { [key: string]: { name: string, price: number } } = {
-        annually: { name: 'Anualmente', price: 35.88 },
-        triennially: { name: 'Trimestral', price: 10.47 },
-        monthly: { name: 'Mensal', price: 3.99 },
-    };
-
-    const total = billingCyclesMap[selectedCycle]?.price || 0;
-
-    const handlePurchase = async () => {
+    useEffect(() => {
+        if (!isUserLoading && !user) {
+            redirect('/login?redirect=/pedido');
+        }
+    }, [isUserLoading, user]);
+    
+    const handleProceedToPayment = async () => {
         if (!domain) {
             toast({
                 variant: 'destructive',
@@ -113,42 +162,93 @@ export default function OrderPage() {
             });
             return;
         }
-
         setIsProcessing(true);
 
-        const orderData = {
-            plan: planDetails[selectedPlan].name,
-            cycle: billingCyclesMap[selectedCycle].name,
-            domain: domain,
-            price: total,
-        };
-
+        const currentPlanDetails = planDetails[selectedPlan];
+        
         try {
-            // Esta função chamará o backend Go, que está protegido por middleware de autenticação.
-            // O cookie de sessão será enviado automaticamente.
+            const response = await fetchFromGoBackend<{ clientSecret: string, amount: number }>('/api/payments/create-intent', {
+                method: 'POST',
+                body: JSON.stringify({ plan: currentPlanDetails.name, cycle: selectedCycle }),
+            });
+            setClientSecret(response.clientSecret);
+            setTotal(response.amount / 100);
+        } catch (error: any) {
+            console.error("Falha ao criar o Payment Intent:", error);
+            toast({
+                variant: "destructive",
+                title: "Erro ao iniciar pagamento",
+                description: error.message || "Não foi possível preparar seu pagamento. Tente novamente.",
+            });
+             setIsProcessing(false);
+        }
+    };
+
+    const handleProvisionAccount = async (orderDetails: { plan: string, cycle: string, domain: string, price: number }) => {
+        try {
             await fetchFromGoBackend('/api/provision-account', {
                 method: 'POST',
-                body: JSON.stringify(orderData),
+                body: JSON.stringify({
+                    plan: orderDetails.plan,
+                    cycle: orderDetails.cycle,
+                    domain: orderDetails.domain,
+                    price: orderDetails.price,
+                }),
             });
 
             toast({
                 title: 'Pedido Recebido!',
-                description: 'Seu novo serviço de hospedagem está sendo provisionado.',
+                description: 'Seu novo serviço de hospedagem foi provisionado com sucesso.',
             });
             
-            // Redireciona para a página de serviços do cliente após um pequeno atraso
             setTimeout(() => router.push('/area-do-cliente/servicos'), 2000);
 
         } catch (error: any) {
             console.error('Falha ao provisionar a conta:', error);
             toast({
                 variant: 'destructive',
-                title: 'Uh oh! Algo deu errado.',
-                description: error.message || 'Não foi possível concluir seu pedido. Por favor, contate o suporte.',
+                title: 'Uh oh! Algo deu errado no provisionamento.',
+                description: error.message || 'Seu pagamento foi confirmado, mas não foi possível provisionar o serviço. Por favor, contate o suporte.',
             });
-             setIsProcessing(false);
         }
     };
+    
+    if (isUserLoading) {
+        return (
+            <div className="flex h-[50vh] items-center justify-center">
+                <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            </div>
+        );
+    }
+    
+    if (clientSecret && stripePromise) {
+        return (
+            <div className="bg-muted/30 py-12">
+                <div className="container max-w-lg">
+                     <Button variant="ghost" onClick={() => setClientSecret(null)} className="mb-4"><ChevronLeft className="mr-2 h-4 w-4"/>Voltar</Button>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Finalizar Pagamento</CardTitle>
+                            <CardDescription>Insira os detalhes do seu pagamento para concluir a compra de forma segura.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                             <Elements stripe={stripePromise} options={{ clientSecret, locale: 'pt-BR' }}>
+                                <CheckoutForm 
+                                    orderDetails={{
+                                        plan: planDetails[selectedPlan].name,
+                                        cycle: billingCycles.find(c => c.id === selectedCycle)?.name || '',
+                                        domain: domain,
+                                        price: total,
+                                    }}
+                                    onPaymentSuccess={handleProvisionAccount} 
+                                />
+                            </Elements>
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
+        )
+    }
 
     return (
         <div className="bg-muted/30 py-12">
@@ -159,10 +259,8 @@ export default function OrderPage() {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-                    {/* Left Column */}
                     <div className="lg:col-span-2 space-y-8">
 
-                        {/* Product Selection */}
                         <Card>
                             <CardHeader>
                                 <CardTitle className="flex justify-between items-center">
@@ -188,7 +286,6 @@ export default function OrderPage() {
                             </CardContent>
                         </Card>
 
-                        {/* Billing Cycle */}
                         <Card>
                             <CardHeader>
                                 <CardTitle>Ciclo de faturamento do produto</CardTitle>
@@ -200,7 +297,6 @@ export default function OrderPage() {
                             </CardContent>
                         </Card>
 
-                        {/* Domain */}
                         <Card>
                             <CardHeader>
                                 <CardTitle>Domínio do produto</CardTitle>
@@ -236,7 +332,6 @@ export default function OrderPage() {
                             </CardContent>
                         </Card>
 
-                        {/* Add-ons */}
                         <Card>
                              <CardHeader>
                                 <CardTitle>Complementos disponíveis</CardTitle>
@@ -259,7 +354,6 @@ export default function OrderPage() {
 
                     </div>
 
-                    {/* Right Column - Summary */}
                     <div className="lg:col-span-1">
                         <div className="sticky top-24 space-y-4">
                             <Card className="shadow-lg">
@@ -276,15 +370,15 @@ export default function OrderPage() {
                                         </div>
                                         <div>
                                             <p className="font-semibold">Hospedagem Web - {planDetails[selectedPlan]?.name}</p>
-                                            <p className="text-sm text-muted-foreground">{billingCyclesMap[selectedCycle].name}</p>
+                                            <p className="text-sm text-muted-foreground">{billingCycles.find(c => c.id === selectedCycle)?.name}</p>
                                         </div>
                                     </div>
                                     <Separator />
                                     <div>
                                         <p className="text-sm text-muted-foreground">Total do pedido devido hoje</p>
-                                        <p className="text-3xl font-bold">R$ {total.toFixed(2).replace('.', ',')}</p>
+                                        <p className="text-3xl font-bold">R$ {calculatedTotal.toFixed(2).replace('.', ',')}</p>
                                     </div>
-                                    <Button className="w-full" size="lg" onClick={handlePurchase} disabled={isProcessing || !domain}>
+                                    <Button className="w-full" size="lg" onClick={handleProceedToPayment} disabled={isProcessing || !domain}>
                                         {isProcessing ? (
                                             <>
                                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -292,7 +386,7 @@ export default function OrderPage() {
                                             </>
                                         ) : (
                                             <>
-                                                Comprar agora <ArrowRight className="ml-2 h-4 w-4" />
+                                                Continuar para o Pagamento <ArrowRight className="ml-2 h-4 w-4" />
                                             </>
                                         )}
                                     </Button>
