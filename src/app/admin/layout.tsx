@@ -31,6 +31,15 @@ import {
   CheckCircle,
   ShieldAlert,
   XCircle,
+  Clock,
+  Ban,
+  Undo2,
+  Archive,
+  Timer,
+  FileStack,
+  FileQuote,
+  Terminal,
+  File,
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 
@@ -227,9 +236,88 @@ export default function AdminLayout({
           </AccordionItem>
         </Accordion>
 
-        <NavLink href="/admin/faturamento" isActive={isActive('/admin/faturamento')} badge={2} isMobile={isMobile}>
-          <DollarSign className={iconSize} /> Faturamento
-        </NavLink>
+        <Accordion type="multiple" className="w-full" defaultValue={['billing']}>
+          <AccordionItem value="billing" className="border-b-0">
+            <AccordionTrigger className={cn("rounded-lg px-3 py-2 hover:no-underline hover:text-primary", isActive('/admin/faturamento') && 'text-primary bg-muted')}>
+              <div className="flex w-full items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <DollarSign className={iconSize} />
+                    Faturamento
+                </div>
+                <Badge className="bg-red-500 text-white hover:bg-red-600">2</Badge>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className={cn("pt-1 space-y-1", isMobile ? "pl-10" : "pl-7")}>
+                <Link href={'/admin/faturamento'} className={cn(subLinkClass, isExactlyActive('/admin/faturamento') && 'bg-muted text-primary')}>
+                    <ListTodo className={iconSize} />
+                    Lista de Transações
+                </Link>
+
+                <Accordion type="multiple" defaultValue={['invoices']} className="w-full">
+                    <AccordionItem value="invoices" className="border-b-0">
+                        <AccordionTrigger className={cn("rounded-lg px-3 py-2 hover:no-underline hover:text-primary", isActive('/admin/faturamento/faturas') && 'text-primary')}>
+                            <div className="flex w-full items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                <FileText className={iconSize} />
+                                Faturas
+                                </div>
+                                <Badge variant="destructive">2</Badge>
+                            </div>
+                        </AccordionTrigger>
+                        <AccordionContent className={cn("pt-1 space-y-1", isMobile ? "pl-10" : "pl-7")}>
+                             <Link href="/admin/faturamento/faturas" className={cn(subLinkClass, isExactlyActive('/admin/faturamento/faturas') && 'bg-muted text-primary')}>
+                                <Search className={iconSize} /> Ver Todas
+                            </Link>
+                            <Link href="/admin/faturamento/faturas?status=paid" className={cn(subLinkClass, isExactlyActive('/admin/faturamento/faturas?status=paid') && 'bg-muted text-primary')}>
+                                <CheckCircle className={iconSize} /> Pagas
+                            </Link>
+                            <Link href="/admin/faturamento/faturas?status=draft" className={cn(subLinkClass, isExactlyActive('/admin/faturamento/faturas?status=draft') && 'bg-muted text-primary')}>
+                                <File className={iconSize} /> Rascunhos
+                            </Link>
+                            <Link href="/admin/faturamento/faturas?status=unpaid" className={cn(subLinkClass, 'flex justify-between', isExactlyActive('/admin/faturamento/faturas?status=unpaid') && 'bg-muted text-primary')}>
+                                <div className="flex items-center gap-3">
+                                <XCircle className={iconSize} /> Não Pagas
+                                </div>
+                                <Badge variant="destructive">2</Badge>
+                            </Link>
+                             <Link href="/admin/faturamento/faturas?status=overdue" className={cn(subLinkClass, 'flex justify-between', isExactlyActive('/admin/faturamento/faturas?status=overdue') && 'bg-muted text-primary')}>
+                                <div className="flex items-center gap-3">
+                                <Clock className={iconSize} /> Vencidas
+                                </div>
+                                <Badge variant="destructive">2</Badge>
+                            </Link>
+                            <Link href="/admin/faturamento/faturas?status=cancelled" className={cn(subLinkClass, isExactlyActive('/admin/faturamento/faturas?status=cancelled') && 'bg-muted text-primary')}>
+                                <Ban className={iconSize} /> Canceladas
+                            </Link>
+                            <Link href="/admin/faturamento/faturas?status=refunded" className={cn(subLinkClass, isExactlyActive('/admin/faturamento/faturas?status=refunded') && 'bg-muted text-primary')}>
+                                <Undo2 className={iconSize} /> Reembolsadas
+                            </Link>
+                            <Link href="/admin/faturamento/faturas?status=collections" className={cn(subLinkClass, isExactlyActive('/admin/faturamento/faturas?status=collections') && 'bg-muted text-primary')}>
+                                <Archive className={iconSize} /> Cobranças
+                            </Link>
+                            <Link href="/admin/faturamento/faturas?status=payment_pending" className={cn(subLinkClass, isExactlyActive('/admin/faturamento/faturas?status=payment_pending') && 'bg-muted text-primary')}>
+                                <Timer className={iconSize} /> Pagamento Pendente
+                            </Link>
+                        </AccordionContent>
+                    </AccordionItem>
+                </Accordion>
+                
+                <Link href={'/admin/faturamento/itens'} className={cn(subLinkClass, isExactlyActive('/admin/faturamento/itens') && 'bg-muted text-primary')}>
+                    <FileStack className={iconSize} /> Itens Faturáveis
+                </Link>
+                <Link href={'/admin/faturamento/orcamentos'} className={cn(subLinkClass, isExactlyActive('/admin/faturamento/orcamentos') && 'bg-muted text-primary')}>
+                    <FileQuote className={iconSize} /> Orçamentos
+                </Link>
+                <Link href={'/admin/faturamento/offline-cc'} className={cn(subLinkClass, isExactlyActive('/admin/faturamento/offline-cc') && 'bg-muted text-primary')}>
+                    <CreditCard className={iconSize} /> Processamento CC Offline
+                </Link>
+                <Link href={'/admin/faturamento/gateway-log'} className={cn(subLinkClass, isExactlyActive('/admin/faturamento/gateway-log') && 'bg-muted text-primary')}>
+                    <Terminal className={iconSize} /> Log de Gateway
+                </Link>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+
         <NavLink href="/admin/suporte" isActive={isActive('/admin/suporte')} badge={1} isMobile={isMobile}>
           <LifeBuoy className={iconSize} /> Suporte
         </NavLink>
