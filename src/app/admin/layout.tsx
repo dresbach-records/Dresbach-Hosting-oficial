@@ -18,6 +18,13 @@ import {
   Puzzle,
   HelpCircle,
   Search,
+  UserPlus,
+  FileText,
+  Ticket,
+  FilePlus2,
+  ListTodo,
+  DollarSign,
+  Globe,
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 
@@ -36,33 +43,49 @@ import { Logo } from '@/components/logo';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Badge } from '@/components/ui/badge';
 
+
+const quickAccessItems = [
+    { href: '#', label: 'Add New Client', icon: UserPlus },
+    { href: '/admin/pedidos', label: 'Add New Order', icon: ShoppingCart },
+    { href: '#', label: 'Create New Quote', icon: FileText },
+    { href: '/admin/suporte', label: 'Open New Ticket', icon: Ticket },
+    { href: '/admin/faturamento', label: 'New Invoice', icon: FilePlus2 },
+    { href: '#', label: 'Create New To-Do Entry', icon: ListTodo },
+    { href: '#', label: 'WHOIS Lookup', icon: Globe },
+    { href: '#', label: 'Generate Due Invoices', icon: DollarSign },
+    { href: '#', label: 'Attempt CC Captures', icon: CreditCard },
+];
 
 const menuItems = [
-  { href: '/admin', label: 'Dashboard', icon: Home },
-  { href: '/admin/clientes', label: 'Clientes', icon: Users },
-  { href: '/admin/pedidos', label: 'Pedidos', icon: ShoppingCart },
-  { href: '/admin/faturamento', label: 'Faturamento', icon: CreditCard },
-  { href: '/admin/suporte', label: 'Suporte', icon: LifeBuoy },
-  { href: '/admin/relatorios', label: 'Relatórios', icon: BarChart },
-  { href: '/admin/utilitarios', label: 'Utilitários', icon: Wrench },
-  { href: '/admin/addons', label: 'Addons', icon: Puzzle },
-  { href: '/admin/configuracoes', label: 'Configurações', icon: Settings },
-  { href: '/admin/ajuda', label: 'Ajuda', icon: HelpCircle },
+  { href: '/admin/clientes', label: 'Clientes', icon: Users, badge: 0 },
+  { href: '/admin/pedidos', label: 'Pedidos', icon: ShoppingCart, badge: 2 },
+  { href: '/admin/faturamento', label: 'Faturamento', icon: CreditCard, badge: 2 },
+  { href: '/admin/suporte', label: 'Suporte', icon: LifeBuoy, badge: 1 },
+  { href: '/admin/relatorios', label: 'Relatórios', icon: BarChart, badge: 0 },
+  { href: '/admin/utilitarios', label: 'Utilitários', icon: Wrench, badge: 0 },
+  { href: '/admin/addons', label: 'Addons', icon: Puzzle, badge: 0 },
+  { href: '/admin/configuracoes', label: 'Configurações', icon: Settings, badge: 0 },
+  { href: '/admin/ajuda', label: 'Ajuda', icon: HelpCircle, badge: 0 },
 ];
 
 
-function NavLink({ href, children, isActive, isMobile = false }: { href: string; children: React.ReactNode; isActive: boolean, isMobile?: boolean }) {
+function NavLink({ href, children, isActive, isMobile = false, badge = 0 }: { href: string; children: React.ReactNode; isActive: boolean, isMobile?: boolean, badge?: number }) {
   return (
     <Link
       href={href}
       className={cn(
-        'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary',
+        'flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary',
         isActive && 'bg-muted text-primary',
         isMobile && 'text-lg'
       )}
     >
-      {children}
+      <div className="flex items-center gap-3">
+        {children}
+      </div>
+       {badge > 0 && <Badge className="bg-red-500 text-white hover:bg-red-600">{badge}</Badge>}
     </Link>
   );
 }
@@ -105,8 +128,28 @@ export default function AdminLayout({
 
   const desktopNav = (
       <nav className="grid items-start px-2 text-sm font-medium">
+         <Accordion type="single" collapsible defaultValue="item-1" className="w-full">
+            <AccordionItem value="item-1" className="border-b-0">
+                <AccordionTrigger className="px-3 py-2 text-muted-foreground transition-all hover:text-primary hover:no-underline [&[data-state=open]]:text-primary [&[data-state=open]]:bg-muted">
+                    <Link href="/admin" className="flex items-center gap-3">
+                        <Home className="h-4 w-4" />
+                        Home
+                    </Link>
+                </AccordionTrigger>
+                <AccordionContent className="pl-7 pt-1">
+                    <div className="flex flex-col gap-1">
+                        {quickAccessItems.map(item => (
+                            <Link key={item.label} href={item.href} className="flex items-center gap-2 py-1.5 text-muted-foreground hover:text-primary text-xs">
+                                <item.icon className="h-4 w-4" />
+                                {item.label}
+                            </Link>
+                        ))}
+                    </div>
+                </AccordionContent>
+            </AccordionItem>
+        </Accordion>
         {menuItems.map((item) => (
-          <NavLink key={item.href} href={item.href} isActive={pathname.startsWith(item.href) && (item.href !== '/admin' || pathname === '/admin')}>
+          <NavLink key={item.href} href={item.href} isActive={pathname.startsWith(item.href) && item.href !== '/admin'} badge={item.badge}>
             <item.icon className="h-4 w-4" />
             {item.label}
           </NavLink>
@@ -123,8 +166,28 @@ export default function AdminLayout({
             <Logo />
             <span className="sr-only">Dresbach Hosting</span>
         </Link>
+         <Accordion type="single" collapsible defaultValue="item-1" className="w-full">
+            <AccordionItem value="item-1" className="border-b-0">
+                <AccordionTrigger className="px-3 py-2 text-muted-foreground transition-all hover:text-primary hover:no-underline [&[data-state=open]]:text-primary [&[data-state=open]]:bg-muted">
+                    <Link href="/admin" className="flex items-center gap-3 text-lg">
+                        <Home className="h-5 w-5" />
+                        Home
+                    </Link>
+                </AccordionTrigger>
+                <AccordionContent className="pl-8 pt-1">
+                    <div className="flex flex-col gap-2">
+                        {quickAccessItems.map(item => (
+                            <Link key={item.label} href={item.href} className="flex items-center gap-3 py-1 text-muted-foreground hover:text-primary text-base">
+                                <item.icon className="h-4 w-4" />
+                                {item.label}
+                            </Link>
+                        ))}
+                    </div>
+                </AccordionContent>
+            </AccordionItem>
+        </Accordion>
         {menuItems.map((item) => (
-          <NavLink key={item.href} href={item.href} isActive={pathname.startsWith(item.href) && (item.href !== '/admin' || pathname === '/admin')} isMobile>
+          <NavLink key={item.href} href={item.href} isActive={pathname.startsWith(item.href) && item.href !== '/admin'} isMobile badge={item.badge}>
             <item.icon className="h-5 w-5" />
             {item.label}
           </NavLink>
@@ -144,6 +207,18 @@ export default function AdminLayout({
               <Bell className="h-4 w-4" />
               <span className="sr-only">Toggle notifications</span>
             </Button>
+          </div>
+          <div className="p-2">
+            <form>
+                <div className="relative">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        type="search"
+                        placeholder="Menu Search..."
+                        className="w-full appearance-none bg-background pl-8 shadow-none"
+                    />
+                </div>
+            </form>
           </div>
           <div className="flex-1 overflow-auto py-2">
             {desktopNav}
