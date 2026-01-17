@@ -17,6 +17,7 @@ import {
 } from 'firebase/auth';
 import { Loader2 } from 'lucide-react';
 import { Logo } from '@/components/logo';
+import { useToast } from '@/hooks/use-toast';
 import { fetchFromGoBackend } from '@/lib/go-api';
 
 const GoogleIcon = () => (
@@ -42,6 +43,7 @@ export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSocialLoading, setIsSocialLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const auth = useAuth();
   const router = useRouter();
@@ -60,22 +62,14 @@ export default function SignupPage() {
         displayName: `${firstName} ${lastName}`.trim(),
       });
       
-      // 3. Get the ID token from the newly created user
-      const idToken = await userCredential.user.getIdToken();
-
-      // 4. Call the backend to create a session cookie. This endpoint will also handle
-      // creating the user in Firestore and assigning the 'admin' role if it's the first user.
-      const sessionData = await fetchFromGoBackend<{ isAdmin: boolean }>('/api/v1/auth/session-login', {
-        method: 'POST',
-        body: JSON.stringify({ idToken }),
+      // 3. Inform the user and redirect to login
+      // The user sync logic and session creation now happens on the login page.
+      toast({
+        title: "Conta criada com sucesso!",
+        description: "Você será redirecionado para a página de login.",
       });
-      
-      // 5. Redirect to the correct dashboard based on the role returned from the session creation
-      if (sessionData.isAdmin) {
-        router.push('/admin');
-      } else {
-        router.push('/area-do-cliente');
-      }
+
+      router.push('/login');
 
     } catch (err: any) {
       if (err.code === 'auth/email-already-in-use') {
