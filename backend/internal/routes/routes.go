@@ -10,23 +10,25 @@ import (
 
 // Register registra todas as rotas da aplicação.
 func Register(r *gin.Engine) {
-	// Rota de health check pública
+	// Rota de health check pública. Acessível via /api/health
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	})
 
-	apiV1 := r.Group("/api/v1")
+    // O rewrite do Firebase (/api/**) passa o resto do caminho para a função.
+    // Então, uma requisição para /api/v1/... chega aqui como /v1/...
+	v1 := r.Group("/v1")
 	{
 		// --- ROTAS PÚBLICAS ---
-		authPublic := apiV1.Group("/auth")
+		authPublic := v1.Group("/auth")
 		{
 			authPublic.POST("/session-login", handlers.SessionLoginHandler)
 			authPublic.POST("/logout", handlers.LogoutHandler)
 		}
-		apiV1.GET("/domains/lookup/:domain", handlers.DomainLookupHandler)
+		v1.GET("/domains/lookup/:domain", handlers.DomainLookupHandler)
 
 		// --- ROTAS AUTENTICADAS (CLIENTE E/OU ADMIN) ---
-		authenticated := apiV1.Group("/")
+		authenticated := v1.Group("/")
 		authenticated.Use(middleware.AuthMiddleware())
 		{
 			authenticated.GET("/auth/me", handlers.MeHandler)
