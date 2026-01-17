@@ -9,6 +9,7 @@ import (
 	"backend/internal/firebase"
 	"backend/internal/utils"
 
+	"cloud.google.com/go/firestore"
 	"github.com/gin-gonic/gin"
 )
 
@@ -42,10 +43,12 @@ func MakeAdminHandler(c *gin.Context) {
 	}
 
 	// 2. Atualizar o papel no documento do usuário no Firestore
+	// Usando Set com MergeAll para criar o documento se não existir ou atualizar se existir.
 	userRef := firebase.FirestoreClient.Collection("users").Doc(user.UID)
-	_, err = userRef.Update(context.Background(), []firestore.Update{
-		{Path: "role", Value: "admin"},
-	})
+	_, err = userRef.Set(context.Background(), map[string]interface{}{
+		"role": "admin",
+	}, firestore.MergeAll)
+
 	if err != nil {
 		log.Printf("Erro ao atualizar o papel do usuário no Firestore para UID %s: %v", user.UID, err)
 		// Neste ponto, o Auth foi atualizado, mas o Firestore não.
