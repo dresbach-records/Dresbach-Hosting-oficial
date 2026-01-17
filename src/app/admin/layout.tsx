@@ -74,6 +74,7 @@ export default function AdminLayout({
   const { user, isAdmin, isUserLoading } = useUser();
   const auth = useAuth();
 
+  // Permite o acesso à página de login do admin sem autenticação
   if (pathname.startsWith('/admin/login')) {
       return <>{children}</>;
   }
@@ -87,12 +88,12 @@ export default function AdminLayout({
   }
 
   if (!user) {
-    redirect('/login');
+    redirect('/admin/login'); // Redireciona para o login de admin
     return null;
   }
 
   if (!isAdmin) {
-      redirect('/area-do-cliente');
+      redirect('/area-do-cliente'); // Se logado mas não for admin, vai para a área do cliente
       return null;
   }
 
