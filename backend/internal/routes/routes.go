@@ -15,29 +15,21 @@ func Register(r *gin.Engine) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	})
 
-	api := r.Group("/api/v1")
+	apiV1 := r.Group("/api/v1")
 	{
 		// --- ROTAS PÚBLICAS ---
-		public := api.Group("/")
+		authPublic := apiV1.Group("/auth")
 		{
-			// Autenticação
-			auth := public.Group("/auth")
-			// O endpoint de registro foi removido. O frontend agora usa o SDK do Firebase para criar o usuário.
-			// O backend sincroniza o usuário na primeira chamada a /session-login.
-			auth.POST("/session-login", handlers.SessionLoginHandler)
-			auth.POST("/logout", handlers.LogoutHandler)
-
-			// Domínios
-			public.GET("/domains/lookup/:domain", handlers.DomainLookupHandler)
+			authPublic.POST("/session-login", handlers.SessionLoginHandler)
+			authPublic.POST("/logout", handlers.LogoutHandler)
 		}
+		apiV1.GET("/domains/lookup/:domain", handlers.DomainLookupHandler)
 
-		// --- ROTAS AUTENTICADAS ---
-		authenticated := api.Group("/")
+		// --- ROTAS AUTENTICADAS (CLIENTE E/OU ADMIN) ---
+		authenticated := apiV1.Group("/")
 		authenticated.Use(middleware.AuthMiddleware())
 		{
 			authenticated.GET("/auth/me", handlers.MeHandler)
-
-			// Pagamentos e Provisionamento para o cliente logado
 			authenticated.POST("/payments/create-intent", handlers.CreatePaymentIntentHandler)
 			authenticated.POST("/provision-account", handlers.ProvisionAccountHandler)
 
@@ -73,11 +65,8 @@ func Register(r *gin.Engine) {
 			admin.Use(middleware.AdminMiddleware())
 			{
 				admin.GET("/dashboard", handlers.GetAdminDashboard)
-				
-				// Gestão de Usuários e Permissões (pós-bootstrap)
 				admin.POST("/make-admin", handlers.MakeAdminHandler)
 
-				// Gestão de Clientes
 				clients := admin.Group("/clients")
 				{
 					clients.GET("/", handlers.ListClients)
@@ -87,7 +76,6 @@ func Register(r *gin.Engine) {
 					clients.PUT("/:id/suspend", handlers.SuspendClient)
 				}
 
-				// Gestão de Produtos/Planos
 				products := admin.Group("/products")
 				{
 					products.GET("/", handlers.ListProducts)
@@ -95,7 +83,6 @@ func Register(r *gin.Engine) {
 					products.PUT("/:id", handlers.UpdateProduct)
 				}
 
-				// Gestão de Serviços
 				services := admin.Group("/services")
 				{
 					services.GET("/", handlers.ListServices)
@@ -104,7 +91,6 @@ func Register(r *gin.Engine) {
 					services.DELETE("/:id", handlers.TerminateService)
 				}
 
-				// Gestão de Faturas
 				invoices := admin.Group("/invoices")
 				{
 					invoices.GET("/", handlers.ListInvoices)
@@ -112,7 +98,6 @@ func Register(r *gin.Engine) {
 					invoices.PUT("/:id/pay", handlers.MarkInvoiceAsPaid)
 				}
 				
-				// Gestão de Tickets
 				tickets := admin.Group("/tickets")
 				{
 					tickets.GET("/", handlers.ListTickets)
@@ -120,7 +105,6 @@ func Register(r *gin.Engine) {
 					tickets.PUT("/:id/status", handlers.UpdateTicketStatus)
 				}
 
-				// Gestão de Servidores WHM
 				servers := admin.Group("/servers")
 				{
 					servers.GET("/", handlers.ListServers)
