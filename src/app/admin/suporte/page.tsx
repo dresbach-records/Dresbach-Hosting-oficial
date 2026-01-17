@@ -38,7 +38,7 @@ export default function SupportAdminPage() {
         <Card>
             <CardHeader className="flex flex-row items-center justify-between">
                 <div>
-                    <CardTitle>Suporte</CardTitle>
+                    <CardTitle>Tickets de Suporte</CardTitle>
                     <CardDescription>Gerencie tickets de suporte, departamentos e automações.</CardDescription>
                 </div>
                 <div className="flex items-center gap-2">

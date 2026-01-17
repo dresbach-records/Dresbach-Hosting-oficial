@@ -37,7 +37,6 @@ import {
   Archive,
   Timer,
   FileStack,
-  FileQuote,
   Terminal,
   File,
   Flag,
@@ -210,7 +209,7 @@ export default function AdminLayout({
               </Accordion>
               
               <Link href="/admin/addons" className={cn(subLinkClass, isExactlyActive('/admin/addons') && 'bg-muted text-primary')}>
-                <BookUser className={iconSize} /> Addons de Serviço
+                <BookUser className={iconSize} /> CRM
               </Link>
               <Link href="/admin/dominios" className={cn(subLinkClass, isExactlyActive('/admin/dominios') && 'bg-muted text-primary')}>
                 <Globe className={iconSize} /> Registros de Domínio
@@ -342,7 +341,7 @@ export default function AdminLayout({
                     <FileStack className={iconSize} /> Itens Faturáveis
                 </Link>
                 <Link href={'/admin/faturamento/orcamentos'} className={cn(subLinkClass, isExactlyActive('/admin/faturamento/orcamentos') && 'bg-muted text-primary')}>
-                    <FileQuote className={iconSize} /> Orçamentos
+                    <FileText className={iconSize} /> Orçamentos
                 </Link>
                 <Link href={'/admin/faturamento/offline-cc'} className={cn(subLinkClass, isExactlyActive('/admin/faturamento/offline-cc') && 'bg-muted text-primary')}>
                     <CreditCard className={iconSize} /> Processamento CC Offline
@@ -452,7 +451,7 @@ export default function AdminLayout({
                         Visão Geral do Suporte
                     </Link>
                     <Link href={'/admin/suporte/predefined-replies'} className={cn(subLinkClass, isExactlyActive('/admin/suporte/predefined-replies') && 'bg-muted text-primary')}>
-                        <FileQuote className={iconSize} />
+                        <FileText className={iconSize} />
                         Respostas Predefinidas
                     </Link>
                 </AccordionContent>
