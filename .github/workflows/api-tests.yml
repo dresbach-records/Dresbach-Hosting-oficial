@@ -1,0 +1,44 @@
+name: API Contract & E2E Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  api-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Newman
+        run: npm install -g newman
+
+      - name: Validate OpenAPI
+        run: |
+          npm install -g swagger-cli
+          swagger-cli validate docs/openapi.yaml
+
+      - name: Run API & E2E Tests
+        env:
+          BASE_URL: ${{ secrets.API_BASE_URL }}
+          API_TOKEN: ${{ secrets.API_TEST_TOKEN }}
+        run: |
+          newman run docs/postman_collection.json \
+            -e docs/postman_environment.json \
+            --env-var base_url=$BASE_URL \
+            --env-var token=$API_TOKEN \
+            --reporters cli,junit \
+            --reporter-junit-export newman-report.xml
+
+      - name: Upload Test Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: newman-report
+          path: newman-report.xml
