@@ -117,7 +117,8 @@ service cloud.firestore {
      * @principle Enables a central service list for admins, secured from non-admin access.
      */
     match /services/{serviceId} {
-        allow get, list, create, update, delete: if isAdmin();
+        allow read, write: if isAdmin();
+        allow create: if (isOwner(request.resource.data.clientId) || isAdmin());
     }
 
 
@@ -197,5 +198,3 @@ service cloud.firestore {
     }
   }
 }
-
-    

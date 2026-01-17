@@ -1,13 +1,16 @@
 'use client';
 
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { collection, limit, query, orderBy } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Server, Globe, MessageSquare, CreditCard, Search, Plus, Newspaper } from 'lucide-react';
 import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { format } from 'date-fns';
 
 const StatCard = ({ title, icon, count, colorClass, isLoading }: { title: string, icon: React.ReactNode, count: number, colorClass: string, isLoading: boolean }) => (
     <Card className="relative overflow-hidden shadow-sm">
@@ -26,15 +29,25 @@ const StatCard = ({ title, icon, count, colorClass, isLoading }: { title: string
     </Card>
 );
 
+function ServiceStatusBadge({ status }: { status: string }) {
+    const variant = status === 'Active' ? 'default' : 'secondary';
+    return <Badge variant={variant}>{status === 'Active' ? 'Ativo' : 'Inativo'}</Badge>;
+}
+
+function TicketStatusBadge({ status }: { status: string }) {
+    const variant = status === 'Open' ? 'default' : 'secondary';
+    return <Badge variant={variant}>{status === 'Open' ? 'Aberto' : 'Fechado'}</Badge>;
+}
+
 
 export default function ClientAreaDashboard() {
   const { user } = useUser();
   const firestore = useFirestore();
 
-  const servicesQuery = useMemoFirebase(() => user && collection(firestore, 'clients', user.uid, 'services'), [firestore, user]);
+  const servicesQuery = useMemoFirebase(() => user && query(collection(firestore, 'clients', user.uid, 'services'), orderBy('startDate', 'desc'), limit(5)), [firestore, user]);
   const domainsQuery = useMemoFirebase(() => user && collection(firestore, 'clients', user.uid, 'domains'), [firestore, user]);
   const invoicesQuery = useMemoFirebase(() => user && collection(firestore, 'clients', user.uid, 'invoices'), [firestore, user]);
-  const ticketsQuery = useMemoFirebase(() => user && collection(firestore, 'clients', user.uid, 'tickets'), [firestore, user]);
+  const ticketsQuery = useMemoFirebase(() => user && query(collection(firestore, 'clients', user.uid, 'tickets'), orderBy('createdAt', 'desc'), limit(5)), [firestore, user]);
 
   const { data: services, isLoading: servicesLoading } = useCollection(servicesQuery);
   const { data: domains, isLoading: domainsLoading } = useCollection(domainsQuery);
@@ -89,7 +102,21 @@ export default function ClientAreaDashboard() {
                 <CardTitle className="text-base font-semibold">Seus Produtos/Serviços Ativos</CardTitle>
             </CardHeader>
             <CardContent>
-                <p className="text-muted-foreground text-center py-4">Parece que você ainda não tem nenhum produto/serviço conosco. <Link href="/planos-de-hospedagem" className="text-accent-600 font-semibold hover:underline">Faça um pedido para começar</Link>.</p>
+                {servicesLoading && <Skeleton className="h-24 w-full" />}
+                {!servicesLoading && services && services.length > 0 ? (
+                     <Table>
+                        <TableBody>
+                        {services.map(service => (
+                            <TableRow key={service.id}>
+                                <TableCell>{service.description}</TableCell>
+                                <TableCell><ServiceStatusBadge status={service.status} /></TableCell>
+                            </TableRow>
+                        ))}
+                        </TableBody>
+                    </Table>
+                ) : (
+                     !servicesLoading && <p className="text-muted-foreground text-center py-4">Parece que você ainda não tem nenhum produto/serviço conosco. <Link href="/planos-de-hospedagem" className="text-accent-600 font-semibold hover:underline">Faça um pedido para começar</Link>.</p>
+                )}
             </CardContent>
             <CardFooter className="bg-muted/50 p-2 flex justify-end">
                 <Button asChild size="sm" variant="outline" className="shadow-sm">
@@ -104,7 +131,22 @@ export default function ClientAreaDashboard() {
                     <CardTitle className="text-base font-semibold">Tickets de Suporte Recentes</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <p className="text-muted-foreground text-center py-4">Nenhum ticket recente encontrado. Se precisar de ajuda, por favor <Link href="/area-do-cliente/tickets?new=true" className="text-accent-600 font-semibold hover:underline">abra um ticket</Link>.</p>
+                    {ticketsLoading && <Skeleton className="h-24 w-full" />}
+                    {!ticketsLoading && tickets && tickets.length > 0 ? (
+                        <Table>
+                            <TableBody>
+                            {tickets.map(ticket => (
+                                <TableRow key={ticket.id}>
+                                    <TableCell>{ticket.subject}</TableCell>
+                                    <TableCell><TicketStatusBadge status={ticket.status} /></TableCell>
+                                    <TableCell className="text-right">{format(new Date(ticket.createdAt), 'dd/MM/yy')}</TableCell>
+                                </TableRow>
+                            ))}
+                            </TableBody>
+                        </Table>
+                    ) : (
+                         !ticketsLoading && <p className="text-muted-foreground text-center py-4">Nenhum ticket recente encontrado. Se precisar de ajuda, por favor <Link href="/area-do-cliente/tickets?new=true" className="text-accent-600 font-semibold hover:underline">abra um ticket</Link>.</p>
+                    )}
                 </CardContent>
                  <CardFooter className="bg-muted/50 p-2 flex justify-end">
                     <Button asChild size="sm" className="bg-primary hover:bg-primary/90">

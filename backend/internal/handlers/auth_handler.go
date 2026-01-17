@@ -92,10 +92,19 @@ func LoginHandler(c *gin.Context) {
 		return
 	}
 
+	// Verifica se o usuário tem a claim de admin
+	isAdmin := false
+	if claims := userRecord.CustomClaims; claims != nil {
+		if val, ok := claims["admin"]; ok {
+			isAdmin = val.(bool)
+		}
+	}
+
 	sess, _ := session.Store.Get(c.Request, session.Name)
 	sess.Values["userID"] = userRecord.UID
 	sess.Values["email"] = userRecord.Email
-	sess.Options.MaxAge = 86400 // 24 horas
+	sess.Values["isAdmin"] = isAdmin // Salva a permissão na sessão
+	sess.Options.MaxAge = 86400      // 24 horas
 	sess.Options.HttpOnly = true
 	sess.Options.SameSite = http.SameSiteLaxMode
 
@@ -105,7 +114,7 @@ func LoginHandler(c *gin.Context) {
 		return
 	}
 
-	utils.Success(c, http.StatusOK, gin.H{"message": "Login bem-sucedido"})
+	utils.Success(c, http.StatusOK, gin.H{"message": "Login bem-sucedido", "isAdmin": isAdmin})
 }
 
 // LogoutHandler lida com a destruição da sessão.

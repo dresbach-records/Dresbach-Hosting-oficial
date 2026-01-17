@@ -10,6 +10,7 @@ const GO_BACKEND_URL = process.env.NEXT_PUBLIC_GO_BACKEND_URL || 'http://localho
 /**
  * A generic and reusable function to make API requests to your Go backend.
  * It handles setting JSON headers, and basic success/error responses.
+ * It also includes credentials to ensure cookies are sent for session-based authentication.
  *
  * @template T The expected type of the data in the successful response.
  * @param endpoint The specific API endpoint to call (e.g., '/auth/login' or '/user/profile').
@@ -21,11 +22,10 @@ export async function fetchFromGoBackend<T>(endpoint: string, options: RequestIn
   const url = `${GO_BACKEND_URL}${endpoint}`;
 
   const response = await fetch(url, {
+    credentials: 'include', // ESSENCIAL: Envia cookies em requisições cross-origin
     ...options,
     headers: {
       'Content-Type': 'application/json',
-      // You could add authorization headers here if needed, e.g.,
-      // 'Authorization': `Bearer ${token}`,
       ...options.headers,
     },
   });
@@ -34,8 +34,13 @@ export async function fetchFromGoBackend<T>(endpoint: string, options: RequestIn
     // Attempt to parse a more specific error message from the backend response body
     let errorMessage = `Request failed with status ${response.status}`;
     try {
+      // Tenta extrair a mensagem de erro do corpo da resposta JSON
       const errorBody = await response.json();
-      errorMessage = errorBody.message || errorBody.error || errorMessage;
+      if (errorBody.error) {
+        errorMessage = errorBody.error;
+      } else if (errorBody.message) {
+        errorMessage = errorBody.message;
+      }
     } catch (e) {
       // The error response was not JSON, use the status text
       errorMessage = `${errorMessage}: ${response.statusText}`;
@@ -74,8 +79,8 @@ export async function fetchFromGoBackend<T>(endpoint: string, options: RequestIn
  *       useEffect(() => {
  *         const loadProfile = async () => {
  *           try {
- *             // Assuming your Go backend has a GET /user/profile endpoint
- *             const data = await fetchFromGoBackend('/user/profile');
+ *             // O cookie de sessão será enviado automaticamente com a requisição
+ *             const data = await fetchFromGoBackend('/api/user/profile');
  *             setProfile(data);
  *           } catch (error) {
  *             console.error("Failed to fetch profile:", error);

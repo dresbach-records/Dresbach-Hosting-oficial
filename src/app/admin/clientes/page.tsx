@@ -67,9 +67,8 @@ export default function ClientsAdminPage() {
   const onSubmit = async (values: NewClientForm) => {
     setIsSubmitting(true);
     try {
-      // This endpoint in the Go backend would use the Firebase Admin SDK 
-      // to create the Auth user and the Firestore document.
-      await fetchFromGoBackend('/admin/create-client', {
+      // Este endpoint no backend Go usa o Admin SDK para criar o usuário de autenticação e o documento Firestore.
+      await fetchFromGoBackend('/api/admin/create-client', {
         method: 'POST',
         body: JSON.stringify(values),
       });
@@ -81,7 +80,7 @@ export default function ClientsAdminPage() {
       setIsSubmitting(false);
       setIsDialogOpen(false);
       form.reset();
-      // The useCollection hook will automatically refresh the list.
+      // O hook useCollection irá atualizar a lista automaticamente.
     } catch (error: any) {
       console.error("Failed to create client:", error);
       toast({

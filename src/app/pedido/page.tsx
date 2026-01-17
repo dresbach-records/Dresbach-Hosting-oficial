@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, redirect } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { fetchFromGoBackend } from '@/lib/go-api';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
+import { useUser } from '@/firebase';
 
 
 const billingCycles = [
@@ -67,6 +68,7 @@ const BillingCycleCard = ({ id, name, price, originalPrice, discount, selected, 
 
 
 export default function OrderPage() {
+    const { user, isUserLoading } = useUser();
     const [selectedPlan, setSelectedPlan] = useState('profissional');
     const [selectedCycle, setSelectedCycle] = useState('annually');
     const [domain, setDomain] = useState('');
@@ -74,6 +76,19 @@ export default function OrderPage() {
     
     const router = useRouter();
     const { toast } = useToast();
+
+    if (isUserLoading) {
+        return (
+            <div className="flex h-[50vh] items-center justify-center">
+                <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            </div>
+        );
+    }
+
+    if (!user) {
+        redirect('/login?redirect=/pedido');
+        return null;
+    }
 
     const planDetails: { [key: string]: { name: string, price: number } } = {
         solteiro: { name: 'Solteiro', price: 2.99 },
@@ -109,9 +124,9 @@ export default function OrderPage() {
         };
 
         try {
-            // This function will call the Go backend
-            // The Go backend will then call the WHM API.
-            await fetchFromGoBackend('/provision-account', {
+            // Esta função chamará o backend Go, que está protegido por middleware de autenticação.
+            // O cookie de sessão será enviado automaticamente.
+            await fetchFromGoBackend('/api/provision-account', {
                 method: 'POST',
                 body: JSON.stringify(orderData),
             });
@@ -121,7 +136,7 @@ export default function OrderPage() {
                 description: 'Seu novo serviço de hospedagem está sendo provisionado.',
             });
             
-            // Redirect to a confirmation or services page after a short delay
+            // Redireciona para a página de serviços do cliente após um pequeno atraso
             setTimeout(() => router.push('/area-do-cliente/servicos'), 2000);
 
         } catch (error: any) {
@@ -133,7 +148,6 @@ export default function OrderPage() {
             });
              setIsProcessing(false);
         }
-        // No need to set isProcessing to false here on success, because we are redirecting
     };
 
     return (
@@ -270,7 +284,7 @@ export default function OrderPage() {
                                         <p className="text-sm text-muted-foreground">Total do pedido devido hoje</p>
                                         <p className="text-3xl font-bold">R$ {total.toFixed(2).replace('.', ',')}</p>
                                     </div>
-                                    <Button className="w-full" size="lg" onClick={handlePurchase} disabled={isProcessing}>
+                                    <Button className="w-full" size="lg" onClick={handlePurchase} disabled={isProcessing || !domain}>
                                         {isProcessing ? (
                                             <>
                                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

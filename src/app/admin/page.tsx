@@ -13,6 +13,9 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart"
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, query, where } from 'firebase/firestore';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const chartData = [
   { month: 'Jan', revenue: 186, orders: 80, income: 200 },
@@ -49,7 +52,28 @@ const todoItems = [
     { text: "Fazer follow-up no Ticket #12345", due: '2 semanas atrás', status: 'ATRASADO' },
 ];
 
+const StatCard = ({ title, icon, value, isLoading, description }: { title: string, icon: React.ReactNode, value: number, isLoading: boolean, description?: string }) => (
+    <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">{title}</CardTitle>
+            {icon}
+        </CardHeader>
+        <CardContent>
+            {isLoading ? <Skeleton className="h-8 w-12" /> : <div className="text-2xl font-bold">{value}</div>}
+            {description && <p className="text-xs text-muted-foreground">{description}</p>}
+        </CardContent>
+    </Card>
+);
+
 export default function AdminDashboard() {
+    const firestore = useFirestore();
+
+    const pendingServicesQuery = useMemoFirebase(() => query(collection(firestore, 'services'), where('status', '==', 'Pending')), [firestore]);
+    const { data: pendingServices, isLoading: pendingServicesLoading } = useCollection(pendingServicesQuery);
+
+    const awaitingTicketsQuery = useMemoFirebase(() => query(collection(firestore, 'tickets'), where('status', 'in', ['Open', 'Customer-Reply'])), [firestore]);
+    const { data: awaitingTickets, isLoading: awaitingTicketsLoading } = useCollection(awaitingTicketsQuery);
+    
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left Sidebar within Dashboard */}
@@ -94,45 +118,33 @@ export default function AdminDashboard() {
         {/* Main Content */}
         <div className="lg:col-span-9 space-y-6">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Pedidos Pendentes</CardTitle>
-                    <ShoppingCart className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                    <div className="text-2xl font-bold">12</div>
-                    <p className="text-xs text-muted-foreground">Aguardando aprovação</p>
-                </CardContent>
-                </Card>
-                <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Tickets Aguardando</CardTitle>
-                    <Ticket className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                    <div className="text-2xl font-bold">34</div>
-                    <p className="text-xs text-muted-foreground">5 aguardando resposta do admin</p>
-                </CardContent>
-                </Card>
-                <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Cancelamentos Pendentes</CardTitle>
-                    <FileX className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                    <div className="text-2xl font-bold">3</div>
-                </CardContent>
-                </Card>
-                 <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Ações de Módulo</CardTitle>
-                    <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                    <div className="text-2xl font-bold">1</div>
-                     <p className="text-xs text-muted-foreground">Falha na criação de serviço</p>
-                </CardContent>
-                </Card>
+                 <StatCard 
+                    title="Pedidos Pendentes"
+                    icon={<ShoppingCart className="h-4 w-4 text-muted-foreground" />}
+                    value={pendingServices?.length ?? 0}
+                    isLoading={pendingServicesLoading}
+                    description="Aguardando aprovação"
+                 />
+                 <StatCard 
+                    title="Tickets Aguardando"
+                    icon={<Ticket className="h-4 w-4 text-muted-foreground" />}
+                    value={awaitingTickets?.length ?? 0}
+                    isLoading={awaitingTicketsLoading}
+                    description="Aguardando resposta do admin"
+                 />
+                 <StatCard 
+                    title="Cancelamentos Pendentes"
+                    icon={<FileX className="h-4 w-4 text-muted-foreground" />}
+                    value={3} // Placeholder
+                    isLoading={false}
+                 />
+                 <StatCard 
+                    title="Ações de Módulo"
+                    icon={<AlertTriangle className="h-4 w-4 text-muted-foreground" />}
+                    value={1} // Placeholder
+                    isLoading={false}
+                    description="Falha na criação de serviço"
+                 />
             </div>
 
             <div className="grid gap-6 md:grid-cols-1">

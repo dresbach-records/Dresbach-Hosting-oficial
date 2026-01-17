@@ -22,7 +22,7 @@ export default function AdminLoginPage() {
   const auth = useAuth();
   const router = useRouter();
   const { user, isAdmin, isUserLoading } = useUser();
-  const siteKey = '6LdZHk0sAAAAAPSnAIbpdQ6wXthwbzGEcdFQiGOD';
+  const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || '6LdZHk0sAAAAAPSnAIbpdQ6wXthwbzGEcdFQiGOD';
 
   // New state for the dev tool
   const [adminEmail, setAdminEmail] = useState('');
@@ -50,24 +50,27 @@ export default function AdminLoginPage() {
       try {
         const recaptchaToken = await (window as any).grecaptcha.enterprise.execute(siteKey, { action: 'LOGIN' });
 
-        // First, verify the token with our Go backend
-        await fetchFromGoBackend('/auth/verify-token', {
+        // Primeiro, o backend Go cria a sessão baseada em cookie.
+        // A API de login do Go agora verifica se o usuário é admin.
+        const loginResponse = await fetchFromGoBackend('/auth/login', {
             method: 'POST',
-            body: JSON.stringify({ recaptchaToken }),
+            body: JSON.stringify({ email, password, recaptchaToken }), // recaptchaToken é validado pelo backend
         });
 
-        // If reCAPTCHA is valid, proceed with Firebase login
+        // O backend retorna um erro se o login falhar ou se o usuário não for admin
+        // mas aqui no frontend, também precisamos fazer o login no Firebase para ter o contexto do usuário.
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        const idTokenResult = await userCredential.user.getIdTokenResult(true); // Force refresh
-        
+        const idTokenResult = await userCredential.user.getIdTokenResult(true); // Força a atualização do token
+
         if (!idTokenResult.claims.admin) {
             await auth.signOut();
             setError('Acesso negado. Este usuário não é um administrador.');
             setIsLoading(false);
+        } else {
+             // O useEffect cuidará do redirecionamento
         }
-        // The useEffect will handle the redirect on successful admin login
       } catch (err: any) {
-        if (err.message?.includes('reCAPTCHA')) {
+        if (err.message) {
             setError(err.message);
         } else if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
           setError('Credenciais inválidas.');
@@ -86,13 +89,14 @@ export default function AdminLoginPage() {
     setIsMakingAdmin(true);
     setMakeAdminMessage('');
     try {
-        await fetchFromGoBackend('/auth/make-admin', {
+        // Este endpoint agora está protegido e requer que um admin já esteja logado
+        await fetchFromGoBackend('/api/admin/make-admin', {
             method: 'POST',
             body: JSON.stringify({ email: adminEmail }),
         });
         setMakeAdminMessage(`Sucesso! ${adminEmail} agora é um administrador. Faça login para acessar o painel.`);
     } catch(err: any) {
-        setMakeAdminMessage(`Erro: ${err.message}`);
+        setMakeAdminMessage(`Erro: ${err.message}. Você precisa estar logado como admin para usar esta ferramenta.`);
     } finally {
         setIsMakingAdmin(false);
     }
@@ -157,7 +161,7 @@ export default function AdminLoginPage() {
           <Card className="w-full max-w-sm mt-6 border-dashed">
             <CardHeader>
                 <CardTitle className="text-lg">Ferramenta de Desenvolvedor</CardTitle>
-                <CardDescription>Use este formulário para conceder privilégios de administrador a um usuário existente.</CardDescription>
+                <CardDescription>Use este formulário para conceder privilégios de administrador a um usuário existente. (Requer login de admin)</CardDescription>
             </CardHeader>
             <CardContent>
                 <form onSubmit={handleMakeAdmin} className="space-y-4">

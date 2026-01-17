@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -10,10 +11,13 @@ import (
 	"strings"
 	"time"
 
+	"backend/internal/firebase"
+	"backend/internal/session"
 	"backend/internal/utils"
 	"backend/internal/whm"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 type ProvisionPayload struct {
@@ -55,69 +59,89 @@ func ProvisionAccountHandler(c *gin.Context) {
 		return
 	}
 
-	if whm.WhmClient == nil {
-		log.Printf("Simulando provisionamento para o domínio %s (cliente WHM não configurado)", p.Domain)
-		// Simulate a delay
-		time.Sleep(2 * time.Second)
-		utils.Success(c, http.StatusOK, gin.H{"message": "Conta provisionada com sucesso (simulação)."})
+	// Obter o ID do usuário da sessão validada pelo middleware
+	sess, _ := session.Store.Get(c.Request, session.Name)
+	userID, ok := sess.Values["userID"].(string)
+	clientName, _ := sess.Values["email"].(string) // Usar email como clientName
+	if !ok || userID == "" {
+		utils.Error(c, http.StatusUnauthorized, "Sessão de usuário inválida ou não encontrada.")
 		return
 	}
 
+	// Lógica de provisionamento WHM
 	username := generateUsername(p.Domain)
 	password := generatePassword(16)
-	// Map frontend plan name to WHM package name (this may need adjustment)
-	// For now, let's assume a simple mapping. E.g., "Profissional" -> "dresbach_profissional"
 	whmPlanName := "dresbach_" + strings.ToLower(p.Plan)
 
-	log.Printf("Iniciando provisionamento WHM para domínio: %s, usuário: %s, plano: %s", p.Domain, username, whmPlanName)
+	log.Printf("Iniciando provisionamento para o usuário %s. Domínio: %s, Plano WHM: %s", userID, p.Domain, whmPlanName)
 
-	resp, err := whm.WhmClient.CreateAccount(p.Domain, username, password, whmPlanName)
-	if err != nil {
-		log.Printf("Erro ao chamar a API WHM: %v", err)
-		utils.Error(c, http.StatusInternalServerError, "Falha na comunicação com o servidor de hospedagem.")
-		return
-	}
-	defer resp.Body.Close()
-
-	bodyBytes, _ := io.ReadAll(resp.Body)
-
-	if resp.StatusCode != http.StatusOK {
-		log.Printf("API WHM retornou status não-OK: %d. Resposta: %s", resp.StatusCode, string(bodyBytes))
-		utils.Error(c, http.StatusInternalServerError, "O servidor de hospedagem retornou um erro.")
-		return
-	}
-
-	var whmResponse map[string]interface{}
-	if err := json.Unmarshal(bodyBytes, &whmResponse); err != nil {
-		log.Printf("Erro ao decodificar resposta do WHM: %v", err)
-		utils.Error(c, http.StatusInternalServerError, "Resposta inválida do servidor de hospedagem.")
-		return
-	}
-
-	// WHM API v1 returns metadata and data fields. result is in metadata.
-	metadata, ok := whmResponse["metadata"].(map[string]interface{})
-	if !ok {
-		log.Printf("Resposta do WHM não contém 'metadata': %s", string(bodyBytes))
-		utils.Error(c, http.StatusInternalServerError, "Resposta inesperada do servidor de hospedagem.")
-		return
-	}
-
-	result, ok := metadata["result"].(float64)
-	if !ok || result != 1 {
-		reason := "Razão desconhecida"
-		if r, exists := metadata["reason"]; exists {
-			reason = r.(string)
+	if whm.WhmClient != nil {
+		resp, err := whm.WhmClient.CreateAccount(p.Domain, username, password, whmPlanName)
+		if err != nil {
+			log.Printf("Erro ao chamar a API WHM: %v", err)
+			utils.Error(c, http.StatusInternalServerError, "Falha na comunicação com o servidor de hospedagem.")
+			return
 		}
-		log.Printf("Falha na criação da conta WHM: %s", reason)
-		utils.Error(c, http.StatusBadRequest, fmt.Sprintf("Não foi possível criar a conta: %s", reason))
+		defer resp.Body.Close()
+
+		bodyBytes, _ := io.ReadAll(resp.Body)
+
+		if resp.StatusCode != http.StatusOK {
+			log.Printf("API WHM retornou status não-OK: %d. Resposta: %s", resp.StatusCode, string(bodyBytes))
+			utils.Error(c, http.StatusInternalServerError, "O servidor de hospedagem retornou um erro.")
+			return
+		}
+
+		var whmResponse map[string]interface{}
+		if err := json.Unmarshal(bodyBytes, &whmResponse); err != nil {
+			log.Printf("Erro ao decodificar resposta do WHM: %v", err)
+			utils.Error(c, http.StatusInternalServerError, "Resposta inválida do servidor de hospedagem.")
+			return
+		}
+
+		metadata, ok := whmResponse["metadata"].(map[string]interface{})
+		if !ok || metadata["result"].(float64) != 1 {
+			reason := metadata["reason"].(string)
+			log.Printf("Falha na criação da conta WHM: %s", reason)
+			utils.Error(c, http.StatusBadRequest, fmt.Sprintf("Não foi possível criar a conta: %s", reason))
+			return
+		}
+
+		log.Printf("Conta para %s criada com sucesso no WHM.", p.Domain)
+	} else {
+		log.Printf("Simulando provisionamento para o domínio %s (cliente WHM não configurado)", p.Domain)
+		time.Sleep(2 * time.Second) // Simula delay
+	}
+
+	// Salvar o novo serviço no Firestore
+	serviceID := uuid.New().String()
+	serviceData := map[string]interface{}{
+		"id":          serviceID,
+		"clientId":    userID,
+		"clientName":  clientName,
+		"serviceType": p.Plan,
+		"description": fmt.Sprintf("Plano de Hospedagem %s para o domínio %s", p.Plan, p.Domain),
+		"domain":      p.Domain,
+		"startDate":   time.Now().Format(time.RFC3339),
+		"status":      "Active",
+	}
+
+	batch := firebase.FirestoreClient.Batch()
+	// Salva na subcoleção do cliente
+	clientServiceRef := firebase.FirestoreClient.Collection("clients").Doc(userID).Collection("services").Doc(serviceID)
+	batch.Set(clientServiceRef, serviceData)
+	// Salva na coleção raiz para queries de admin
+	rootServiceRef := firebase.FirestoreClient.Collection("services").Doc(serviceID)
+	batch.Set(rootServiceRef, serviceData)
+
+	if _, err := batch.Commit(context.Background()); err != nil {
+		log.Printf("Erro ao salvar serviço no Firestore: %v", err)
+		utils.Error(c, http.StatusInternalServerError, "Falha ao registrar o novo serviço no sistema.")
 		return
 	}
 
-	// TODO: Save the new service to Firestore here.
-
-	log.Printf("Conta para %s criada com sucesso no WHM.", p.Domain)
+	log.Printf("Serviço %s salvo com sucesso no Firestore para o cliente %s.", serviceID, userID)
 	utils.Success(c, http.StatusOK, gin.H{
-		"message": "Conta provisionada com sucesso!",
-		"details": whmResponse,
+		"message": "Conta provisionada e registrada com sucesso!",
 	})
 }

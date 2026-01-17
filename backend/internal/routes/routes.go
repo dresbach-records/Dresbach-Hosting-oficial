@@ -15,9 +15,6 @@ func Register(r *gin.Engine) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	})
 
-	// Rota pública para provisionamento de conta
-	r.POST("/provision-account", handlers.ProvisionAccountHandler)
-
 	// Agrupa as rotas públicas de autenticação
 	authRouter := r.Group("/auth")
 	{
@@ -25,21 +22,31 @@ func Register(r *gin.Engine) {
 		authRouter.POST("/login", handlers.LoginHandler)
 		authRouter.POST("/logout", handlers.LogoutHandler)
 		authRouter.POST("/verify-token", handlers.VerifyTokenHandler)
-		authRouter.POST("/make-admin", handlers.MakeAdminHandler) // Idealmente, esta rota deveria ser protegida
+		// Esta rota será movida para dentro do grupo de admin por segurança
+		// authRouter.POST("/make-admin", handlers.MakeAdminHandler)
 	}
 
-	// Agrupa as rotas protegidas que exigem autenticação
-	userRouter := r.Group("/user")
-	userRouter.Use(middleware.AuthMiddleware())
+	// API Group - Todas as rotas aqui dentro exigem autenticação de sessão
+	api := r.Group("/api")
+	api.Use(middleware.AuthMiddleware())
 	{
-		userRouter.GET("/profile", handlers.GetProfileHandler)
-	}
+		// Rotas de usuário autenticado
+		userRouter := api.Group("/user")
+		{
+			userRouter.GET("/profile", handlers.GetProfileHandler)
+		}
 
-	// TODO: Implementar rotas do admin com middleware de verificação de admin
-	// adminRouter := r.Group("/api/admin")
-	// adminRouter.Use(middleware.AuthMiddleware())
-	// adminRouter.Use(middleware.AdminOnly()) // Um middleware que verifica a claim de admin
-	// {
-	// 	adminRouter.GET("/dashboard", handlers.AdminDashboardHandler)
-	// }
+		// Rota para provisionamento de conta (agora protegida)
+		api.POST("/provision-account", handlers.ProvisionAccountHandler)
+
+		// Rotas de administrador
+		adminRouter := api.Group("/admin")
+		adminRouter.Use(middleware.AdminMiddleware()) // Middleware extra para checar se é admin
+		{
+			// Exemplo: adminRouter.GET("/dashboard", handlers.AdminDashboardHandler)
+			adminRouter.POST("/create-client", handlers.CreateClientHandler)
+			// A rota para tornar um usuário admin agora é protegida e só pode ser usada por outros admins.
+			adminRouter.POST("/make-admin", handlers.MakeAdminHandler)
+		}
+	}
 }
