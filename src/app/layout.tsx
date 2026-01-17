@@ -8,6 +8,9 @@ import { ThemeProvider } from '@/components/theme-provider';
 export const metadata: Metadata = {
   title: 'Dresbach Hosting',
   description: 'Hospedagem Profissional com Atendimento Inteligente',
+  icons: {
+    icon: '/ICONE-DMG.ico',
+  },
 };
 
 export default function RootLayout({
