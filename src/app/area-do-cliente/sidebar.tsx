@@ -88,7 +88,7 @@ export function ClientSidebar() {
                 <CardContent className="p-2 space-y-1">
                     {supportLinks.map(link => (
                          // `Meus Tickets` is active for both the list and the new ticket flow.
-                        <SidebarLink key={link.href} href={link.href} icon={link.icon} active={pathname === link.href && link.href.includes('tickets')}>
+                        <SidebarLink key={link.label} href={link.href} icon={link.icon} active={link.href !== '#' && pathname.startsWith(link.href)}>
                             {link.label}
                         </SidebarLink>
                     ))}
