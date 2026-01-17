@@ -15,7 +15,7 @@ import {
   Loader2,
   LogOut,
   Wrench,
-  Puzzle,
+  BookUser,
   HelpCircle,
   Search,
   UserPlus,
@@ -205,7 +205,7 @@ export default function AdminLayout({
               </Accordion>
               
               <Link href="/admin/addons" className={cn(subLinkClass, isExactlyActive('/admin/addons') && 'bg-muted text-primary')}>
-                <Puzzle className={iconSize} /> Addons de Serviço
+                <BookUser className={iconSize} /> Addons de Serviço
               </Link>
               <Link href="/admin/dominios" className={cn(subLinkClass, isExactlyActive('/admin/dominios') && 'bg-muted text-primary')}>
                 <Globe className={iconSize} /> Registros de Domínio
@@ -555,7 +555,7 @@ export default function AdminLayout({
         </Accordion>
 
         <NavLink href="/admin/addons" isActive={isActive('/admin/addons')} isMobile={isMobile}>
-          <Puzzle className={iconSize} /> Addons
+          <BookUser className={iconSize} /> CRM
         </NavLink>
         <NavLink href="/admin/configuracoes" isActive={isActive('/admin/configuracoes')} isMobile={isMobile}>
           <Settings className={iconSize} /> Configurações
