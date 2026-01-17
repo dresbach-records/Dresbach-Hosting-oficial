@@ -34,24 +34,34 @@ export default function AdminLoginPage() {
     setError(null);
 
     try {
+      // 1. Authenticate with Firebase on the client
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       
-      const idTokenResult = await userCredential.user.getIdTokenResult(true);
-      const role = idTokenResult.claims.role;
+      // 2. Get the ID token to send to the backend
+      const idToken = await userCredential.user.getIdToken();
 
-      if (role !== 'admin') {
-        await auth.signOut();
-        setError('Acesso negado. Este usuário não é um administrador.');
-        setIsLoading(false);
-        return;
-      }
-      
-      await fetchFromGoBackend('/api/v1/auth/session-login', {
+      // 3. Call the backend to create the session and bootstrap the role if necessary.
+      // The backend is the source of truth for the user's role.
+      const sessionData = await fetchFromGoBackend<{ isAdmin: boolean, role: string }>('/api/v1/auth/session-login', {
         method: 'POST',
-        body: JSON.stringify({ idToken: idTokenResult.token }),
+        body: JSON.stringify({ idToken: idToken }),
       });
       
-      // The useEffect will handle the redirect to /admin
+      // 4. Check the role returned *from the backend*.
+      if (!sessionData.isAdmin) {
+          // If the backend says the user is not an admin, sign them out and show an error.
+          await auth.signOut(); 
+          setError('Acesso negado. Este usuário não é um administrador.');
+          setIsLoading(false);
+          return;
+      }
+
+      // 5. If successful, the user is an admin. We need to force a refresh of the user's
+      // token on the client to pick up the new custom claim set by the backend.
+      await userCredential.user.getIdToken(true);
+      
+      // The `useUser` hook will now update, and the `useEffect` above will handle the redirect.
+      
     } catch (err: any) {
       if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
         setError('Credenciais inválidas.');
