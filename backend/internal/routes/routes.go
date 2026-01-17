@@ -15,6 +15,9 @@ func Register(r *gin.Engine) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	})
 
+	// Rota pública para provisionamento de conta
+	r.POST("/provision-account", handlers.ProvisionAccountHandler)
+
 	// Agrupa as rotas públicas de autenticação
 	authRouter := r.Group("/auth")
 	{

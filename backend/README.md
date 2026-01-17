@@ -4,17 +4,16 @@ Este diretório contém o código-fonte para o servidor de API Go, construído c
 
 ## Visão Geral da Arquitetura
 
-- **`cmd/api/main.go`**: O ponto de entrada da aplicação. Responsável por carregar configurações, inicializar serviços (Firebase, Sessão) e iniciar o servidor web.
+- **`cmd/api/main.go`**: O ponto de entrada da aplicação. Responsável por carregar configurações, inicializar serviços (Firebase, Sessão, WHM) e iniciar o servidor web.
 - **`internal/`**: Contém toda a lógica de negócio, estritamente separada da camada de apresentação.
   - **`config/`**: Carregamento de variáveis de ambiente.
   - **`firebase/`**: Inicialização e configuração do Firebase Admin SDK.
-  - **`handlers/`**: A lógica principal para cada rota da API (ex: `RegisterHandler`, `LoginHandler`).
+  - **`handlers/`**: A lógica principal para cada rota da API (ex: `RegisterHandler`, `LoginHandler`, `ProvisionAccountHandler`).
   - **`middleware/`**: Middlewares para o Gin, como o `AuthMiddleware` para proteger rotas.
   - **`routes/`**: Definição e agrupamento de todas as rotas da API.
   - **`session/`**: Configuração do gerenciamento de sessão baseado em cookies.
   - **`utils/`**: Funções auxiliares, como padronização de respostas JSON (`Success`, `Error`).
-- **`go.mod` / `go.sum`**: Gerenciamento de dependências do Go.
-- **`.env`**: Arquivo para armazenar segredos e configurações de ambiente (não versionado).
+  - **`whm/`**: Cliente da API para interagir com o servidor WHM/cPanel.
 
 ## Como Executar Localmente
 
@@ -22,6 +21,7 @@ Este diretório contém o código-fonte para o servidor de API Go, construído c
     - [Go](https://go.dev/doc/install) (versão 1.21 ou superior).
     - Um arquivo `serviceAccountKey.json` do seu projeto Firebase.
     - Chave do site reCAPTCHA Enterprise.
+    - Acesso à API de um servidor WHM/cPanel.
 
 2.  **Configurar Variáveis de Ambiente**:
     - Renomeie ou copie `../../.env.example` para `../../.env` na raiz do projeto.
@@ -38,6 +38,11 @@ Este diretório contém o código-fonte para o servidor de API Go, construído c
       
       # A chave do *site* reCAPTCHA Enterprise
       RECAPTCHA_SITE_KEY="sua-chave-de-site-recaptcha"
+
+      # Credenciais da API WHM/cPanel
+      WHM_HOST="IP_OU_HOSTNAME_DO_SEU_SERVIDOR_WHM"
+      WHM_USER="SEU_USUARIO_WHM_RESELLER"
+      WHM_TOKEN="SEU_TOKEN_DE_API_WHM"
       ```
 
 3.  **Coloque a Chave de Serviço**:

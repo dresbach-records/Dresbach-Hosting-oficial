@@ -110,9 +110,7 @@ export default function OrderPage() {
 
         try {
             // This function will call the Go backend
-            // For now, we assume it's successful without a real backend response.
-            // You will need to implement the Go backend endpoint '/api/provision-account'
-            // to handle the WHM API logic.
+            // The Go backend will then call the WHM API.
             await fetchFromGoBackend('/provision-account', {
                 method: 'POST',
                 body: JSON.stringify(orderData),
@@ -123,7 +121,8 @@ export default function OrderPage() {
                 description: 'Seu novo serviço de hospedagem está sendo provisionado.',
             });
             
-            router.push('/area-do-cliente/servicos');
+            // Redirect to a confirmation or services page after a short delay
+            setTimeout(() => router.push('/area-do-cliente/servicos'), 2000);
 
         } catch (error: any) {
             console.error('Falha ao provisionar a conta:', error);
@@ -132,9 +131,9 @@ export default function OrderPage() {
                 title: 'Uh oh! Algo deu errado.',
                 description: error.message || 'Não foi possível concluir seu pedido. Por favor, contate o suporte.',
             });
-        } finally {
-            setIsProcessing(false);
+             setIsProcessing(false);
         }
+        // No need to set isProcessing to false here on success, because we are redirecting
     };
 
     return (

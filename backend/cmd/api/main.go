@@ -9,6 +9,7 @@ import (
 	"backend/internal/firebase"
 	"backend/internal/routes"
 	"backend/internal/session"
+	"backend/internal/whm" // Import the new WHM package
 
 	"github.com/gin-gonic/gin"
 )
@@ -22,6 +23,9 @@ func main() {
 
 	// Inicializa os serviços do Firebase
 	firebase.InitFirebase()
+
+	// Inicializa o cliente WHM
+	whm.InitWhmClient()
 
 	// Inicializa a store de sessão
 	session.InitSessionStore()
