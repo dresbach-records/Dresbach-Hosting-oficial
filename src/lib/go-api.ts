@@ -3,14 +3,10 @@
  * It provides a standardized way to handle API requests from the Next.js application.
  */
 
-// By default, use a relative path. This allows Firebase Hosting to handle rewriting
-// the URL to the correct Go backend function, both in local emulation and in production.
-const GO_BACKEND_URL = process.env.NEXT_PUBLIC_GO_BACKEND_URL || '';
-
 /**
  * A generic and reusable function to make API requests to your Go backend.
- * It handles setting JSON headers, and basic success/error responses.
- * It also includes credentials to ensure cookies are sent for session-based authentication.
+ * It always makes relative API calls (e.g., '/api/v1/...') which is the correct
+ * approach for an application deployed to Firebase Hosting with rewrites to a backend function.
  *
  * @template T The expected type of the data in the successful response.
  * @param endpoint The specific API endpoint to call (e.g., '/api/v1/auth/login').
@@ -19,9 +15,9 @@ const GO_BACKEND_URL = process.env.NEXT_PUBLIC_GO_BACKEND_URL || '';
  * @throws An error if the network request fails or if the API returns a non-ok status.
  */
 export async function fetchFromGoBackend<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  // If GO_BACKEND_URL is a full URL, it will be used. If it's an empty string,
-  // the endpoint (e.g., /api/v1/...) will be treated as a relative path by fetch().
-  const url = GO_BACKEND_URL ? `${GO_BACKEND_URL}${endpoint}` : endpoint;
+  // The URL is always relative. This allows Firebase Hosting (both in production and local emulation)
+  // to rewrite the request to the correct backend Go function based on firebase.json rules.
+  const url = endpoint;
 
   const response = await fetch(url, {
     credentials: 'include', // ESSENCIAL: Envia cookies em requisições
