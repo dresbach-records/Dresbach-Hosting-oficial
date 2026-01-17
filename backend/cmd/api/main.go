@@ -51,8 +51,10 @@ func main() {
 	// Configura o roteador Gin
 	router := gin.Default()
 
-	// Configura CORS (essencial para desenvolvimento local)
+	// Configura CORS (essencial para desenvolvimento local com `firebase emulators:start`)
 	router.Use(func(c *gin.Context) {
+		// As URLs do emulador do Firebase seguem um padrão, ex: http://localhost:9002
+		// Em produção, o App Hosting serve o frontend e o backend da mesma origem, então CORS não é um problema.
 		c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:9002")
 		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
 		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
@@ -72,7 +74,7 @@ func main() {
 	log.Println("API routes registered.")
 
 
-	// Inicia o servidor. Cloud Run define a porta através da variável de ambiente PORT.
+	// Inicia o servidor. Cloud Run (usado pelo App Hosting e Functions) define a porta via variável de ambiente PORT.
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"

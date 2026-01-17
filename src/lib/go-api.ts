@@ -3,9 +3,9 @@
  * It provides a standardized way to handle API requests from the Next.js application.
  */
 
-// The base URL for your Go backend API.
-// It's recommended to set this in your .env file for flexibility between environments.
-const GO_BACKEND_URL = process.env.NEXT_PUBLIC_GO_BACKEND_URL || 'http://localhost:8080';
+// By default, use a relative path. This allows Firebase Hosting to handle rewriting
+// the URL to the correct Go backend function, both in local emulation and in production.
+const GO_BACKEND_URL = process.env.NEXT_PUBLIC_GO_BACKEND_URL || '';
 
 /**
  * A generic and reusable function to make API requests to your Go backend.
@@ -13,16 +13,18 @@ const GO_BACKEND_URL = process.env.NEXT_PUBLIC_GO_BACKEND_URL || 'http://localho
  * It also includes credentials to ensure cookies are sent for session-based authentication.
  *
  * @template T The expected type of the data in the successful response.
- * @param endpoint The specific API endpoint to call (e.g., '/auth/login' or '/user/profile').
+ * @param endpoint The specific API endpoint to call (e.g., '/api/v1/auth/login').
  * @param options The standard options for the `fetch` request (e.g., method, body).
  * @returns A promise that resolves to the JSON data of type T from the backend.
  * @throws An error if the network request fails or if the API returns a non-ok status.
  */
 export async function fetchFromGoBackend<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const url = new URL(endpoint, GO_BACKEND_URL).href;
+  // If GO_BACKEND_URL is a full URL, it will be used. If it's an empty string,
+  // the endpoint (e.g., /api/v1/...) will be treated as a relative path by fetch().
+  const url = GO_BACKEND_URL ? `${GO_BACKEND_URL}${endpoint}` : endpoint;
 
   const response = await fetch(url, {
-    credentials: 'include', // ESSENCIAL: Envia cookies em requisições cross-origin
+    credentials: 'include', // ESSENCIAL: Envia cookies em requisições
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -60,36 +62,32 @@ export async function fetchFromGoBackend<T>(endpoint: string, options: RequestIn
 /**
  * --- HOW TO USE ---
  *
- * 1.  **Configure your backend URL:**
- *     In your `.env` file, add the following line with the correct URL for your Go backend:
- *     `NEXT_PUBLIC_GO_BACKEND_URL=http://localhost:8080`
+ * This setup is designed for use with Firebase Hosting rewrites.
+ *
+ * 1.  **Firebase Configuration:**
+ *     Ensure your `firebase.json` has a rewrite rule that directs API calls to your Go backend function.
+ *     For example:
+ *     "rewrites": [
+ *       {
+ *         "source": "/api/**",
+ *         "function": "api"
+ *       }
+ *     ]
  *
  * 2.  **Use in a component or Server Action:**
- *     Import the function and call it to interact with your backend.
- *
- *     Example (fetching a user profile in a React component):
+ *     Import the function and call it with a relative path. Firebase Hosting will handle the rest.
  *
  *     ```jsx
- *     import { useEffect, useState } from 'react';
  *     import { fetchFromGoBackend } from '@/lib/go-api';
  *
- *     function UserProfile() {
- *       const [profile, setProfile] = useState(null);
- *
- *       useEffect(() => {
- *         const loadProfile = async () => {
- *           try {
- *             // O cookie de sessão será enviado automaticamente com a requisição
- *             const data = await fetchFromGoBackend('/api/user/profile');
- *             setProfile(data);
- *           } catch (error) {
- *             console.error("Failed to fetch profile:", error);
- *           }
- *         };
- *         loadProfile();
- *       }, []);
- *
- *       // ... render your profile
+ *     async function someAction() {
+ *       try {
+ *         // The cookie will be sent automatically. The path is relative to the host.
+ *         const data = await fetchFromGoBackend('/api/v1/user/profile');
+ *         console.log(data);
+ *       } catch (error) {
+ *         console.error("Failed to fetch profile:", error);
+ *       }
  *     }
  *     ```
  */
