@@ -40,20 +40,21 @@ const serviceDetailsMock: { [key: string]: { price: number; isLocked: boolean } 
 
 
 function ServiceStatusBadge({ status }: { status: string }) {
-    let variant: "success" | "destructive" | "secondary" | "warning" = "secondary";
-    const textMap: { [key: string]: string } = {
-        'Active': 'Ativo',
-        'Suspended': 'Suspenso',
-        'Pending': 'Pendente',
-        'Canceled': 'Cancelado'
-    }
-    const currentStatus = textMap[status] || status;
-
-    if (currentStatus === 'Ativo') variant = 'success';
-    else if (currentStatus === 'Suspenso') variant = 'destructive';
-    else if (currentStatus === 'Pendente') variant = 'warning';
+    let variant: "success" | "destructive" | "warning" | "secondary" = "secondary";
     
-    return <Badge variant={variant}>{currentStatus}</Badge>;
+    switch (status) {
+        case 'Active':
+            variant = 'success';
+            break;
+        case 'Suspended':
+            variant = 'destructive';
+            break;
+        case 'Pending':
+            variant = 'warning';
+            break;
+    }
+    
+    return <Badge variant={variant}>{status}</Badge>;
 }
 
 function Sidebar({ statusCounts, onFilterChange }: { statusCounts: any, onFilterChange: (status: string) => void }) {

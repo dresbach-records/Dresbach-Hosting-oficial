@@ -1,11 +1,13 @@
 package handlers
 
 import (
+	"backend/internal/domain/constants"
 	"backend/internal/firebase"
 	"backend/internal/models"
 	"backend/internal/session"
 	"backend/internal/utils"
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -62,7 +64,7 @@ func CreateClientTicket(c *gin.Context) {
 	p.ID = newTicketRef.ID
 	p.ClientID = userID
 	p.ClientName = userName
-	p.Status = "Open"
+	p.Status = constants.StatusOpen
 	p.CreatedAt = time.Now()
 	p.LastUpdated = time.Now()
 
@@ -107,14 +109,14 @@ func ReplyClientTicket(c *gin.Context) {
 
 	// Adiciona a resposta e atualiza o timestamp do ticket
 	batch := firebase.FirestoreClient.Batch()
-	
+
 	// Adiciona resposta na coleção raiz
 	rootReplyRef := firebase.FirestoreClient.Collection("tickets").Doc(ticketID).Collection("replies").NewDoc()
 	batch.Set(rootReplyRef, p)
 	// Adiciona resposta na subcoleção do cliente
 	clientReplyRef := firebase.FirestoreClient.Collection("clients").Doc(userID).Collection("tickets").Doc(ticketID).Collection("replies").NewDoc()
 	batch.Set(clientReplyRef, p)
-	
+
 	// Atualiza o timestamp do ticket em ambos os locais
 	updateTime := map[string]interface{}{"lastUpdated": p.CreatedAt}
 	batch.Set(firebase.FirestoreClient.Collection("tickets").Doc(ticketID), updateTime, firestore.MergeAll)
@@ -126,7 +128,7 @@ func ReplyClientTicket(c *gin.Context) {
 		utils.Error(c, http.StatusInternalServerError, "Falha ao enviar resposta.")
 		return
 	}
-	
+
 	utils.Success(c, http.StatusCreated, gin.H{"message": "Resposta enviada com sucesso."})
 }
 
@@ -181,7 +183,7 @@ func ReplyToTicket(c *gin.Context) {
 	clientID := ticketDoc.Data()["clientId"].(string)
 
 	batch := firebase.FirestoreClient.Batch()
-	
+
 	rootReplyRef := firebase.FirestoreClient.Collection("tickets").Doc(ticketID).Collection("replies").NewDoc()
 	batch.Set(rootReplyRef, p)
 	clientReplyRef := firebase.FirestoreClient.Collection("clients").Doc(clientID).Collection("tickets").Doc(ticketID).Collection("replies").NewDoc()
@@ -204,7 +206,7 @@ func ReplyToTicket(c *gin.Context) {
 // UpdateTicketStatus altera o status de um ticket. (Admin)
 func UpdateTicketStatus(c *gin.Context) {
 	ticketID := c.Param("id")
-	
+
 	var payload struct {
 		Status string `json:"status" binding:"required"`
 	}
@@ -212,14 +214,14 @@ func UpdateTicketStatus(c *gin.Context) {
 		utils.Error(c, http.StatusBadRequest, "Corpo da requisição inválido, 'status' é obrigatório.")
 		return
 	}
-	
+
 	ticketDoc, err := firebase.FirestoreClient.Collection("tickets").Doc(ticketID).Get(context.Background())
 	if err != nil {
 		utils.Error(c, http.StatusNotFound, "Ticket não encontrado.")
 		return
 	}
 	clientID := ticketDoc.Data()["clientId"].(string)
-	
+
 	updateData := map[string]interface{}{
 		"status": payload.Status,
 		"lastUpdated": time.Now(),
@@ -237,4 +239,3 @@ func UpdateTicketStatus(c *gin.Context) {
 
 	utils.Success(c, http.StatusOK, gin.H{"message": "Status do ticket atualizado com sucesso."})
 }
-

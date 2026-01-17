@@ -11,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
   CardContent,
+  CardFooter,
 } from "@/components/ui/card";
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -60,6 +61,13 @@ type SummaryData = {
     is_mock: boolean;
 };
 
+const getStatusVariant = (status: string): "success" | "destructive" | "secondary" => {
+    switch (status) {
+        case 'Active': return 'success';
+        case 'Suspended': return 'destructive';
+        default: return 'secondary';
+    }
+}
 
 const UsageChart = ({ title, used, total, unit, isLoading, isUnlimited }: { title: string, used: number, total: number, unit: string, isLoading: boolean, isUnlimited: boolean }) => {
     
@@ -378,7 +386,7 @@ export default function ServiceDetailPage() {
                                     </TableRow>
                                      <TableRow>
                                         <TableCell className="font-medium">Status</TableCell>
-                                        <TableCell><Badge variant={service.status === 'Active' ? 'success' : 'secondary'}>{service.status}</Badge></TableCell>
+                                        <TableCell><Badge variant={getStatusVariant(service.status)}>{service.status}</Badge></TableCell>
                                     </TableRow>
                                 </TableBody>
                             </Table>

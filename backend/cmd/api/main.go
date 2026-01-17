@@ -46,10 +46,6 @@ func main() {
 	router := gin.Default()
 
 	router.Use(func(c *gin.Context) {
-		// Em um ambiente de desenvolvimento com emuladores, o frontend e o backend podem ter origens diferentes.
-		// Em produção, com o App Hosting, eles compartilham a mesma origem, então isso é menos crítico.
-		// A URL do emulador do Firebase para Hosting é geralmente `http://localhost:XXXX`.
-		// Permita a origem do seu frontend de desenvolvimento.
 		c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:9002") // Ajuste se a porta do seu frontend for diferente
 		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
 		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, Authorization, accept, origin, Cache-Control, X-Requested-With")
@@ -78,3 +74,4 @@ func main() {
 		log.Fatalf("CRITICAL: Failed to start server: %v", err)
 	}
 }
+

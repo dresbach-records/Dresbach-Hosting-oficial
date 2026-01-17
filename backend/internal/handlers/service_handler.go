@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 
+	"backend/internal/domain/constants"
 	"backend/internal/firebase"
 	"backend/internal/session"
 	"backend/internal/utils"
@@ -131,7 +132,7 @@ func SuspendService(c *gin.Context) {
 		utils.Error(c, http.StatusInternalServerError, "Serviço não possui um usuário cPanel associado.")
 		return
 	}
-	
+
 	if whm.WhmClient != nil {
 		resp, err := whm.WhmClient.SuspendAccount(cpanelUser, reason)
 		if err != nil {
@@ -144,9 +145,9 @@ func SuspendService(c *gin.Context) {
 	} else {
 		log.Printf("AVISO: Simulando suspensão da conta %s (cliente WHM não configurado)", cpanelUser)
 	}
-	
-	if err := updateServiceStatus(context.Background(), serviceID, "Suspended"); err != nil {
-		log.Printf("Erro ao atualizar status do serviço %s para 'Suspended': %v", serviceID, err)
+
+	if err := updateServiceStatus(context.Background(), serviceID, constants.StatusSuspended); err != nil {
+		log.Printf("Erro ao atualizar status do serviço %s para '%s': %v", serviceID, constants.StatusSuspended, err)
 		utils.Error(c, http.StatusInternalServerError, "Falha ao atualizar o status do serviço no banco de dados.")
 		return
 	}
@@ -182,8 +183,8 @@ func UnsuspendService(c *gin.Context) {
 		log.Printf("AVISO: Simulando reativação da conta %s (cliente WHM não configurado)", cpanelUser)
 	}
 
-	if err := updateServiceStatus(context.Background(), serviceID, "Active"); err != nil {
-		log.Printf("Erro ao atualizar status do serviço %s para 'Active': %v", serviceID, err)
+	if err := updateServiceStatus(context.Background(), serviceID, constants.StatusActive); err != nil {
+		log.Printf("Erro ao atualizar status do serviço %s para '%s': %v", serviceID, constants.StatusActive, err)
 		utils.Error(c, http.StatusInternalServerError, "Falha ao atualizar o status do serviço no banco de dados.")
 		return
 	}
@@ -212,7 +213,7 @@ func TerminateService(c *gin.Context) {
 		utils.Error(c, http.StatusInternalServerError, "Serviço não possui um cliente associado.")
 		return
 	}
-	
+
 	if whm.WhmClient != nil {
 		resp, err := whm.WhmClient.RemoveAccount(cpanelUser, false)
 		if err != nil {

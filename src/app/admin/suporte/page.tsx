@@ -14,37 +14,28 @@ import { format } from 'date-fns';
 
 function TicketStatusBadge({ status }: { status: string }) {
     let variant: "success" | "secondary" | "outline" = "outline";
-    const textMap: { [key: string]: string } = {
-        'Open': 'Aberto',
-        'In Progress': 'Em Progresso',
-        'Closed': 'Fechado',
-    }
-    const currentStatus = textMap[status] || status;
     
-    if (currentStatus === 'Aberto') {
-        variant = 'success';
-    } else if (currentStatus === 'Em Progresso') {
-        variant = 'secondary';
+    switch (status) {
+        case 'Open':
+            variant = 'success';
+            break;
+        case 'In Progress':
+            variant = 'secondary';
+            break;
     }
 
-    return <Badge variant={variant}>{currentStatus}</Badge>;
+    return <Badge variant={variant}>{status}</Badge>;
 }
 
-function PriorityBadge({ priority }: { priority: string }) {
-    let variant: "destructive" | "warning" | "secondary" = "secondary";
-    const textMap: { [key: string]: string } = {
-        'High': 'Alta',
-        'Medium': 'Média',
-        'Low': 'Baixa',
-    }
-    const currentPriority = textMap[priority] || priority;
+const priorityMap: { [key: string]: { text: string; variant: "destructive" | "warning" | "secondary" } } = {
+    'Low': { text: 'Baixa', variant: 'secondary' },
+    'Medium': { text: 'Média', variant: 'warning' },
+    'High': { text: 'Alta', variant: 'destructive' },
+};
 
-    if (currentPriority === 'Alta') {
-        variant = 'destructive';
-    } else if (currentPriority === 'Média') {
-        variant = 'warning';
-    }
-    return <Badge variant={variant}>{currentPriority}</Badge>;
+function PriorityBadge({ priority }: { priority: string }) {
+    const priorityInfo = priorityMap[priority] || { text: priority, variant: 'secondary' };
+    return <Badge variant={priorityInfo.variant}>{priorityInfo.text}</Badge>
 }
 
 
@@ -122,5 +113,3 @@ export default function SupportAdminPage() {
         </Card>
     );
 }
-
-    

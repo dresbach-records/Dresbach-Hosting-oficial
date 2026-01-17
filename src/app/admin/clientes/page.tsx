@@ -12,7 +12,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Loader2, Eye } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+import { Badge, badgeVariants } from "@/components/ui/badge";
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import {
@@ -42,9 +42,9 @@ type NewClientForm = z.infer<typeof newClientSchema>;
 
 function ClientStatusBadge({ status }: { status: string }) {
     let variant: "success" | "destructive" | "secondary" = "secondary";
-    if (status === 'Ativo') {
+    if (status === 'Active') {
         variant = 'success';
-    } else if (status === 'Suspenso') {
+    } else if (status === 'Suspended') {
         variant = 'destructive';
     }
     return <Badge variant={variant}>{status}</Badge>;

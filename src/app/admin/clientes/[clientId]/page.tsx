@@ -113,6 +113,14 @@ export default function ClientProfileAdminPage() {
         )
     }
 
+    const getStatusVariant = (status: string): "success" | "destructive" | "secondary" => {
+        switch (status) {
+            case 'Active': return 'success';
+            case 'Suspended': return 'destructive';
+            default: return 'secondary';
+        }
+    }
+
     return (
         <div className="space-y-6">
             <div className="flex items-center gap-4">
@@ -143,7 +151,7 @@ export default function ClientProfileAdminPage() {
                                 <StatCard 
                                     title="Serviços Ativos"
                                     icon={<Server className="h-4 w-4 text-muted-foreground" />}
-                                    count={services?.filter(s => s.status === 'Active' || s.status === 'Ativo').length || 0}
+                                    count={services?.filter(s => s.status === 'Active').length || 0}
                                     isLoading={servicesLoading}
                                 />
                                 <StatCard 
@@ -161,7 +169,7 @@ export default function ClientProfileAdminPage() {
                                 <StatCard 
                                     title="Tickets Abertos"
                                     icon={<LifeBuoy className="h-4 w-4 text-muted-foreground" />}
-                                    count={tickets?.filter(t => t.status === 'Open' || t.status === 'Aberto').length || 0}
+                                    count={tickets?.filter(t => t.status === 'Open').length || 0}
                                     isLoading={ticketsLoading}
                                 />
                              </div>
@@ -180,7 +188,7 @@ export default function ClientProfileAdminPage() {
                            <p><strong>Email:</strong> {client.email}</p>
                            <p><strong>Telefone:</strong> {client.phoneNumber || 'Não informado'}</p>
                            <p><strong>Endereço:</strong> {client.address || 'Não informado'}</p>
-                           <p><strong>Status:</strong> <Badge>{client.status}</Badge></p>
+                           <p><strong>Status:</strong> <Badge variant={getStatusVariant(client.status)}>{client.status}</Badge></p>
                            <p><strong>Data de Cadastro:</strong> {format(new Date(client.createdAt), 'dd/MM/yyyy')}</p>
                         </CardContent>
                     </Card>
@@ -195,7 +203,7 @@ export default function ClientProfileAdminPage() {
                                 columns={[
                                     { key: 'serviceType', header: 'Serviço' },
                                     { key: 'startDate', header: 'Data de Início', render: (item) => format(new Date(item.startDate), 'dd/MM/yyyy') },
-                                    { key: 'status', header: 'Status', render: (item) => <Badge variant={(item.status === 'Active' || item.status === 'Ativo') ? 'default' : 'secondary'}>{item.status}</Badge> }
+                                    { key: 'status', header: 'Status', render: (item) => <Badge variant={getStatusVariant(item.status)}>{item.status}</Badge> }
                                 ]}
                                 emptyStateMessage="Nenhum serviço encontrado para este cliente."
                              />
@@ -232,7 +240,7 @@ export default function ClientProfileAdminPage() {
                                     { key: 'issueDate', header: 'Data de Emissão', render: (item) => format(new Date(item.issueDate), 'dd/MM/yyyy') },
                                     { key: 'dueDate', header: 'Data de Vencimento', render: (item) => format(new Date(item.dueDate), 'dd/MM/yyyy') },
                                     { key: 'amount', header: 'Valor', render: (item) => `R$ ${item.amount.toFixed(2)}` },
-                                    { key: 'status', header: 'Status', render: (item) => <Badge variant={item.status === 'Paid' ? 'default' : item.status === 'Overdue' ? 'destructive' : 'secondary'}>{item.status}</Badge> }
+                                    { key: 'status', header: 'Status', render: (item) => <Badge variant={item.status === 'Paid' ? 'success' : item.status === 'Overdue' ? 'destructive' : 'secondary'}>{item.status}</Badge> }
                                 ]}
                                 emptyStateMessage="Nenhuma fatura encontrada para este cliente."
                             />
@@ -248,8 +256,8 @@ export default function ClientProfileAdminPage() {
                                 query={ticketsQuery}
                                 columns={[
                                     { key: 'subject', header: 'Assunto' },
-                                    { key: 'priority', header: 'Prioridade', render: (item) => <Badge variant={item.priority === 'High' ? 'destructive' : item.priority === 'Medium' ? 'secondary' : 'outline'}>{item.priority}</Badge> },
-                                    { key: 'status', header: 'Status', render: (item) => <Badge variant={item.status === 'Open' ? 'default' : 'secondary'}>{item.status}</Badge> },
+                                    { key: 'priority', header: 'Prioridade', render: (item) => <Badge variant={item.priority === 'High' ? 'destructive' : item.priority === 'Medium' ? 'warning' : 'secondary'}>{item.priority}</Badge> },
+                                    { key: 'status', header: 'Status', render: (item) => <Badge variant={item.status === 'Open' ? 'success' : 'secondary'}>{item.status}</Badge> },
                                     { key: 'createdAt', header: 'Criado em', render: (item) => format(new Date(item.createdAt), 'dd/MM/yyyy HH:mm') }
                                 ]}
                                 emptyStateMessage="Nenhum ticket de suporte encontrado para este cliente."

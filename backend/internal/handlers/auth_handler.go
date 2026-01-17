@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"backend/internal/domain/constants"
 	"backend/internal/firebase"
 	"backend/internal/models"
 	"backend/internal/session"
@@ -140,7 +141,7 @@ func RegisterHandler(c *gin.Context) {
 		"lastName":    p.LastName,
 		"email":       p.Email,
 		"createdAt":   time.Now().Format(time.RFC3339),
-		"status":      "Ativo",
+		"status":      constants.StatusActive,
 		"phoneNumber": "",
 		"address":     "",
 	}
@@ -154,7 +155,7 @@ func RegisterHandler(c *gin.Context) {
 
 
 	utils.Success(c, http.StatusCreated, gin.H{
-		"message": "Usuário criado com sucesso", 
+		"message": "Usuário criado com sucesso",
 		"userId": userRecord.UID,
 		"role": role,
 	})
@@ -182,7 +183,7 @@ func SessionLoginHandler(c *gin.Context) {
 		utils.Error(c, http.StatusInternalServerError, "Não foi possível obter os dados do usuário.")
 		return
 	}
-	
+
 	// A função ensureUserAndRole não é chamada aqui para evitar criar um usuário no login.
 	// O usuário DEVE existir do registro. Vamos buscar o papel direto.
 	userDoc, err := firebase.FirestoreClient.Collection("users").Doc(userRecord.UID).Get(context.Background())
@@ -191,7 +192,7 @@ func SessionLoginHandler(c *gin.Context) {
 		utils.Error(c, http.StatusForbidden, "Usuário não registrado no sistema. Contate o suporte.")
 		return
 	}
-	
+
 	role, _ := userDoc.Data()["role"].(string)
 	isAdmin := role == "admin"
 
@@ -213,7 +214,7 @@ func SessionLoginHandler(c *gin.Context) {
 
 	log.Printf("Sessão criada com sucesso para %s (Role: %s)", userRecord.Email, role)
 	utils.Success(c, http.StatusOK, gin.H{
-		"message": "Sessão criada com sucesso", 
+		"message": "Sessão criada com sucesso",
 		"isAdmin": isAdmin,
 		"role": role,
 	})

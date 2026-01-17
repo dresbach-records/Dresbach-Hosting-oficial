@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"backend/internal/domain/constants"
 	"backend/internal/firebase"
 	"backend/internal/session"
 	"backend/internal/utils"
@@ -124,7 +125,7 @@ func ProvisionAccountHandler(c *gin.Context) {
 		"domain":      p.Domain,
 		"cpanelUser":  username, // Salva o nome de usuário do cPanel
 		"startDate":   time.Now().Format(time.RFC3339),
-		"status":      "Active",
+		"status":      constants.StatusActive,
 	}
 
 	batch := firebase.FirestoreClient.Batch()

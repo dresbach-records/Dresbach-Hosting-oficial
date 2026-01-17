@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"backend/internal/domain/constants"
 	"backend/internal/firebase"
 	"backend/internal/session"
 	"backend/internal/utils"
@@ -83,9 +84,9 @@ func GetAdminDashboard(c *gin.Context) {
 
 	wg.Add(5)
 	go getCount("clients", firebase.FirestoreClient.Collection("clients"), "clients")
-	go getCount("services", firebase.FirestoreClient.Collection("services").Where("status", "==", "Active"), "services")
-	go getCount("invoices", firebase.FirestoreClient.Collection("invoices").Where("status", "!=", "Paid"), "invoices_open")
-	go getCount("tickets", firebase.FirestoreClient.Collection("tickets").Where("status", "==", "Open"), "tickets_open")
+	go getCount("services", firebase.FirestoreClient.Collection("services").Where("status", "==", constants.StatusActive), "services")
+	go getCount("invoices", firebase.FirestoreClient.Collection("invoices").Where("status", "!=", constants.StatusPaid), "invoices_open")
+	go getCount("tickets", firebase.FirestoreClient.Collection("tickets").Where("status", "==", constants.StatusOpen), "tickets_open")
 	go getWhmCount()
 
 	wg.Wait()
@@ -134,8 +135,8 @@ func GetClientDashboard(c *gin.Context) {
 	wg.Add(4)
 	go getCount("services", clientBase.Collection("services"), "services")
 	go getCount("domains", clientBase.Collection("domains"), "domains")
-	go getCount("tickets", clientBase.Collection("tickets").Where("status", "==", "Open"), "tickets_open")
-	go getCount("invoices", clientBase.Collection("invoices").Where("status", "!=", "Paid"), "invoices_open")
+	go getCount("tickets", clientBase.Collection("tickets").Where("status", "==", constants.StatusOpen), "tickets_open")
+	go getCount("invoices", clientBase.Collection("invoices").Where("status", "!=", constants.StatusPaid), "invoices_open")
 
 	wg.Wait()
 

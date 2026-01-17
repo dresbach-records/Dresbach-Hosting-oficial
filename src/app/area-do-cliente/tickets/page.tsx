@@ -33,20 +33,17 @@ type NewTicketForm = z.infer<typeof newTicketSchema>;
 
 function TicketStatusBadge({ status }: { status: string }) {
     let variant: "success" | "secondary" | "outline" = "outline";
-    const textMap: { [key: string]: string } = {
-        'Open': 'Aberto',
-        'In Progress': 'Em Progresso',
-        'Closed': 'Fechado',
-    }
-    const currentStatus = textMap[status] || status;
-
-    if (currentStatus === 'Aberto') {
-        variant = 'success';
-    } else if (currentStatus === 'Em Progresso') {
-        variant = 'secondary';
+    
+    switch (status) {
+        case 'Open':
+            variant = 'success';
+            break;
+        case 'In Progress':
+            variant = 'secondary';
+            break;
     }
     
-    return <Badge variant={variant}>{currentStatus}</Badge>;
+    return <Badge variant={variant}>{status}</Badge>;
 }
 
 const priorityMap: { [key: string]: { text: string; variant: "destructive" | "warning" | "secondary" } } = {

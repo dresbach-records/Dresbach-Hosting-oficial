@@ -12,20 +12,21 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 
 function ServiceStatusBadge({ status }: { status: string }) {
-    let variant: "success" | "destructive" | "warning" = "warning";
-    const textMap: { [key: string]: string } = {
-        'Active': 'Ativo',
-        'Suspended': 'Suspenso',
-        'Pending': 'Pendente',
-    }
-    const currentStatus = textMap[status] || status;
+    let variant: "success" | "destructive" | "warning" | "secondary" = "secondary";
 
-    if (currentStatus === 'Ativo') {
-        variant = 'success';
-    } else if (currentStatus === 'Suspenso') {
-        variant = 'destructive';
+    switch (status) {
+        case 'Active':
+            variant = 'success';
+            break;
+        case 'Suspended':
+            variant = 'destructive';
+            break;
+        case 'Pending':
+            variant = 'warning';
+            break;
     }
-    return <Badge variant={variant}>{currentStatus}</Badge>;
+    
+    return <Badge variant={variant}>{status}</Badge>;
 }
 
 export default function ServicesAdminPage() {
@@ -99,5 +100,3 @@ export default function ServicesAdminPage() {
     </Card>
   );
 }
-
-    

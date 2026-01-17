@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"backend/internal/domain/constants"
 	"backend/internal/firebase"
 	"backend/internal/utils"
 
@@ -56,7 +57,7 @@ func CreateClientHandler(c *gin.Context) {
 		"lastName":    p.LastName,
 		"email":       p.Email,
 		"createdAt":   time.Now().Format(time.RFC3339),
-		"status":      "Ativo",
+		"status":      constants.StatusActive,
 		"phoneNumber": "",
 		"address":     "",
 	}
@@ -150,7 +151,7 @@ func SuspendClient(c *gin.Context) {
 	}
 
 	updateData := map[string]interface{}{
-		"status": "Suspenso",
+		"status": constants.StatusSuspended,
 	}
 
 	_, err := firebase.FirestoreClient.Collection("clients").Doc(clientID).Set(context.Background(), updateData, firestore.MergeAll)
@@ -162,4 +163,3 @@ func SuspendClient(c *gin.Context) {
 
 	utils.Success(c, http.StatusOK, gin.H{"message": "Cliente suspenso com sucesso."})
 }
-
