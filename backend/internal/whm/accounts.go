@@ -8,16 +8,18 @@ import (
 
 // CreateAccount sends a request to the WHM API to create a new hosting account.
 // See: https://documentation.cpanel.net/display/DD/WHM+API+1+Functions+-+createacct
-func (c *Client) CreateAccount(domain, username, password, plan string) (*http.Response, error) {
+func (c *Client) CreateAccount(domain, username, password, plan, contactemail string) (*http.Response, error) {
 	// URL encode parameters to handle special characters
 	safePassword := url.QueryEscape(password)
+	safeEmail := url.QueryEscape(contactemail)
 
 	endpoint := fmt.Sprintf(
-		"createacct?api.version=1&username=%s&domain=%s&password=%s&plan=%s",
+		"createacct?api.version=1&username=%s&domain=%s&password=%s&plan=%s&contactemail=%s",
 		username,
 		domain,
 		safePassword,
 		plan,
+		safeEmail,
 	)
 	return c.Request(endpoint, "GET", nil)
 }
@@ -38,8 +40,12 @@ func (c *Client) UnsuspendAccount(user string) (*http.Response, error) {
 
 // RemoveAccount terminates a hosting account.
 // See: https://documentation.cpanel.net/display/DD/WHM+API+1+Functions+-+removeacct
-func (c *Client) RemoveAccount(user string) (*http.Response, error) {
-	endpoint := fmt.Sprintf("removeacct?api.version=1&user=%s", user)
+func (c *Client) RemoveAccount(user string, keepdns bool) (*http.Response, error) {
+	keepDnsParam := "0"
+	if keepdns {
+		keepDnsParam = "1"
+	}
+	endpoint := fmt.Sprintf("removeacct?api.version=1&user=%s&keepdns=%s", user, keepDnsParam)
 	return c.Request(endpoint, "GET", nil)
 }
 

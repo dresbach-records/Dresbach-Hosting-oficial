@@ -24,17 +24,13 @@ type RegisterPayload struct {
 	LastName  string `json:"lastName" binding:"required"`
 }
 
-type LoginPayload struct {
-	Email    string `json:"email" binding:"required"`
-	Password string `json:"password" binding:"required"`
-}
-
 type SessionLoginPayload struct {
 	IdToken string `json:"idToken" binding:"required"`
 }
 
 // RegisterHandler lida com o registro de novos usuários.
-// Ele cria o usuário no Firebase Auth e o documento de cliente no Firestore.
+// Ele cria o usuário no Firebase Auth, o documento de cliente no Firestore,
+// e promove o primeiro usuário registrado a administrador.
 func RegisterHandler(c *gin.Context) {
 	var p RegisterPayload
 	if err := c.ShouldBindJSON(&p); err != nil {
@@ -70,7 +66,30 @@ func RegisterHandler(c *gin.Context) {
 		return
 	}
 
-	// 2. Criar documento do cliente no Firestore
+	// 2. Verificar se é o primeiro usuário para promover a admin
+	isFirstUser := false
+	iter := firebase.FirestoreClient.Collection("clients").Limit(1).Documents(context.Background())
+	docs, err := iter.GetAll()
+	if err != nil {
+		// Loga o erro mas continua, pois a criação do usuário é mais crítica.
+		log.Printf("AVISO: Não foi possível verificar se existem outros clientes. O usuário %s não será promovido a admin automaticamente: %v", p.Email, err)
+	} else if len(docs) == 0 {
+		isFirstUser = true
+	}
+
+	if isFirstUser {
+		claims := map[string]interface{}{"admin": true}
+		err = firebase.AuthClient.SetCustomUserClaims(context.Background(), userRecord.UID, claims)
+		if err != nil {
+			// Novamente, loga o erro mas não impede o registro do usuário
+			log.Printf("AVISO: Falha ao definir a claim de admin para o primeiro usuário %s: %v", userRecord.UID, err)
+		} else {
+			log.Printf("Este é o primeiro usuário registrado. %s foi promovido a administrador.", p.Email)
+		}
+	}
+
+
+	// 3. Criar documento do cliente no Firestore
 	clientData := map[string]interface{}{
 		"id":          userRecord.UID,
 		"firstName":   p.FirstName,
@@ -127,7 +146,7 @@ func SessionLoginHandler(c *gin.Context) {
 	sess.Values["userID"] = userRecord.UID
 	sess.Values["email"] = userRecord.Email
 	sess.Values["isAdmin"] = isAdmin
-	sess.Options.MaxAge = 86400 // 24 horas
+	sess.Options.MaxAge = 86400 * 3 // 3 dias
 	sess.Options.HttpOnly = true
 	sess.Options.SameSite = http.SameSiteLaxMode
 
@@ -137,59 +156,21 @@ func SessionLoginHandler(c *gin.Context) {
 		return
 	}
 
+	log.Printf("Sessão criada com sucesso para %s (Admin: %t)", userRecord.Email, isAdmin)
 	utils.Success(c, http.StatusOK, gin.H{"message": "Sessão criada com sucesso", "isAdmin": isAdmin})
-}
-
-// LoginHandler lida com o login e criação de sessão. **DEPRECATED E INSEGURO**. Usar SessionLoginHandler.
-func LoginHandler(c *gin.Context) {
-	var p LoginPayload
-	if err := c.ShouldBindJSON(&p); err != nil {
-		utils.Error(c, http.StatusBadRequest, "Corpo da requisição inválido")
-		return
-	}
-
-	// NOTA DE SEGURANÇA: Este fluxo de login é inseguro e apenas para fins de exercício.
-	// Uma aplicação de produção deve usar o Firebase Client SDK para logar o usuário,
-	// obter o ID Token e enviá-lo para este backend para validação e criação de sessão.
-	userRecord, err := firebase.AuthClient.GetUserByEmail(context.Background(), p.Email)
-	if err != nil {
-		utils.Error(c, http.StatusUnauthorized, "Email ou senha inválidos")
-		return
-	}
-
-	// Verifica se o usuário tem a claim de admin
-	isAdmin := false
-	if claims := userRecord.CustomClaims; claims != nil {
-		if val, ok := claims["admin"]; ok {
-			isAdmin = val.(bool)
-		}
-	}
-
-	sess, _ := session.Store.Get(c.Request, session.Name)
-	sess.Values["userID"] = userRecord.UID
-	sess.Values["email"] = userRecord.Email
-	sess.Values["isAdmin"] = isAdmin // Salva a permissão na sessão
-	sess.Options.MaxAge = 86400      // 24 horas
-	sess.Options.HttpOnly = true
-	sess.Options.SameSite = http.SameSiteLaxMode
-
-	if err := sess.Save(c.Request, c.Writer); err != nil {
-		log.Printf("Erro ao salvar a sessão: %v\n", err)
-		utils.Error(c, http.StatusInternalServerError, "Falha ao criar a sessão")
-		return
-	}
-
-	utils.Success(c, http.StatusOK, gin.H{"message": "Login bem-sucedido", "isAdmin": isAdmin})
 }
 
 // LogoutHandler lida com a destruição da sessão.
 func LogoutHandler(c *gin.Context) {
 	sess, _ := session.Store.Get(c.Request, session.Name)
+	email, _ := sess.Values["email"].(string)
+
 	sess.Options.MaxAge = -1 // Expira o cookie
 	if err := sess.Save(c.Request, c.Writer); err != nil {
-		log.Printf("Erro ao destruir a sessão: %v\n", err)
+		log.Printf("Erro ao destruir a sessão para %s: %v\n", email, err)
 		utils.Error(c, http.StatusInternalServerError, "Falha ao fazer logout")
 		return
 	}
+	log.Printf("Logout bem-sucedido para %s", email)
 	utils.Success(c, http.StatusOK, gin.H{"message": "Logout bem-sucedido"})
 }

@@ -21,18 +21,16 @@ func Register(r *gin.Engine) {
 		// --- ROTAS PÚBLICAS DE AUTENTICAÇÃO ---
 		authRouter := api.Group("/auth")
 		{
+			// Cria o usuário e o promove a admin se for o primeiro
 			authRouter.POST("/register", handlers.RegisterHandler)
-			// A rota /login é insegura e mantida para compatibilidade temporária
-			authRouter.POST("/login", handlers.LoginHandler)
 			// Rota de login segura baseada em ID Token do Firebase
 			authRouter.POST("/session-login", handlers.SessionLoginHandler)
 			authRouter.POST("/logout", handlers.LogoutHandler)
+
+			// Rota de login legada, marcada como insegura.
+			// authRouter.POST("/login", handlers.LoginHandler) 
 		}
 
-		// Rota pública temporária para criar o primeiro administrador.
-		// ATENÇÃO: Por segurança, esta rota deve ser movida de volta para o grupo /admin
-		// e protegida pelo AdminMiddleware após a criação do primeiro admin.
-		api.POST("/make-admin", handlers.MakeAdminHandler)
 
 		// --- ROTAS PÚBLICAS DIVERSAS ---
 		api.GET("/domains/lookup/:domain", handlers.DomainLookupHandler)
@@ -69,7 +67,7 @@ func Register(r *gin.Engine) {
 			adminRouter.Use(middleware.AdminMiddleware()) // Protege todas as rotas de admin
 			{
 				adminRouter.GET("/dashboard", handlers.GetAdminDashboard)
-				// adminRouter.POST("/make-admin", handlers.MakeAdminHandler) // Movido para público
+				adminRouter.POST("/make-admin", handlers.MakeAdminHandler)
 
 				// Clientes
 				adminRouter.GET("/clients", handlers.ListClients)
@@ -85,9 +83,6 @@ func Register(r *gin.Engine) {
 
 				// Serviços (Instâncias de Hosting)
 				adminRouter.GET("/services", handlers.ListServices)
-				// A rota de provisionamento de cliente está no nível superior.
-				// Aqui poderia haver uma rota de provisionamento manual pelo admin.
-				// adminRouter.POST("/services/provision", handlers.AdminProvisionHandler)
 				adminRouter.PUT("/services/:id/suspend", handlers.SuspendService)
 				adminRouter.PUT("/services/:id/unsuspend", handlers.UnsuspendService)
 				adminRouter.DELETE("/services/:id", handlers.TerminateService)
@@ -101,7 +96,6 @@ func Register(r *gin.Engine) {
 				adminRouter.GET("/tickets", handlers.ListTickets)
 				adminRouter.POST("/tickets/:id/reply", handlers.ReplyToTicket)
 				adminRouter.PUT("/tickets/:id/status", handlers.UpdateTicketStatus)
-
 
 				// Servidores
 				adminRouter.GET("/servers", handlers.ListServers)
