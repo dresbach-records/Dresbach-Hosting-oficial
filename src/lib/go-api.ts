@@ -19,7 +19,7 @@ const GO_BACKEND_URL = process.env.NEXT_PUBLIC_GO_BACKEND_URL || 'http://localho
  * @throws An error if the network request fails or if the API returns a non-ok status.
  */
 export async function fetchFromGoBackend<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const url = `${GO_BACKEND_URL}${endpoint}`;
+  const url = new URL(endpoint, GO_BACKEND_URL).href;
 
   const response = await fetch(url, {
     credentials: 'include', // ESSENCIAL: Envia cookies em requisições cross-origin
