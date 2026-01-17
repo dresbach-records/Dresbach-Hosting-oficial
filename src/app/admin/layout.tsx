@@ -40,6 +40,11 @@ import {
   FileQuote,
   Terminal,
   File,
+  Flag,
+  MessageSquare,
+  Reply,
+  ReplyAll,
+  Network,
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 
@@ -318,9 +323,111 @@ export default function AdminLayout({
           </AccordionItem>
         </Accordion>
 
-        <NavLink href="/admin/suporte" isActive={isActive('/admin/suporte')} badge={1} isMobile={isMobile}>
-          <LifeBuoy className={iconSize} /> Suporte
-        </NavLink>
+        <Accordion type="multiple" className="w-full" defaultValue={['suporte']}>
+            <AccordionItem value="suporte" className="border-b-0">
+                <AccordionTrigger className={cn("rounded-lg px-3 py-2 hover:no-underline hover:text-primary", isActive('/admin/suporte') && 'text-primary bg-muted')}>
+                    <div className="flex w-full items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <LifeBuoy className={iconSize} />
+                            Suporte
+                        </div>
+                        <Badge className="bg-red-500 text-white hover:bg-red-600">1</Badge>
+                    </div>
+                </AccordionTrigger>
+                <AccordionContent className={cn("pt-1 space-y-1", isMobile ? "pl-10" : "pl-7")}>
+                    <Accordion type="multiple" className="w-full" defaultValue={['tickets-de-suporte']}>
+                        <AccordionItem value="tickets-de-suporte" className="border-b-0">
+                            <AccordionTrigger className={cn("rounded-lg px-3 py-2 hover:no-underline hover:text-primary", isActive('/admin/suporte/tickets') && 'text-primary')}>
+                                <div className="flex w-full items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <Ticket className={iconSize} />
+                                        Tickets de Suporte
+                                    </div>
+                                    <Badge variant="destructive">1</Badge>
+                                </div>
+                            </AccordionTrigger>
+                            <AccordionContent className={cn("pt-1 space-y-1", isMobile ? "pl-10" : "pl-7")}>
+                                <Link href={'/admin/suporte/tickets?new=true'} className={cn(subLinkClass, isExactlyActive('/admin/suporte/tickets?new=true') && 'bg-muted text-primary')}>
+                                    <FilePlus2 className={iconSize} />
+                                    Abrir Novo Ticket
+                                </Link>
+                                <Link href={'/admin/suporte'} className={cn(subLinkClass, isExactlyActive('/admin/suporte') && 'bg-muted text-primary')}>
+                                    <ListTodo className={iconSize} />
+                                    Ver Todos
+                                </Link>
+                                <Link href={'/admin/suporte/tickets?status=awaiting'} className={cn(subLinkClass, 'flex justify-between', isExactlyActive('/admin/suporte/tickets?status=awaiting') && 'bg-muted text-primary')}>
+                                    <div className="flex items-center gap-3">
+                                        <Clock className={iconSize} />
+                                        Aguardando Resposta
+                                    </div>
+                                    <Badge variant="destructive">1</Badge>
+                                </Link>
+                                <Link href={'/admin/suporte/tickets?flagged=true'} className={cn(subLinkClass, isExactlyActive('/admin/suporte/tickets?flagged=true') && 'bg-muted text-primary')}>
+                                    <Flag className={iconSize} />
+                                    Tickets Sinalizados
+                                </Link>
+                                <Link href={'/admin/suporte/tickets?status=active'} className={cn(subLinkClass, 'flex justify-between', isExactlyActive('/admin/suporte/tickets?status=active') && 'bg-muted text-primary')}>
+                                    <div className="flex items-center gap-3">
+                                        <ListTodo className={iconSize} />
+                                        Todos Tickets Ativos
+                                    </div>
+                                    <Badge className="bg-green-600 text-white hover:bg-green-700">2</Badge>
+                                </Link>
+                                <Link href={'/admin/suporte/tickets?status=open'} className={cn(subLinkClass, 'flex justify-between', isExactlyActive('/admin/suporte/tickets?status=open') && 'bg-muted text-primary')}>
+                                    <div className="flex items-center gap-3">
+                                        <MessageSquare className={iconSize} />
+                                        Aberto
+                                    </div>
+                                    <Badge className="bg-blue-500 text-white">1</Badge>
+                                </Link>
+                                <Link href={'/admin/suporte/tickets?status=answered'} className={cn(subLinkClass, isExactlyActive('/admin/suporte/tickets?status=answered') && 'bg-muted text-primary')}>
+                                    <Reply className={iconSize} />
+                                    Respondido
+                                </Link>
+                                <Link href={'/admin/suporte/tickets?status=customer-reply'} className={cn(subLinkClass, 'flex justify-between', isExactlyActive('/admin/suporte/tickets?status=customer-reply') && 'bg-muted text-primary')}>
+                                    <div className="flex items-center gap-3">
+                                        <ReplyAll className={iconSize} />
+                                        Resposta do Cliente
+                                    </div>
+                                    <Badge className="bg-blue-500 text-white">1</Badge>
+                                </Link>
+                                <Link href={'/admin/suporte/tickets?status=on-hold'} className={cn(subLinkClass, 'flex justify-between', isExactlyActive('/admin/suporte/tickets?status=on-hold') && 'bg-muted text-primary')}>
+                                    <div className="flex items-center gap-3">
+                                        <PauseCircle className={iconSize} />
+                                        Em Espera
+                                    </div>
+                                    <Badge className="bg-blue-500 text-white">1</Badge>
+                                </Link>
+                                <Link href={'/admin/suporte/tickets?status=in-progress'} className={cn(subLinkClass, isExactlyActive('/admin/suporte/tickets?status=in-progress') && 'bg-muted text-primary')}>
+                                    <Timer className={iconSize} />
+                                    Em Progresso
+                                </Link>
+                                <Link href={'/admin/suporte/tickets?status=closed'} className={cn(subLinkClass, 'flex justify-between', isExactlyActive('/admin/suporte/tickets?status=closed') && 'bg-muted text-primary')}>
+                                    <div className="flex items-center gap-3">
+                                        <CheckCircle className={iconSize} />
+                                        Fechado
+                                    </div>
+                                    <Badge className="bg-green-600 text-white hover:bg-green-700">1</Badge>
+                                </Link>
+                            </AccordionContent>
+                        </AccordionItem>
+                    </Accordion>
+                     <Link href={'/admin/suporte/network-issues'} className={cn(subLinkClass, isExactlyActive('/admin/suporte/network-issues') && 'bg-muted text-primary')}>
+                        <Network className={iconSize} />
+                        Problemas de Rede
+                    </Link>
+                    <Link href={'/admin/suporte/overview'} className={cn(subLinkClass, isExactlyActive('/admin/suporte/overview') && 'bg-muted text-primary')}>
+                        <BarChart className={iconSize} />
+                        Visão Geral do Suporte
+                    </Link>
+                    <Link href={'/admin/suporte/predefined-replies'} className={cn(subLinkClass, isExactlyActive('/admin/suporte/predefined-replies') && 'bg-muted text-primary')}>
+                        <FileQuote className={iconSize} />
+                        Respostas Predefinidas
+                    </Link>
+                </AccordionContent>
+            </AccordionItem>
+        </Accordion>
+
         <NavLink href="/admin/relatorios" isActive={isActive('/admin/relatorios')} isMobile={isMobile}>
           <BarChart className={iconSize} /> Relatórios
         </NavLink>
