@@ -16,7 +16,7 @@ export function Footer() {
   return (
     <footer className="border-t bg-card">
       <div className="container py-12">
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
           <div>
             <h4 className="font-headline font-semibold tracking-tight">Empresa</h4>
             <ul className="mt-4 space-y-2">
@@ -42,6 +42,15 @@ export function Footer() {
               <FooterLink href="/suporte">WhatsApp</FooterLink>
               <FooterLink href="/suporte">Tickets</FooterLink>
               {/* <FooterLink href="/status">Status do Sistema</FooterLink> */}
+            </ul>
+          </div>
+           <div>
+            <h4 className="font-headline font-semibold tracking-tight">Contato</h4>
+            <ul className="mt-4 space-y-2">
+                <li><a href="mailto:financeiro@dresbachhosting.com.br" className="text-muted-foreground transition-colors hover:text-foreground">Financeiro</a></li>
+                <li><a href="mailto:sac@dresbachhosting.com.br" className="text-muted-foreground transition-colors hover:text-foreground">SAC</a></li>
+                <li><a href="mailto:suporte@dresbachhosting.com.br" className="text-muted-foreground transition-colors hover:text-foreground">Suporte</a></li>
+                <li><a href="mailto:techops@dresbachhosting.com.br" className="text-muted-foreground transition-colors hover:text-foreground">Tech Ops</a></li>
             </ul>
           </div>
           <div>

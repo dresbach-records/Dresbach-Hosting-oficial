@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
-import { Bot, MessageSquare, Ticket } from "lucide-react";
+import { Bot, MessageSquare, Ticket, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function SupportPage() {
@@ -54,6 +54,19 @@ export default function SupportPage() {
                     <Button asChild variant="outline">
                         <a href="https://wa.me/5511999999999" target="_blank" rel="noopener noreferrer">Falar no WhatsApp</a>
                     </Button>
+                </CardContent>
+             </Card>
+             <Card>
+                <CardHeader>
+                    <CardTitle className="text-xl font-headline flex items-center gap-2"><Mail className="h-5 w-5 text-accent"/> E-mail de Contato</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <ul className="space-y-1 text-sm">
+                        <li><a href="mailto:suporte@dresbachhosting.com.br" className="text-muted-foreground hover:text-primary">suporte@dresbachhosting.com.br</a></li>
+                        <li><a href="mailto:financeiro@dresbachhosting.com.br" className="text-muted-foreground hover:text-primary">financeiro@dresbachhosting.com.br</a></li>
+                        <li><a href="mailto:sac@dresbachhosting.com.br" className="text-muted-foreground hover:text-primary">sac@dresbachhosting.com.br</a></li>
+                        <li><a href="mailto:techops@dresbachhosting.com.br" className="text-muted-foreground hover:text-primary">techops@dresbachhosting.com.br</a></li>
+                    </ul>
                 </CardContent>
              </Card>
           </div>
