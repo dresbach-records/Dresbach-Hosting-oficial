@@ -1,8 +1,9 @@
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { CreditCard, ArrowRight } from "lucide-react";
+import Link from 'next/link';
 
-function SettingsSection({ title, description }: { title: string, description: string }) {
+function SettingsLinkCard({ title, description, href }: { title: string, description: string, href: string }) {
     return (
         <Card>
             <CardHeader>
@@ -10,10 +11,11 @@ function SettingsSection({ title, description }: { title: string, description: s
                 <CardDescription>{description}</CardDescription>
             </CardHeader>
             <CardContent>
-                <p className="text-center text-muted-foreground py-8">Configurações para {title.toLowerCase()} em desenvolvimento.</p>
-                <div className="flex justify-end">
-                    <Button>Salvar Alterações</Button>
-                </div>
+                <Button asChild variant="outline">
+                    <Link href={href}>
+                        Gerenciar <ArrowRight className="ml-2 h-4 w-4" />
+                    </Link>
+                </Button>
             </CardContent>
         </Card>
     )
@@ -25,33 +27,17 @@ export default function SettingsAdminPage() {
          <Card>
             <CardHeader>
                 <CardTitle>Configurações do Sistema</CardTitle>
-                <CardDescription>Gerencie configurações gerais, segurança, faturamento, email e APIs.</CardDescription>
+                <CardDescription>Gerencie as configurações essenciais do seu negócio.</CardDescription>
             </CardHeader>
         </Card>
-        <Tabs defaultValue="geral" className="w-full">
-            <TabsList className="grid w-full grid-cols-5">
-                <TabsTrigger value="geral">Geral</TabsTrigger>
-                <TabsTrigger value="seguranca">Segurança</TabsTrigger>
-                <TabsTrigger value="faturamento">Faturamento</TabsTrigger>
-                <TabsTrigger value="email">Email</TabsTrigger>
-                <TabsTrigger value="api">API</TabsTrigger>
-            </TabsList>
-            <TabsContent value="geral">
-                <SettingsSection title="Configurações Gerais" description="Nome da empresa, moeda, idioma, fuso horário." />
-            </TabsContent>
-            <TabsContent value="seguranca">
-                 <SettingsSection title="Segurança" description="Permissões, 2FA, logs, IP whitelist, rate limit." />
-            </TabsContent>
-            <TabsContent value="faturamento">
-                 <SettingsSection title="Faturamento" description="Gateways de pagamento, moedas, impostos." />
-            </TabsContent>
-            <TabsContent value="email">
-                 <SettingsSection title="Email" description="Configuração de SMTP, templates de email." />
-            </TabsContent>
-            <TabsContent value="api">
-                 <SettingsSection title="API" description="Gerencie tokens de API, webhooks e logs." />
-            </TabsContent>
-        </Tabs>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+             <SettingsLinkCard 
+                title="Configurações Fiscais"
+                description="Gerencie os dados da empresa para emissão de notas fiscais."
+                href="/admin/configuracoes/fiscal"
+             />
+             {/* Adicionar mais cards de configuração aqui no futuro */}
+        </div>
     </div>
   );
 }

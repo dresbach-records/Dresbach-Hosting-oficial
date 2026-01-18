@@ -24,6 +24,8 @@ import {
   ClipboardList,
   Cog,
   FileText,
+  Briefcase,
+  DollarSign
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -101,10 +103,10 @@ export default function AdminLayout({
   }
 
   const renderNavLinks = (isMobile = false) => {
-    const subLinkClass = cn('flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary', isMobile && 'text-base');
+    const subLinkClass = cn('flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary text-sm', isMobile && 'text-base');
     const iconSize = isMobile ? 'h-5 w-5' : 'h-4 w-4';
 
-    const isActive = (href: string) => pathname.startsWith(href) && href !== '/admin';
+    const isActive = (href: string) => pathname.startsWith(href);
     const isExactlyActive = (href: string) => pathname === href;
 
     return (
@@ -113,7 +115,7 @@ export default function AdminLayout({
           <Home className={iconSize} /> Visão Geral
         </NavLink>
 
-        <Accordion type="multiple" defaultValue={['clientes', 'faturamento', 'suporte']} className="w-full">
+        <Accordion type="multiple" defaultValue={['clientes', 'faturamento', 'configuracoes']} className="w-full">
           
           <AccordionItem value="clientes" className="border-b-0">
             <AccordionTrigger className={cn("rounded-lg px-3 py-2 hover:no-underline hover:text-primary font-medium", isActive('/admin/clientes') && 'text-primary bg-muted')}>
@@ -124,29 +126,21 @@ export default function AdminLayout({
             </AccordionTrigger>
             <AccordionContent className={cn("pt-1 space-y-1", isMobile ? "pl-10" : "pl-7")}>
                 <Link href={'/admin/clientes'} className={cn(subLinkClass, isExactlyActive('/admin/clientes') && 'bg-muted text-primary')}>
-                  <Search className={iconSize} />
-                  Ver/Buscar Clientes
+                  Listar Clientes
                 </Link>
-                <Link href={'/admin/clientes?new=true'} className={cn(subLinkClass, isExactlyActive('/admin/clientes?new=true') && 'bg-muted text-primary')}>
-                  <UserPlus className={iconSize} />
-                  Adicionar Novo
-                </Link>
-              <Link href="/admin/addons" className={cn(subLinkClass, isExactlyActive('/admin/addons') && 'bg-muted text-primary')}>
-                <BookUser className={iconSize} /> CRM
-              </Link>
             </AccordionContent>
           </AccordionItem>
 
-          <AccordionItem value="pedidos" className="border-b-0">
-            <AccordionTrigger className={cn("rounded-lg px-3 py-2 hover:no-underline hover:text-primary font-medium", isActive('/admin/pedidos') && 'text-primary bg-muted')}>
+          <AccordionItem value="servicos" className="border-b-0">
+            <AccordionTrigger className={cn("rounded-lg px-3 py-2 hover:no-underline hover:text-primary font-medium", isActive('/admin/servicos') && 'text-primary bg-muted')}>
               <div className="flex items-center gap-3">
-                <ClipboardList className={iconSize} />
-                Pedidos
+                <Briefcase className={iconSize} />
+                Serviços
               </div>
             </AccordionTrigger>
             <AccordionContent className={cn("pt-1 space-y-1", isMobile ? "pl-10" : "pl-7")}>
-                <Link href={'/admin/pedidos'} className={cn(subLinkClass, isExactlyActive('/admin/pedidos') && 'bg-muted text-primary')}>
-                   Listar Pedidos
+                <Link href={'/admin/servicos'} className={cn(subLinkClass, isExactlyActive('/admin/servicos') && 'bg-muted text-primary')}>
+                   Listar Serviços
                 </Link>
             </AccordionContent>
           </AccordionItem>
@@ -155,7 +149,7 @@ export default function AdminLayout({
             <AccordionTrigger className={cn("rounded-lg px-3 py-2 hover:no-underline hover:text-primary font-medium", isActive('/admin/faturamento') && 'text-primary bg-muted')}>
               <div className="flex w-full items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <CreditCard className={iconSize} />
+                  <DollarSign className={iconSize} />
                     Faturamento
                 </div>
               </div>
@@ -167,34 +161,18 @@ export default function AdminLayout({
             </AccordionContent>
           </AccordionItem>
 
-          <AccordionItem value="suporte" className="border-b-0">
-            <AccordionTrigger className={cn("rounded-lg px-3 py-2 hover:no-underline hover:text-primary font-medium", isActive('/admin/suporte') && 'text-primary bg-muted')}>
+           <AccordionItem value="dominios" className="border-b-0">
+            <AccordionTrigger className={cn("rounded-lg px-3 py-2 hover:no-underline hover:text-primary font-medium", isActive('/admin/dominios') && 'text-primary bg-muted')}>
               <div className="flex w-full items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <LifeBuoy className={iconSize} />
-                    Suporte
+                  <Globe className={iconSize} />
+                    Pedidos de Domínio
                 </div>
               </div>
             </AccordionTrigger>
             <AccordionContent className={cn("pt-1 space-y-1", isMobile ? "pl-10" : "pl-7")}>
-                <Link href={'/admin/suporte'} className={cn(subLinkClass, isExactlyActive('/admin/suporte') && 'bg-muted text-primary')}>
-                    Todos os Tickets
-                </Link>
-            </AccordionContent>
-          </AccordionItem>
-          
-          <AccordionItem value="relatorios" className="border-b-0">
-            <AccordionTrigger className={cn("rounded-lg px-3 py-2 hover:no-underline hover:text-primary font-medium", isActive('/admin/relatorios') && 'text-primary bg-muted')}>
-              <div className="flex w-full items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <BarChart className={iconSize} />
-                    Relatórios
-                </div>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className={cn("pt-1 space-y-1", isMobile ? "pl-10" : "pl-7")}>
-                <Link href={'/admin/relatorios'} className={cn(subLinkClass, isExactlyActive('/admin/relatorios') && 'bg-muted text-primary')}>
-                    Ver Relatórios
+                <Link href={'/admin/dominios'} className={cn(subLinkClass, isExactlyActive('/admin/dominios') && 'bg-muted text-primary')}>
+                   Listar Pedidos
                 </Link>
             </AccordionContent>
           </AccordionItem>
@@ -211,32 +189,26 @@ export default function AdminLayout({
               </div>
             </AccordionTrigger>
             <AccordionContent className={cn("pt-1 space-y-1", isMobile ? "pl-10" : "pl-7")}>
-               <Link href={'/admin/produtos'} className={cn(subLinkClass, isActive('/admin/produtos') && 'bg-muted text-primary')}>
-                  <ShoppingCart className={iconSize} /> Produtos/Serviços
+               <Link href={'/admin/configuracoes/fiscal'} className={cn(subLinkClass, isActive('/admin/configuracoes/fiscal') && 'bg-muted text-primary')}>
+                  <CreditCard className={iconSize} /> Configuração Fiscal
                 </Link>
-                <Link href={'/admin/servidores'} className={cn(subLinkClass, isActive('/admin/servidores') && 'bg-muted text-primary')}>
-                  <Server className={iconSize} /> Servidores
-                </Link>
-                <Link href={'/admin/dominios'} className={cn(subLinkClass, isActive('/admin/dominios') && 'bg-muted text-primary')}>
-                  <Globe className={iconSize} /> Pedidos de Domínio
-                </Link>
-                <Link href={'/admin/automacao'} className={cn(subLinkClass, isActive('/admin/automacao') && 'bg-muted text-primary')}>
-                  <Cog className={iconSize} /> Automação
-                </Link>
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="monitoramento" className="border-b-0">
+            <AccordionTrigger className={cn("rounded-lg px-3 py-2 hover:no-underline hover:text-primary font-medium", isActive('/admin/logs') && 'text-primary bg-muted')}>
+              <div className="flex items-center gap-3">
+                <FileText className={iconSize} /> Monitoramento
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className={cn("pt-1 space-y-1", isMobile ? "pl-10" : "pl-7")}>
                 <Link href={'/admin/logs'} className={cn(subLinkClass, isActive('/admin/logs') && 'bg-muted text-primary')}>
-                  <FileText className={iconSize} /> Logs do Sistema
-                </Link>
-                <Link href={'/admin/configuracoes'} className={cn(subLinkClass, isActive('/admin/configuracoes') && 'bg-muted text-primary')}>
-                  <Wrench className={iconSize} /> Configurações Gerais
+                  Logs do Sistema
                 </Link>
             </AccordionContent>
           </AccordionItem>
         </Accordion>
 
-
-        <NavLink href="/admin/ajuda" isActive={isActive('/admin/ajuda')} isMobile={isMobile}>
-          <HelpCircle className={iconSize} /> Ajuda
-        </NavLink>
       </>
     );
   }
