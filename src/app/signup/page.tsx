@@ -42,7 +42,7 @@ export default function SignupPage() {
     setError(null);
 
     try {
-      await apiFetch('/v1/auth/register', {
+      await apiFetch('/api/register', {
         method: 'POST',
         body: JSON.stringify({ name, email, password }),
       });
@@ -61,7 +61,7 @@ export default function SignupPage() {
   };
 
   const handleSocialLogin = async (providerName: 'google' | 'facebook') => {
-    window.location.href = `${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/auth/login/${providerName}`;
+     setError('Login social não está disponível no momento.');
   };
 
   return (

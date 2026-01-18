@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Menu, MessageCircle, LogOut } from "lucide-react";
+import { Menu, MessageCircle, LogOut, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,7 +28,7 @@ export function Header() {
   const { user, isLoading, logout } = useAuth();
   const router = useRouter();
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
     logout();
     router.push('/login');
   };
@@ -97,12 +97,14 @@ export function Header() {
                 WhatsApp
               </a>
             </Button>
-            {!isLoading && (
+            {isLoading ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : (
               <>
                 {user ? (
                   <>
                     <Button size="sm" variant="secondary" asChild>
-                      <Link href="/area-do-cliente">Área do Cliente</Link>
+                      <Link href={user.role === 'admin' ? '/admin' : '/area-do-cliente'}>Área do Cliente</Link>
                     </Button>
                     <Button size="sm" variant="ghost" onClick={handleLogout}>
                       <LogOut className="mr-2 h-4 w-4" />

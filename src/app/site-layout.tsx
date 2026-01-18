@@ -9,12 +9,27 @@ import { Button } from '@/components/ui/button';
 
 export function SiteLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
-    const isAuthPage = pathname === '/login' || pathname === '/signup';
+    const noLayoutPages = [
+      '/login', 
+      '/signup', 
+      '/forgot-password', 
+      '/reset-password',
+      '/admin/login'
+    ];
+    
     const isClientArea = pathname.startsWith('/area-do-cliente');
-    const isAdminArea = pathname.startsWith('/admin');
+    const isAdminArea = pathname.startsWith('/admin') && pathname !== '/admin/login';
 
-    if (isClientArea || isAdminArea || isAuthPage) {
+    if (isClientArea || isAdminArea) {
         return <>{children}</>;
+    }
+    
+    if (noLayoutPages.includes(pathname)) {
+        return (
+             <div className="relative flex min-h-screen flex-col bg-background">
+                <main className="flex-1">{children}</main>
+            </div>
+        );
     }
 
     return (

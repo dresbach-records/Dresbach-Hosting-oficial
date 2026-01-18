@@ -29,16 +29,21 @@ export async function apiFetch<T>(
     try {
         errorBody = await res.json();
     } catch (e) {
-        errorBody = { message: await res.text() };
+        const text = await res.text();
+        throw new Error(`API Error ${res.status}: ${text || res.statusText}`);
     }
-    const errorMessage = errorBody.message || `A API retornou um erro ${res.status}`;
+    const errorMessage = errorBody.message || errorBody.error || `A API retornou um erro ${res.status}`;
     throw new Error(errorMessage);
   }
   
-  // Handle empty responses for methods like POST/DELETE that might return 204 No Content
-  if (res.status === 204) {
+  if (res.status === 204 || res.headers.get('Content-Length') === '0') {
     return {} as T;
   }
 
-  return res.json();
+  try {
+    return await res.json();
+  } catch (e) {
+    // Handle cases where the response is not JSON, but the status is OK.
+    return {} as T;
+  }
 }

@@ -1,55 +1,38 @@
+'use client';
+
 import Link from "next/link";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-
-const plans = [
-  {
-    name: "Plano Inicial",
-    price: "R$ 19,90",
-    period: "/mês",
-    features: [
-      "1 Site",
-      "10 GB SSD",
-      "10 Contas de Email",
-      "Suporte Básico",
-      "Painel de Controle",
-    ],
-    cta: "Contratar Agora",
-    isFeatured: false,
-  },
-  {
-    name: "Plano Pro",
-    price: "R$ 49,90",
-    period: "/mês",
-    features: [
-      "Sites Ilimitados",
-      "50 GB SSD NVMe",
-      "Emails Ilimitados",
-      "Suporte Prioritário",
-      "Acesso SSH",
-      "Backups Diários",
-    ],
-    cta: "Contratar Agora",
-    isFeatured: true,
-  },
-  {
-    name: "Plano Business",
-    price: "R$ 99,90",
-    period: "/mês",
-    features: [
-      "Tudo do Pro+",
-      "100 GB SSD NVMe",
-      "Servidor Dedicado",
-      "Suporte Especializado 24/7",
-      "Consultoria Tech Ops inclusa",
-    ],
-    cta: "Contratar Agora",
-    isFeatured: false,
-  },
-];
+import { useEffect, useState } from "react";
+import { apiFetch } from "@/lib/api";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
 
 export default function HostingPlansPage() {
+  const [plans, setPlans] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchPlans = async () => {
+      setIsLoading(true);
+      try {
+        const data = await apiFetch<any[]>('/products/vps');
+        setPlans(data || []);
+      } catch (error: any) {
+        toast({
+          variant: "destructive",
+          title: "Erro ao carregar planos",
+          description: error.message,
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchPlans();
+  }, [toast]);
+  
   return (
     <div className="bg-background">
       <div className="container py-16 sm:py-24">
@@ -63,18 +46,25 @@ export default function HostingPlansPage() {
         </div>
 
         <div className="mt-16 grid grid-cols-1 gap-8 md:grid-cols-3">
-          {plans.map((plan) => (
-            <Card key={plan.name} className={`flex flex-col text-center ${plan.isFeatured ? 'border-primary ring-2 ring-primary' : 'border-border'}`}>
+          {isLoading && Array.from({length: 3}).map((_, i) => (
+            <Card key={i}>
+              <CardHeader><Skeleton className="h-8 w-3/5 mx-auto" /><Skeleton className="h-10 w-2/5 mx-auto mt-4" /></CardHeader>
+              <CardContent><Skeleton className="h-32 w-full" /></CardContent>
+              <CardFooter><Skeleton className="h-10 w-full" /></CardFooter>
+            </Card>
+          ))}
+          {plans.map((plan, index) => (
+            <Card key={plan.id} className={`flex flex-col text-center ${index === 1 ? 'border-primary ring-2 ring-primary' : 'border-border'}`}>
               <CardHeader>
                 <CardTitle className="font-headline text-2xl">{plan.name}</CardTitle>
                 <div className="mt-4">
-                  <span className="text-4xl font-bold text-foreground">{plan.price}</span>
-                  <span className="text-muted-foreground">{plan.period}</span>
+                  <span className="text-4xl font-bold text-foreground">R$ {plan.price.toFixed(2)}</span>
+                  <span className="text-muted-foreground">/mês</span>
                 </div>
               </CardHeader>
               <CardContent className="flex-grow">
                 <ul className="space-y-4 text-left">
-                  {plan.features.map((feature) => (
+                  {plan.features?.map((feature: string) => (
                     <li key={feature} className="flex items-center">
                       <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
                       <span>{feature}</span>
@@ -83,13 +73,16 @@ export default function HostingPlansPage() {
                 </ul>
               </CardContent>
               <CardFooter>
-                <Button className={`w-full ${plan.isFeatured ? 'bg-primary text-primary-foreground hover:bg-primary/90' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'}`} asChild>
-                  <Link href="/pedido">{plan.cta}</Link>
+                <Button className={`w-full ${index === 1 ? 'bg-primary text-primary-foreground hover:bg-primary/90' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'}`} asChild>
+                  <Link href="/pedido">{plan.cta || 'Contratar Agora'}</Link>
                 </Button>
               </CardFooter>
             </Card>
           ))}
         </div>
+        {!isLoading && plans.length === 0 && (
+          <p className="text-center mt-12 text-muted-foreground">Não foi possível carregar os planos no momento.</p>
+        )}
         <p className="text-center mt-12 text-muted-foreground">
           Precisa de uma solução personalizada? <Link href="/tech-ops" className="font-semibold text-primary hover:underline">Fale com nossa equipe de Tech Ops</Link>.
         </p>

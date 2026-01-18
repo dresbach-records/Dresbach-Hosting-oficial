@@ -1,6 +1,6 @@
 'use client';
 
-import { redirect, usePathname } from 'next/navigation';
+import { redirect, usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   Bell,
@@ -62,7 +62,7 @@ export default function ClientAreaLayout({
 
   const handleLogout = () => {
     logout();
-    redirect('/login');
+    router.push('/login');
   }
 
   return (

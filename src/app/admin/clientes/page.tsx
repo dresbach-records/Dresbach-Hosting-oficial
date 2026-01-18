@@ -26,16 +26,13 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { apiFetch } from '@/lib/api';
 
-
 const newClientSchema = z.object({
-  firstName: z.string().min(2, "O nome é obrigatório."),
-  lastName: z.string().min(2, "O sobrenome é obrigatório."),
+  name: z.string().min(2, "O nome é obrigatório."),
   email: z.string().email("Email inválido."),
   password: z.string().min(6, "A senha deve ter pelo menos 6 caracteres."),
 });
 
 type NewClientForm = z.infer<typeof newClientSchema>;
-
 
 function ClientStatusBadge({ status }: { status: string }) {
     let variant: "success" | "destructive" | "secondary" = "secondary";
@@ -57,8 +54,7 @@ export default function ClientsAdminPage() {
   const form = useForm<NewClientForm>({
     resolver: zodResolver(newClientSchema),
     defaultValues: {
-      firstName: '',
-      lastName: '',
+      name: '',
       email: '',
       password: '',
     },
@@ -67,8 +63,8 @@ export default function ClientsAdminPage() {
   const fetchClients = async () => {
     setIsLoading(true);
     try {
-        const data = await apiFetch<any[]>('/v1/admin/clients');
-        setClients(data);
+        const data = await apiFetch<any[]>('/admin/clients');
+        setClients(data || []);
     } catch (error) {
         toast({
             variant: "destructive",
@@ -87,7 +83,7 @@ export default function ClientsAdminPage() {
   const onSubmit = async (values: NewClientForm) => {
     setIsSubmitting(true);
     try {
-      await apiFetch('/v1/admin/clients', {
+      await apiFetch('/admin/clients', {
         method: 'POST',
         body: JSON.stringify(values),
       });
@@ -105,7 +101,7 @@ export default function ClientsAdminPage() {
       toast({
         variant: "destructive",
         title: "Erro ao criar cliente",
-        description: error.message || "Não foi possível criar o cliente. Verifique se o email já está em uso.",
+        description: error.message || "Não foi possível criar o cliente.",
       });
       setIsSubmitting(false);
     }
@@ -130,35 +126,22 @@ export default function ClientsAdminPage() {
                 <DialogHeader>
                   <DialogTitle>Adicionar Novo Cliente</DialogTitle>
                   <DialogDescription>
-                    Crie uma nova conta de cliente e um login de usuário associado.
+                    Crie uma nova conta de cliente.
                   </DialogDescription>
                 </DialogHeader>
                  <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                             <FormField
-                                control={form.control}
-                                name="firstName"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Nome</FormLabel>
-                                        <FormControl><Input {...field} /></FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                             <FormField
-                                control={form.control}
-                                name="lastName"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Sobrenome</FormLabel>
-                                        <FormControl><Input {...field} /></FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
+                        <FormField
+                            control={form.control}
+                            name="name"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Nome</FormLabel>
+                                    <FormControl><Input {...field} /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
                         <FormField
                             control={form.control}
                             name="email"
@@ -216,9 +199,9 @@ export default function ClientsAdminPage() {
                     {clients && clients.length > 0 ? (
                         clients.map((client) => (
                             <TableRow key={client.id}>
-                                <TableCell>{client.first_name} {client.last_name}</TableCell>
+                                <TableCell>{client.name}</TableCell>
                                 <TableCell>{client.email}</TableCell>
-                                <TableCell><ClientStatusBadge status={client.status} /></TableCell>
+                                <TableCell><ClientStatusBadge status={client.status || 'active'} /></TableCell>
                                 <TableCell>{format(new Date(client.created_at), 'dd/MM/yyyy')}</TableCell>
                                 <TableCell className="text-right">
                                     <Button asChild variant="ghost" size="icon">

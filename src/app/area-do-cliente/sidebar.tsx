@@ -14,11 +14,6 @@ import {
 } from 'lucide-react';
 import { usePathname, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Skeleton } from "@/components/ui/skeleton";
-import { formatDistanceToNow } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { useEffect, useState } from "react";
-import { apiFetch } from "@/lib/api";
 
 function SidebarLink({ href, children, icon: Icon, active }: { href: string; children: React.ReactNode; icon: React.ElementType, active: boolean }) {
     return (
@@ -38,25 +33,6 @@ function SidebarLink({ href, children, icon: Icon, active }: { href: string; chi
 export function ClientSidebar() {
     const pathname = usePathname();
     const searchParams = useSearchParams();
-    const [latestTicket, setLatestTicket] = useState<any>(null);
-    const [isTicketLoading, setIsTicketLoading] = useState(true);
-    
-    useEffect(() => {
-        const fetchTicket = async () => {
-            setIsTicketLoading(true);
-            try {
-                const tickets = await apiFetch<any[]>('/v1/client/tickets?limit=1&sort=desc');
-                if (tickets && tickets.length > 0) {
-                    setLatestTicket(tickets[0]);
-                }
-            } catch (error) {
-                console.error("Failed to fetch latest ticket", error);
-            } finally {
-                setIsTicketLoading(false);
-            }
-        };
-        fetchTicket();
-    }, []);
 
     const supportLinks = [
         { href: '/area-do-cliente/tickets', icon: MessageSquare, label: 'Meus Tickets de Suporte' },
@@ -75,19 +51,7 @@ export function ClientSidebar() {
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="p-3">
-                    {isTicketLoading && <Skeleton className="h-10 w-full" />}
-                    {latestTicket && (
-                        <Link href="/area-do-cliente/tickets" className="text-sm hover:underline">
-                            <p className="font-semibold truncate">#{latestTicket.id.slice(0,6)} - {latestTicket.subject}</p>
-                            <p className="text-primary">{latestTicket.status === 'open' ? 'Aguardando Suporte' : 'Aguardando Cliente'}</p>
-                            <p className="text-xs text-muted-foreground">
-                                {formatDistanceToNow(new Date(latestTicket.created_at), { addSuffix: true, locale: ptBR })}
-                            </p>
-                        </Link>
-                    )}
-                     {!isTicketLoading && !latestTicket && (
-                        <p className="text-sm text-center text-muted-foreground p-2">Nenhum ticket recente.</p>
-                    )}
+                    <p className="text-sm text-center text-muted-foreground p-2">Sistema de tickets em desenvolvimento.</p>
                 </CardContent>
             </Card>
 
@@ -99,7 +63,6 @@ export function ClientSidebar() {
                 </CardHeader>
                 <CardContent className="p-2 space-y-1">
                     {supportLinks.map(link => (
-                         // `Meus Tickets` is active for both the list and the new ticket flow.
                         <SidebarLink key={link.label} href={link.href} icon={link.icon} active={link.href !== '#' && pathname.startsWith(link.href)}>
                             {link.label}
                         </SidebarLink>

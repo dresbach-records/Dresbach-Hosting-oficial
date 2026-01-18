@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -32,40 +32,53 @@ const FacebookIcon = () => (
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
-  const { login } = useAuth();
+  const { login, user, isLoading } = useAuth();
+
+  useEffect(() => {
+      if (!isLoading && user) {
+        if (user.role === 'admin') {
+            router.replace('/admin');
+        } else {
+            router.replace('/area-do-cliente');
+        }
+      }
+  }, [user, isLoading, router]);
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    setIsSubmitting(true);
     setError(null);
 
     try {
-      const { token, user } = await apiFetch<{token: string, user: any}>('/v1/auth/login', {
+      const { token } = await apiFetch<{token: string}>('/api/login', {
         method: 'POST',
         body: JSON.stringify({ email, password }),
       });
       
-      login(token, user);
+      await login(token);
+      // Let the useEffect handle the redirection
       
-      if (user.role === 'admin') {
-        router.push('/admin');
-      } else {
-        router.push('/area-do-cliente');
-      }
-
     } catch (err: any) {
         setError(err.message || 'Ocorreu um erro ao tentar fazer login.');
-        setIsLoading(false);
+        setIsSubmitting(false);
     }
   };
 
   const handleSocialLogin = async (providerName: 'google' | 'facebook') => {
-    // This would redirect to the backend to initiate OAuth flow
-    window.location.href = `${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/auth/login/${providerName}`;
+    // This functionality is not in the current backend spec
+    setError('Login social não está disponível no momento.');
   };
+
+  if (isLoading || (!isLoading && user)) {
+     return (
+        <div className="flex h-screen items-center justify-center bg-background">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        </div>
+    );
+  }
 
   return (
     <>
@@ -107,7 +120,7 @@ export default function LoginPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    disabled={isLoading}
+                    disabled={isSubmitting}
                   />
                 </div>
                 <div className="space-y-2">
@@ -118,19 +131,19 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    disabled={isLoading}
+                    disabled={isSubmitting}
                   />
                 </div>
                 <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
-                        <Checkbox id="remember-me" disabled={isLoading} />
+                        <Checkbox id="remember-me" disabled={isSubmitting} />
                         <Label htmlFor="remember-me" className="text-sm font-normal text-muted-foreground">Lembrar-me</Label>
                     </div>
                     <Link href="/forgot-password" className="text-sm text-primary hover:underline">Esqueceu a senha?</Link>
                 </div>
                 {error && <p className="text-sm text-destructive">{error}</p>}
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                  {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Entrar
                 </Button>
               </form>
@@ -145,10 +158,10 @@ export default function LoginPage() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Button variant="outline" onClick={() => handleSocialLogin('google')} disabled={isLoading} className="w-full">
+                  <Button variant="outline" onClick={() => handleSocialLogin('google')} disabled={isSubmitting} className="w-full">
                       <GoogleIcon /> Google
                   </Button>
-                  <Button variant="outline" onClick={() => handleSocialLogin('facebook')} disabled={isLoading} className="w-full">
+                  <Button variant="outline" onClick={() => handleSocialLogin('facebook')} disabled={isSubmitting} className="w-full">
                        <FacebookIcon /> Facebook
                   </Button>
               </div>

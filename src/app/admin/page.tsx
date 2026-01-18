@@ -15,12 +15,12 @@ import { useToast } from '@/hooks/use-toast';
 import { apiFetch } from '@/lib/api';
 
 const chartData = [
-  { month: 'Jan', revenue: 1860, newClients: 12 },
-  { month: 'Fev', revenue: 3050, newClients: 15 },
-  { month: 'Mar', revenue: 2370, newClients: 8 },
-  { month: 'Abr', revenue: 1730, newClients: 20 },
-  { month: 'Mai', revenue: 2090, newClients: 18 },
-  { month: 'Jun', revenue: 3140, newClients: 25 },
+  { month: 'Jan', revenue: 1860 },
+  { month: 'Fev', revenue: 3050 },
+  { month: 'Mar', revenue: 2370 },
+  { month: 'Abr', revenue: 1730 },
+  { month: 'Mai', revenue: 2090 },
+  { month: 'Jun', revenue: 3140 },
 ];
 
 const chartConfig = {
@@ -49,27 +49,28 @@ const StatCard = ({ title, icon, value, description, isLoading }: { title: strin
     </Card>
 );
 
-type DashboardData = {
-    clients: number;
-    services: number;
-    invoices_open: number;
-    tickets_open: number;
-    revenue: number;
-    whm_total_accounts: number;
+type BalanceData = {
+    balance: number;
+    waiting_funds: number;
 };
 
 
 export default function AdminDashboard() {
   const { toast } = useToast();
-  const [data, setData] = React.useState<Partial<DashboardData>>({});
+  const [balance, setBalance] = React.useState<Partial<BalanceData>>({});
+  const [clients, setClients] = React.useState<any[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
 
   React.useEffect(() => {
     const fetchData = async () => {
         setIsLoading(true);
         try {
-            const dashboardData = await apiFetch<DashboardData>('/v1/admin/dashboard');
-            setData(dashboardData);
+            const [balanceData, clientsData] = await Promise.all([
+              apiFetch<BalanceData>('/admin/financials/balance'),
+              apiFetch<any[]>('/admin/clients'),
+            ]);
+            setBalance(balanceData);
+            setClients(clientsData || []);
         } catch (error: any) {
             console.error("Error fetching dashboard data:", error);
             toast({
@@ -89,58 +90,30 @@ export default function AdminDashboard() {
              <StatCard 
                 title="Clientes Ativos"
                 icon={<Users className="h-4 w-4 text-muted-foreground" />}
-                value={data.clients ?? 0}
+                value={clients.length}
                 isLoading={isLoading}
                 description="Total de clientes no sistema"
              />
              <StatCard 
-                title="Serviços Ativos"
-                icon={<Briefcase className="h-4 w-4 text-muted-foreground" />}
-                value={data.services ?? 0}
+                title="Receita Disponível"
+                icon={<CreditCard className="h-4 w-4 text-muted-foreground" />}
+                value={balance.balance ? `R$ ${(balance.balance / 100).toFixed(2)}` : 'R$ 0.00'}
                 isLoading={isLoading}
-                description="Total de serviços provisionados"
+                description="Balanço atual na conta Asaas"
              />
-             <StatCard 
-                title="Contas WHM"
-                icon={<Server className="h-4 w-4 text-muted-foreground" />}
-                value={data.whm_total_accounts ?? 0}
+              <StatCard 
+                title="Receita Pendente"
+                icon={<CreditCard className="h-4 w-4 text-muted-foreground" />}
+                value={balance.waiting_funds ? `R$ ${(balance.waiting_funds / 100).toFixed(2)}` : 'R$ 0.00'}
                 isLoading={isLoading}
-                description="Total de contas no servidor"
+                description="Aguardando compensação"
              />
              <StatCard 
                 title="Tickets Abertos"
                 icon={<LifeBuoy className="h-4 w-4 text-muted-foreground" />}
-                value={data.tickets_open ?? 0}
+                value={0}
                 isLoading={isLoading}
-                description="Aguardando resposta do suporte"
-             />
-        </div>
-
-        <div className="grid gap-6 grid-cols-1 lg:grid-cols-4">
-             <StatCard 
-                title="Receita Mensal (MRR)"
-                icon={<CreditCard className="h-4 w-4 text-muted-foreground" />}
-                value={data.revenue ? `R$ ${(data.revenue / 1000).toFixed(1)}k` : 'R$ 0.0k'}
-                isLoading={isLoading}
-                description="+20.1% do último mês"
-             />
-             <StatCard 
-                title="Serviços Suspensos"
-                icon={<AlertTriangle className="h-4 w-4 text-muted-foreground" />}
-                value={0} // Placeholder
-                isLoading={isLoading}
-             />
-             <StatCard 
-                title="Faturas Vencidas"
-                icon={<FileX className="h-4 w-4 text-muted-foreground" />}
-                value={data.invoices_open ?? 0}
-                isLoading={isLoading}
-             />
-              <StatCard 
-                title="Pedidos Pendentes"
-                icon={<ShoppingCart className="h-4 w-4 text-muted-foreground" />}
-                value={3} // Placeholder
-                isLoading={isLoading}
+                description="Funcionalidade em breve"
              />
         </div>
 
@@ -148,7 +121,7 @@ export default function AdminDashboard() {
             <Card>
             <CardHeader>
                 <CardTitle>Visão Geral da Receita</CardTitle>
-                <CardDescription>Últimos 6 meses</CardDescription>
+                <CardDescription>Últimos 6 meses (dados de exemplo)</CardDescription>
             </CardHeader>
             <CardContent className="pl-2">
                 <ChartContainer config={chartConfig} className="h-[300px] w-full">
@@ -176,29 +149,12 @@ export default function AdminDashboard() {
             <Card>
             <CardHeader>
                 <CardTitle>Aquisição de Novos Clientes</CardTitle>
-                <CardDescription>Últimos 6 meses</CardDescription>
+                <CardDescription>Funcionalidade em desenvolvimento</CardDescription>
             </CardHeader>
             <CardContent className="pl-2">
-                <ChartContainer config={chartConfig} className="h-[300px] w-full">
-                <ResponsiveContainer>
-                    <BarChart data={chartData}>
-                    <CartesianGrid vertical={false} />
-                    <XAxis
-                        dataKey="month"
-                        tickLine={false}
-                        tickMargin={10}
-                        axisLine={false}
-                        tickFormatter={(value) => value.slice(0, 3)}
-                    />
-                    <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--chart-2))" />
-                    <Tooltip
-                        cursor={false}
-                        content={<ChartTooltipContent indicator="dot" />}
-                    />
-                    <Bar yAxisId="left" dataKey="newClients" fill="var(--color-newClients)" radius={4} />
-                    </BarChart>
-                </ResponsiveContainer>
-                </ChartContainer>
+                <div className="h-[300px] w-full flex items-center justify-center text-muted-foreground">
+                  (Gráfico em breve)
+                </div>
             </CardContent>
             </Card>
         </div>
@@ -208,24 +164,7 @@ export default function AdminDashboard() {
                 <CardTitle className="flex items-center gap-2"><Activity className="h-5 w-5" /> Log de Atividades Recentes</CardTitle>
             </CardHeader>
             <CardContent>
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Ator</TableHead>
-                            <TableHead>Ação</TableHead>
-                            <TableHead className="text-right">Horário</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {activityLog.map((log, index) => (
-                            <TableRow key={index}>
-                                <TableCell>{log.actor}</TableCell>
-                                <TableCell>{log.action}</TableCell>
-                                <TableCell className="text-right text-xs text-muted-foreground">{log.time}</TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
+                 <p className="text-center text-muted-foreground py-8">Funcionalidade de log de atividades em desenvolvimento.</p>
             </CardContent>
         </Card>
 

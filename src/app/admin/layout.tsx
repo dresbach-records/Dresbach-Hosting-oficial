@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, redirect } from 'next/navigation';
+import { usePathname, redirect, useRouter } from 'next/navigation';
 import {
   Bell,
   CreditCard,
@@ -69,14 +69,9 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const { user, isLoading, logout } = useAuth();
-  const isAdmin = user?.role === 'admin';
-
-  // Permite o acesso à página de login do admin sem autenticação
-  if (pathname.startsWith('/admin/login')) {
-      return <>{children}</>;
-  }
-
+  
   if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center bg-muted/40">
@@ -86,11 +81,11 @@ export default function AdminLayout({
   }
 
   if (!user) {
-    redirect('/admin/login');
+    redirect('/login');
     return null;
   }
 
-  if (!isAdmin) {
+  if (user.role !== 'admin') {
       redirect('/area-do-cliente');
       return null;
   }
@@ -102,7 +97,7 @@ export default function AdminLayout({
 
   const handleLogout = () => {
     logout();
-    redirect('/admin/login');
+    router.push('/login');
   }
 
   const renderNavLinks = (isMobile = false) => {
@@ -167,7 +162,7 @@ export default function AdminLayout({
             </AccordionTrigger>
             <AccordionContent className={cn("pt-1 space-y-1", isMobile ? "pl-10" : "pl-7")}>
                 <Link href={'/admin/faturamento'} className={cn(subLinkClass, isExactlyActive('/admin/faturamento') && 'bg-muted text-primary')}>
-                   Faturas
+                   Transações
                 </Link>
             </AccordionContent>
           </AccordionItem>
@@ -223,13 +218,13 @@ export default function AdminLayout({
                   <Server className={iconSize} /> Servidores
                 </Link>
                 <Link href={'/admin/dominios'} className={cn(subLinkClass, isActive('/admin/dominios') && 'bg-muted text-primary')}>
-                  <Globe className={iconSize} /> Registros de Domínio
+                  <Globe className={iconSize} /> Pedidos de Domínio
                 </Link>
                 <Link href={'/admin/automacao'} className={cn(subLinkClass, isActive('/admin/automacao') && 'bg-muted text-primary')}>
                   <Cog className={iconSize} /> Automação
                 </Link>
                 <Link href={'/admin/logs'} className={cn(subLinkClass, isActive('/admin/logs') && 'bg-muted text-primary')}>
-                  <FileText className={iconSize} /> Logs
+                  <FileText className={iconSize} /> Logs do Sistema
                 </Link>
                 <Link href={'/admin/configuracoes'} className={cn(subLinkClass, isActive('/admin/configuracoes') && 'bg-muted text-primary')}>
                   <Wrench className={iconSize} /> Configurações Gerais
@@ -327,14 +322,14 @@ export default function AdminLayout({
             <DropdownMenuTrigger asChild>
               <Button variant="secondary" size="icon" className="rounded-full">
                  <Avatar>
-                  <AvatarImage src="https://picsum.photos/seed/admin/32/32" alt="@admin" />
-                  <AvatarFallback>A</AvatarFallback>
+                  <AvatarImage src={`https://i.pravatar.cc/32?u=${user?.id}`} alt={user?.name} />
+                  <AvatarFallback>{user?.name?.charAt(0).toUpperCase()}</AvatarFallback>
                 </Avatar>
                 <span className="sr-only">Toggle user menu</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
+              <DropdownMenuLabel>Minha Conta ({user?.role})</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem>Configurações</DropdownMenuItem>
               <DropdownMenuItem>Suporte</DropdownMenuItem>

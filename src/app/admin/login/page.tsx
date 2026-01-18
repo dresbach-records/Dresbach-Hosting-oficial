@@ -15,46 +15,38 @@ import { useAuth } from '@/providers/auth-provider';
 export default function AdminLoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
-  const { user, isLoading: isAuthLoading, login } = useAuth();
-  const isAdmin = user?.role === 'admin';
+  const { login, user, isLoading: isAuthLoading } = useAuth();
 
   useEffect(() => {
-    if (!isAuthLoading && user && isAdmin) {
+    if (!isAuthLoading && user && user.role === 'admin') {
       router.replace('/admin');
     }
-  }, [user, isAdmin, isAuthLoading, router]);
+  }, [user, isAuthLoading, router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    setIsSubmitting(true);
     setError(null);
 
     try {
-      const { token, user } = await apiFetch<{token: string, user: any}>('/v1/auth/login', {
+      const { token } = await apiFetch<{token: string}>('/api/login', {
         method: 'POST',
         body: JSON.stringify({ email, password }),
       });
       
-      if (user.role !== 'admin') {
-          setError('Acesso negado. Este usuário não é um administrador.');
-          setIsLoading(false);
-          return;
-      }
-
-      login(token); // Update auth context
-      router.replace('/admin');
+      await login(token);
+      // The useEffect will handle redirection after user state is updated.
       
     } catch (err: any) {
-      setError('Credenciais inválidas. Por favor, tente novamente.');
-      console.error(err);
-      setIsLoading(false);
+      setError(err.message || 'Credenciais inválidas ou erro no servidor.');
+      setIsSubmitting(false);
     }
   };
 
-  if (isAuthLoading || (!isAuthLoading && user && isAdmin)) {
+  if (isAuthLoading || (!isAuthLoading && user && user.role === 'admin')) {
     return (
         <div className="flex h-screen items-center justify-center bg-muted/40">
             <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -99,8 +91,8 @@ export default function AdminLoginPage() {
                           />
                       </div>
                       {error && <p className="text-sm text-destructive">{error}</p>}
-                      <Button type="submit" className="w-full" disabled={isLoading}>
-                          {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      <Button type="submit" className="w-full" disabled={isSubmitting}>
+                          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                           Entrar
                       </Button>
                   </form>

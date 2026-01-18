@@ -13,8 +13,9 @@ interface User {
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  login: (token: string, user: User) => void;
+  login: (token: string) => Promise<void>;
   logout: () => void;
+  refetchUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -23,39 +24,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const logout = useCallback(() => {
+    localStorage.removeItem('jwt_token');
+    setUser(null);
+  }, []);
+
   const verifyUser = useCallback(async () => {
     const token = localStorage.getItem('jwt_token');
     if (token) {
       try {
-        const data = await apiFetch<User>('/v1/auth/me');
+        const data = await apiFetch<User>('/api/me');
         setUser(data);
       } catch (error) {
-        console.error("Failed to verify user with token", error);
-        localStorage.removeItem('jwt_token');
-        setUser(null);
+        console.error("Token verification failed", error);
+        logout();
       }
     }
     setIsLoading(false);
-  }, []);
+  }, [logout]);
 
   useEffect(() => {
     verifyUser();
   }, [verifyUser]);
   
-  const login = (token: string, userData: User) => {
+  const login = async (token: string) => {
     localStorage.setItem('jwt_token', token);
-    setUser(userData);
-  };
-
-
-  const logout = () => {
-    localStorage.removeItem('jwt_token');
-    setUser(null);
-    apiFetch('/v1/auth/logout', { method: 'POST' }).catch(console.error);
+    setIsLoading(true);
+    await verifyUser();
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, login, logout, refetchUser: verifyUser }}>
       {children}
     </AuthContext.Provider>
   );

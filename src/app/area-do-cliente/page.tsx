@@ -35,42 +35,32 @@ function ServiceStatusBadge({ status }: { status: string }) {
     return <Badge variant={variant}>{status === 'active' ? 'Ativo' : 'Inativo'}</Badge>;
 }
 
-function TicketStatusBadge({ status }: { status: string }) {
-    const variant = status === 'open' ? 'default' : 'secondary';
-    return <Badge variant={variant}>{status === 'open' ? 'Aberto' : 'Fechado'}</Badge>;
-}
-
-
 export default function ClientAreaDashboard() {
   const { user } = useAuth();
   const [services, setServices] = useState<any[]>([]);
-  const [domains, setDomains] = useState<any[]>([]);
   const [invoices, setInvoices] = useState<any[]>([]);
-  const [tickets, setTickets] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
       const fetchData = async () => {
           setIsLoading(true);
           try {
-              const [servicesData, domainsData, invoicesData, ticketsData] = await Promise.all([
-                  apiFetch('/v1/client/services?limit=5'),
-                  apiFetch('/v1/client/domains'),
-                  apiFetch('/v1/client/invoices'),
-                  apiFetch('/v1/client/tickets?limit=5'),
+              const [servicesData, invoicesData] = await Promise.all([
+                  apiFetch('/api/my-services'),
+                  apiFetch('/api/my-invoices'),
               ]);
               setServices(servicesData || []);
-              setDomains(domainsData || []);
               setInvoices(invoicesData || []);
-              setTickets(ticketsData || []);
           } catch (error) {
               console.error("Failed to fetch dashboard data", error);
           } finally {
               setIsLoading(false);
           }
       };
-      fetchData();
-  }, []);
+      if (user) {
+        fetchData();
+      }
+  }, [user]);
   
   return (
     <div className="space-y-6">
@@ -90,14 +80,14 @@ export default function ClientAreaDashboard() {
              <StatCard 
                 title="DOMÍNIOS" 
                 icon={<Globe className="h-10 w-10" />} 
-                count={domains?.length || 0}
+                count={0}
                 colorClass="bg-green-500"
                 isLoading={isLoading}
             />
              <StatCard 
                 title="TICKETS" 
                 icon={<MessageSquare className="h-10 w-10" />} 
-                count={tickets?.filter(t => t.status !== 'closed').length || 0}
+                count={0}
                 colorClass="bg-red-500"
                 isLoading={isLoading}
             />
@@ -124,16 +114,16 @@ export default function ClientAreaDashboard() {
                 {!isLoading && services && services.length > 0 ? (
                      <Table>
                         <TableBody>
-                        {services.map(service => (
+                        {services.slice(0, 5).map(service => (
                             <TableRow key={service.id}>
-                                <TableCell>{service.description}</TableCell>
+                                <TableCell>{service.description || service.product_name}</TableCell>
                                 <TableCell><ServiceStatusBadge status={service.status} /></TableCell>
                             </TableRow>
                         ))}
                         </TableBody>
                     </Table>
                 ) : (
-                     !isLoading && <p className="text-muted-foreground text-center py-4">Parece que você ainda não tem nenhum produto/serviço conosco. <Link href="/planos-de-hospedagem" className="text-accent-600 font-semibold hover:underline">Faça um pedido para começar</Link>.</p>
+                     !isLoading && <p className="text-muted-foreground text-center py-4">Parece que você ainda não tem nenhum produto/serviço conosco. <Link href="/planos-de-hospedagem" className="text-primary font-semibold hover:underline">Faça um pedido para começar</Link>.</p>
                 )}
             </CardContent>
             <CardFooter className="bg-muted/50 p-2 flex justify-end">
@@ -149,26 +139,11 @@ export default function ClientAreaDashboard() {
                     <CardTitle className="text-base font-semibold">Tickets de Suporte Recentes</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    {isLoading && <Skeleton className="h-24 w-full" />}
-                    {!isLoading && tickets && tickets.length > 0 ? (
-                        <Table>
-                            <TableBody>
-                            {tickets.map(ticket => (
-                                <TableRow key={ticket.id}>
-                                    <TableCell>{ticket.subject}</TableCell>
-                                    <TableCell><TicketStatusBadge status={ticket.status} /></TableCell>
-                                    <TableCell className="text-right">{format(new Date(ticket.created_at), 'dd/MM/yy')}</TableCell>
-                                </TableRow>
-                            ))}
-                            </TableBody>
-                        </Table>
-                    ) : (
-                         !isLoading && <p className="text-muted-foreground text-center py-4">Nenhum ticket recente encontrado. Se precisar de ajuda, por favor <Link href="/area-do-cliente/tickets?new=true" className="text-accent-600 font-semibold hover:underline">abra um ticket</Link>.</p>
-                    )}
+                    <p className="text-muted-foreground text-center py-4">O sistema de suporte por tickets está em desenvolvimento. Se precisar de ajuda, por favor <a href="https://wa.me/5511999999999" target="_blank" rel="noopener noreferrer" className="text-primary font-semibold hover:underline">fale conosco no WhatsApp</a>.</p>
                 </CardContent>
                  <CardFooter className="bg-muted/50 p-2 flex justify-end">
                     <Button asChild size="sm" className="bg-primary hover:bg-primary/90">
-                        <Link href="/area-do-cliente/tickets?new=true"><Plus className="mr-2 h-4 w-4" />Abrir Novo Ticket</Link>
+                       <Link href="/area-do-cliente/tickets?new=true"><Plus className="mr-2 h-4 w-4" />Abrir Novo Ticket</Link>
                     </Button>
                 </CardFooter>
             </Card>

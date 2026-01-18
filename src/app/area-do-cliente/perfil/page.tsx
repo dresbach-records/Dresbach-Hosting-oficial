@@ -17,14 +17,13 @@ import { apiFetch } from '@/lib/api';
 const profileSchema = z.object({
   name: z.string().min(2, "O nome deve ter pelo menos 2 caracteres."),
   email: z.string().email("Email inválido."),
-  phone_number: z.string().optional(),
-  address: z.string().optional(),
+  // Additional fields are not in the API spec, so they are removed for now
 });
 
 type ProfileForm = z.infer<typeof profileSchema>;
 
 export default function ProfilePage() {
-    const { user, isLoading } = useAuth();
+    const { user, isLoading, refetchUser } = useAuth();
     const { toast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -33,8 +32,6 @@ export default function ProfilePage() {
         defaultValues: {
             name: '',
             email: '',
-            phone_number: '',
-            address: '',
         }
     });
 
@@ -43,18 +40,24 @@ export default function ProfilePage() {
             form.reset({
                 name: user.name,
                 email: user.email,
-                phone_number: user.phone_number || '',
-                address: user.address || '',
             });
         }
     }, [user, form]);
 
     const onSubmit = async (values: ProfileForm) => {
+        // The API spec does not include an endpoint to update user profile.
+        // This is a placeholder.
+        toast({
+            title: "Funcionalidade em desenvolvimento",
+            description: "A edição do perfil de usuário será implementada em breve.",
+        });
+
+        /*
         if (!user) return;
         setIsSubmitting(true);
         
         try {
-            await apiFetch(`/v1/client/profile`, {
+            await apiFetch(`/api/me`, { // Assumed endpoint
                 method: 'PUT',
                 body: JSON.stringify(values),
             });
@@ -63,6 +66,7 @@ export default function ProfilePage() {
                 title: "Perfil Atualizado",
                 description: "Suas informações foram salvas com sucesso.",
             });
+            refetchUser(); // refetch user data to update the UI
         } catch(error: any) {
              toast({
                 variant: 'destructive',
@@ -72,6 +76,7 @@ export default function ProfilePage() {
         } finally {
             setIsSubmitting(false);
         }
+        */
     }
     
     if (isLoading) {
@@ -81,9 +86,7 @@ export default function ProfilePage() {
                 <CardContent className="space-y-4">
                     <div className="space-y-2"><Skeleton className="h-5 w-16" /><Skeleton className="h-9 w-full" /></div>
                     <div className="space-y-2"><Skeleton className="h-5 w-12" /><Skeleton className="h-9 w-full" /></div>
-                    <div className="space-y-2"><Skeleton className="h-5 w-24" /><Skeleton className="h-9 w-full" /></div>
-                    <div className="space-y-2"><Skeleton className="h-5 w-20" /><Skeleton className="h-9 w-full" /></div>
-                    <Skeleton className="h-10 w-32" />
+                    <Skeleton className="h-10 w-32 mt-4" />
                 </CardContent>
             </Card>
         )
@@ -120,31 +123,9 @@ export default function ProfilePage() {
                                 </FormItem>
                             )}
                         />
-                         <FormField
-                            control={form.control}
-                            name="phone_number"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Telefone</FormLabel>
-                                    <FormControl><Input {...field} placeholder="(XX) XXXXX-XXXX" /></FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name="address"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Endereço</FormLabel>
-                                    <FormControl><Input {...field} placeholder="Sua rua, número, bairro..." /></FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <Button type="submit" disabled={isSubmitting}>
+                        <Button type="submit" disabled={isSubmitting || true}>
                            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                           Salvar Alterações
+                           Salvar (Em Breve)
                         </Button>
                     </form>
                 </Form>

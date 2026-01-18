@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { format, addYears } from 'date-fns';
+import { format } from 'date-fns';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,14 +30,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useState, useMemo, useEffect } from 'react';
 import { apiFetch } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
-
-// Mock data for prices as they are not in the firestore document
-const serviceDetailsMock: { [key: string]: { price: number; isLocked: boolean } } = {
-  'Solteiro': { price: 3.99, isLocked: false },
-  'Profissional': { price: 59.90, isLocked: false },
-  'Negócios': { price: 9.99, isLocked: true },
-};
-
 
 function ServiceStatusBadge({ status }: { status: string }) {
     let variant: "success" | "destructive" | "warning" | "secondary" = "secondary";
@@ -118,7 +110,7 @@ export default function ServicesPage() {
         const fetchServices = async () => {
             setIsLoading(true);
             try {
-                const data = await apiFetch<any[]>('/v1/client/services');
+                const data = await apiFetch<any[]>('/api/my-services');
                 setAllServices(data || []);
                 setFilteredServices(data || []);
             } catch (error) {
@@ -168,7 +160,7 @@ export default function ServicesPage() {
           </div>
           <Card>
             <CardHeader className="bg-muted/50 p-4 flex-row justify-between items-center">
-              <p className="text-sm">Mostrando {filteredServices?.length || 0} para {filteredServices?.length || 0} de {allServices?.length || 0} registros</p>
+              <p className="text-sm">Mostrando {filteredServices?.length || 0} de {allServices?.length || 0} registros</p>
                <div className="relative w-full max-w-sm">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input placeholder="Pesquisar..." className="pl-10" />
@@ -193,7 +185,7 @@ export default function ServicesPage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {isLoading && Array.from({ length: 2 }).map((_, i) => (
+                        {isLoading && Array.from({ length: 3 }).map((_, i) => (
                             <TableRow key={i}>
                                 <TableCell>
                                   <div className="flex items-center gap-4">
@@ -211,27 +203,22 @@ export default function ServicesPage() {
                         ))}
                         {filteredServices && filteredServices.length > 0 ? (
                             filteredServices.map((service) => {
-                              const details = serviceDetailsMock[service.service_type] || { price: 59.90, isLocked: Math.random() > 0.5 };
-                              const nextDueDate = addYears(new Date(service.start_date), 1);
                               return (
                                 <TableRow key={service.id} onClick={() => handleRowClick(service.id)} className="cursor-pointer">
                                     <TableCell className="font-medium">
                                       <div className="flex items-start gap-3">
-                                        {details.isLocked ? 
-                                            <div className="p-2 bg-red-100 rounded-md"><Lock className="h-4 w-4 text-red-600"/></div>
-                                            : <div className="p-2 bg-green-100 rounded-md"><Unlock className="h-4 w-4 text-green-600"/></div>
-                                        }
+                                        <div className="p-2 bg-green-100 rounded-md"><Unlock className="h-4 w-4 text-green-600"/></div>
                                         <div>
-                                          <p className="font-semibold">{service.description || `Rev. Ilimitada SSD Turbo MAX`}</p>
+                                          <p className="font-semibold">{service.description || service.product_name}</p>
                                           <p className="text-sm text-primary hover:underline">{service.domain}</p>
                                         </div>
                                       </div>
                                     </TableCell>
                                     <TableCell>
-                                      <p>R$ {details.price.toFixed(2)}</p>
+                                      <p>R$ {service.price?.toFixed(2) || '0.00'}</p>
                                       <p className="text-xs text-muted-foreground">Mensal</p>
                                     </TableCell>
-                                    <TableCell>{format(nextDueDate, 'PPP')}</TableCell>
+                                    <TableCell>{service.next_due_date ? format(new Date(service.next_due_date), 'dd/MM/yyyy') : 'N/A'}</TableCell>
                                     <TableCell><ServiceStatusBadge status={service.status} /></TableCell>
                                 </TableRow>
                             )})
