@@ -139,41 +139,11 @@ function OrderPageContent() {
     };
     
     const handleProceedToPayment = async () => {
-        if (!domain) {
-            toast({
-                variant: 'destructive',
-                title: 'Domínio necessário',
-                description: 'Por favor, insira um nome de domínio para continuar.',
-            });
-            return;
-        }
-        setIsProcessing(true);
-        
-        try {
-            const order = {
-                plan: planDetails[selectedPlan].name,
-                cycle: selectedCycle,
-                domain: domain,
-                price: calculatedTotal,
-            }
-            await apiFetch('/client/orders', {
-                method: 'POST',
-                body: JSON.stringify(order)
-            });
-
-            toast({ title: "Pedido criado!", description: "Você será redirecionado para a página de faturas para concluir o pagamento." });
-            router.push('/area-do-cliente/faturas');
-
-        } catch (error: any) {
-            console.error("Falha ao criar pedido:", error);
-            toast({
-                variant: "destructive",
-                title: "Erro ao criar pedido",
-                description: error.message || "Não foi possível criar seu pedido. Tente novamente.",
-            });
-        } finally {
-             setIsProcessing(false);
-        }
+        toast({
+            title: "Funcionalidade em desenvolvimento",
+            description: "A criação de novos pedidos será implementada em breve.",
+        });
+        return;
     };
 
     
@@ -331,7 +301,7 @@ function OrderPageContent() {
                                         <p className="text-sm text-muted-foreground">Total do pedido devido hoje</p>
                                         <p className="text-3xl font-bold">R$ {calculatedTotal.toFixed(2).replace('.', ',')}</p>
                                     </div>
-                                    <Button className="w-full" size="lg" onClick={handleProceedToPayment} disabled={isProcessing || !domain || !domainSearchResult?.available}>
+                                    <Button className="w-full" size="lg" onClick={handleProceedToPayment} disabled={isProcessing || !domain || !domainSearchResult?.available || true}>
                                         {isProcessing ? (
                                             <>
                                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
