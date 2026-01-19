@@ -1,9 +1,6 @@
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
-  output: 'export',
-  distDir: 'out',
-  trailingSlash: true,
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -32,6 +29,16 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
     ],
+  },
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        // This proxies requests from the Next.js dev server to the Go backend.
+        // It correctly mimics the Nginx production setup by stripping /api from the path.
+        destination: 'http://127.0.0.1:8080/:path*',
+      },
+    ];
   },
 };
 
