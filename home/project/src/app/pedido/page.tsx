@@ -301,17 +301,8 @@ function OrderPageContent() {
                                         <p className="text-sm text-muted-foreground">Total do pedido devido hoje</p>
                                         <p className="text-3xl font-bold">R$ {calculatedTotal.toFixed(2).replace('.', ',')}</p>
                                     </div>
-                                    <Button className="w-full" size="lg" onClick={handleProceedToPayment} disabled={isProcessing || !domain || !domainSearchResult?.available || true}>
-                                        {isProcessing ? (
-                                            <>
-                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                Processando...
-                                            </>
-                                        ) : (
-                                            <>
-                                                Continuar para o Pagamento <ArrowRight className="ml-2 h-4 w-4" />
-                                            </>
-                                        )}
+                                    <Button className="w-full" size="lg" onClick={handleProceedToPayment} disabled={true}>
+                                        Funcionalidade em desenvolvimento
                                     </Button>
                                     <Button variant="outline" className="w-full" disabled={isProcessing}>Alterar suas escolhas</Button>
                                 </CardContent>

@@ -20,14 +20,21 @@ function InvoiceStatusBadge({ status }: { status: string }) {
         'unpaid': 'Pendente',
         'canceled': 'Cancelada'
     }
-    const currentStatus = textMap[status] || status;
+    // Asaas statuses
+    const asaasStatusMap: { [key: string]: string } = {
+        'RECEIVED': 'Pago',
+        'CONFIRMED': 'Pago',
+        'PENDING': 'Pendente',
+        'OVERDUE': 'Vencida',
+    }
+    const currentStatusText = asaasStatusMap[status] || textMap[status] || status;
 
-    if (currentStatus === 'Pago') {
+    if (currentStatusText === 'Pago') {
         variant = 'success';
-    } else if (currentStatus === 'Vencida') {
+    } else if (currentStatusText === 'Vencida') {
         variant = 'destructive';
     }
-    return <Badge variant={variant}>{currentStatus}</Badge>;
+    return <Badge variant={variant}>{currentStatusText}</Badge>;
 }
 
 function InvoicesPageContent() {
@@ -54,6 +61,7 @@ function InvoicesPageContent() {
         const fetchInvoices = async () => {
             setIsLoading(true);
             try {
+                // Corrected API path
                 const data = await apiFetch<any[]>('/my-invoices');
                 setInvoices(data);
             } catch (error) {
@@ -72,6 +80,7 @@ function InvoicesPageContent() {
     const handlePayInvoice = async (invoice: any) => {
         setIsProcessingId(invoice.id);
         try {
+            // Corrected API path and payload
             const response = await apiFetch<{ invoiceUrl: string }>('/checkout', {
                 method: 'POST',
                 body: JSON.stringify({ invoice_id: Number(invoice.id) }),
@@ -126,7 +135,7 @@ function InvoicesPageContent() {
                                     <TableCell>R$ {invoice.amount.toFixed(2)}</TableCell>
                                     <TableCell><InvoiceStatusBadge status={invoice.status} /></TableCell>
                                     <TableCell className="text-right">
-                                        {(invoice.status === 'unpaid' || invoice.status === 'overdue') && (
+                                        {(invoice.status === 'unpaid' || invoice.status === 'overdue' || invoice.status === 'PENDING' || invoice.status === 'OVERDUE') && (
                                             <Button 
                                                 size="sm" 
                                                 onClick={() => handlePayInvoice(invoice)}

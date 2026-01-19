@@ -94,7 +94,7 @@ export default function ClientAreaDashboard() {
             <StatCard 
                 title="FATURAS" 
                 icon={<CreditCard className="h-10 w-10" />} 
-                count={invoices?.filter(inv => inv.status !== 'paid').length || 0}
+                count={invoices?.filter(inv => inv.status !== 'paid' && inv.status !== 'RECEIVED' && inv.status !== 'CONFIRMED').length || 0}
                 colorClass="bg-orange-500"
                 isLoading={isLoading}
             />
