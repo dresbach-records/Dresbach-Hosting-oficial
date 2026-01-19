@@ -8,8 +8,8 @@
 
 - **Frontend:** Next.js
 - **Backend:** Go (API v1)
-- **Auth:** Firebase (JWT próprio preparado)
-- **DB:** Firestore (SQL futuro)
+- **Auth:** JWT
+- **DB:** MySQL
 - **Docs:** OpenAPI + Swagger UI
 
 ### Regras de ouro

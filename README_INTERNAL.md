@@ -6,8 +6,7 @@
 - prod
 
 ## Autenticação
-- Firebase Auth (atual)
-- JWT próprio (planejado)
+- JWT (atual)
 
 ## Regras Críticas
 - Primeiro login vira admin automaticamente. Para forçar um admin específico, defina a variável de ambiente `DRESBACH_INITIAL_ADMIN`.
@@ -17,7 +16,7 @@
 ## CI/CD
 - GitHub Actions
 - Testes automáticos
-- Deploy Firebase/VPS
+- Deploy VPS
 
 ## Contato Interno
 - Dev Lead

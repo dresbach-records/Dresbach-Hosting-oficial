@@ -35,12 +35,14 @@
 
 ## 🔄 ROLLBACK
 
-### Firebase
+### Frontend (VPS)
 ```bash
-firebase hosting:rollback
+# Exemplo de rollback com links simbólicos, se aplicável
+# sudo ln -sfn /var/www/frontend-v1.2.0 /var/www/frontend_current
+# sudo systemctl reload nginx
 ```
 
-### VPS
+### Backend (VPS)
 ```bash
 docker stop dresbach-api
 docker run versão-anterior
