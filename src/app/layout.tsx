@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
-import { SiteLayout } from '@/components/site-layout';
+import { SiteLayout } from './site-layout';
 import { ThemeProvider } from '@/components/theme-provider';
 import { AuthProvider } from '@/providers/auth-provider';
 
