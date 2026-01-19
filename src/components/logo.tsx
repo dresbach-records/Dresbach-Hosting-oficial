@@ -10,7 +10,6 @@ export function Logo({ className }: { className?: string }) {
       height={45}
       priority
       className={className}
-      style={{ height: 'auto', width: 'auto' }}
     />
   );
 }
