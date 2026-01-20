@@ -1,28 +1,24 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { Wrench } from 'lucide-react';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
+import CountdownPage from './countdown'; 
 
-const MaintenanceBanner = () => (
-    <div className="bg-destructive text-destructive-foreground p-3 text-center text-sm font-medium z-50 relative animate-blink">
-        <div className="container flex flex-col sm:flex-row items-center justify-center gap-2">
-            <Wrench className="h-5 w-5 flex-shrink-0" />
-            <p>
-                <strong>Aviso:</strong> Site em manutenção. Pode haver falhas e instabilidades.
-                <span className="hidden sm:inline"> Se precisar de ajuda, </span>
-                <a href="https://wa.me/5511999999999" target="_blank" rel="noopener noreferrer" className="font-bold underline hover:text-destructive-foreground/80 whitespace-nowrap">
-                    nos chame no WhatsApp
-                </a>.
-            </p>
-        </div>
-    </div>
-);
-
+// The date for the countdown to end. Timezone is America/Sao_Paulo (BRT, -03:00)
+const countdownEndDate = new Date('2025-01-01T00:00:00-03:00');
 
 export function SiteLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
+    const [isClient, setIsClient] = React.useState(false);
+
+    React.useEffect(() => {
+        setIsClient(true);
+    }, []);
+
+    // Check if the current date is before the countdown ends
+    const isCountdownActive = isClient && (new Date() < countdownEndDate);
+    
     const noLayoutPages = [
       '/login', 
       '/signup', 
@@ -33,7 +29,15 @@ export function SiteLayout({ children }: { children: React.ReactNode }) {
     
     const isClientArea = pathname.startsWith('/area-do-cliente');
     const isAdminArea = pathname.startsWith('/admin') && pathname !== '/admin/login';
+    const isApiRoute = pathname.startsWith('/api');
 
+    // These pages should always be accessible, even during countdown
+    const accessibleDuringCountdown = isClientArea || isAdminArea || noLayoutPages.includes(pathname) || isApiRoute;
+
+    if (isCountdownActive && !accessibleDuringCountdown) {
+        return <CountdownPage />;
+    }
+    
     if (isClientArea || isAdminArea) {
         return <>{children}</>;
     }
@@ -41,15 +45,14 @@ export function SiteLayout({ children }: { children: React.ReactNode }) {
     if (noLayoutPages.includes(pathname)) {
         return (
              <div className="relative flex min-h-screen flex-col bg-background">
-                <MaintenanceBanner />
                 <main className="flex-1">{children}</main>
             </div>
         );
     }
 
+    // Default layout for normal operation
     return (
         <div className="relative flex min-h-screen flex-col bg-background">
-            <MaintenanceBanner />
             <Header />
             <main className="flex-1">{children}</main>
             <Footer />
