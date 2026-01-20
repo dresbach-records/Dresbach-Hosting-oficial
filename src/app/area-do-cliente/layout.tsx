@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ClientSidebar } from './sidebar';
 import { useAuth } from '@/providers/auth-provider';
+import SantaHat from '@/components/santa-hat';
 
 function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
   const pathname = usePathname();
@@ -47,6 +48,8 @@ export default function ClientAreaLayout({
 }) {
   const { user, isLoading, logout } = useAuth();
   const router = useRouter();
+
+  const isChristmasTime = new Date().getMonth() === 11; // December
 
   if (isLoading) {
     return (
@@ -71,7 +74,14 @@ export default function ClientAreaLayout({
         {/* Top Header */}
         <header className="border-b">
           <div className="container flex h-16 items-center justify-between">
-            <Logo />
+            <div className="relative">
+              <Logo />
+              {isChristmasTime && (
+                <div className="absolute -top-5 -left-4 pointer-events-none">
+                    <SantaHat className="w-16 h-16" />
+                </div>
+              )}
+            </div>
             <div className="flex items-center gap-4 text-sm">
                <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -131,9 +141,9 @@ export default function ClientAreaLayout({
       </main>
 
       <footer className="py-4 mt-auto bg-card border-t">
-        <div className="container flex items-center justify-center">
+        <div className="container flex items-center justify-between">
           <p className="text-xs text-muted-foreground">
-            Copyright © 2026 Dresbach hosting do brasil.ltda. Todos os direitos reservados.
+            Copyright © {new Date().getFullYear()} Dresbach hosting do brasil.ltda. Todos os direitos reservados.
           </p>
           <Button variant="outline" size="sm" className="ml-4" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
             <ArrowUp className="mr-2 h-4 w-4" /> Voltar ao Topo

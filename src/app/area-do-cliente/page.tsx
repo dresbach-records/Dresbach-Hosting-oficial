@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Server, Globe, MessageSquare, CreditCard, Search, Plus, Newspaper } from 'lucide-react';
+import { Server, Globe, MessageSquare, CreditCard, Search, Plus, Newspaper, Gift, Snowflake, CandyCane, Mail } from 'lucide-react';
 import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
@@ -31,7 +31,7 @@ const StatCard = ({ title, icon, count, colorClass, isLoading }: { title: string
 );
 
 function ServiceStatusBadge({ status }: { status: string }) {
-    const variant = status === 'active' ? 'default' : 'secondary';
+    const variant = status === 'active' ? 'info' : 'secondary';
     return <Badge variant={variant}>{status === 'active' ? 'Ativo' : 'Inativo'}</Badge>;
 }
 
@@ -41,13 +41,15 @@ export default function ClientAreaDashboard() {
   const [invoices, setInvoices] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const isChristmasTime = new Date().getMonth() === 11; // December
+
   useEffect(() => {
       const fetchData = async () => {
           setIsLoading(true);
           try {
               const [servicesData, invoicesData] = await Promise.all([
-                  apiFetch('/api/my-services'),
-                  apiFetch('/api/my-invoices'),
+                  apiFetch('/my-services'),
+                  apiFetch('/my-invoices'),
               ]);
               setServices(servicesData || []);
               setInvoices(invoicesData || []);
@@ -64,38 +66,38 @@ export default function ClientAreaDashboard() {
   
   return (
     <div className="space-y-6">
-        <div>
-            <p className="text-sm text-muted-foreground">Início do Portal / Área do Cliente</p>
+        <div className="flex items-center gap-2">
+            {isChristmasTime && <Snowflake className="h-7 w-7 text-destructive" />}
             <h1 className="text-3xl font-light">Bem-vindo de volta, <span className="font-medium">{user?.name?.split(' ')[0] || 'Usuário'}</span></h1>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <StatCard 
                 title="SERVIÇOS" 
-                icon={<Server className="h-10 w-10" />} 
+                icon={isChristmasTime ? <Gift className="h-10 w-10" /> : <Server className="h-10 w-10" />} 
                 count={services?.length || 0}
-                colorClass="bg-cyan-500"
+                colorClass={isChristmasTime ? "bg-destructive" : "bg-chart-1"}
                 isLoading={isLoading}
             />
              <StatCard 
                 title="DOMÍNIOS" 
-                icon={<Globe className="h-10 w-10" />} 
+                icon={isChristmasTime ? <Snowflake className="h-10 w-10" /> : <Globe className="h-10 w-10" />} 
                 count={0}
-                colorClass="bg-green-500"
+                colorClass={isChristmasTime ? "bg-sky-500" : "bg-chart-2"}
                 isLoading={isLoading}
             />
              <StatCard 
                 title="TICKETS" 
-                icon={<MessageSquare className="h-10 w-10" />} 
+                icon={isChristmasTime ? <Mail className="h-10 w-10" /> : <MessageSquare className="h-10 w-10" />} 
                 count={0}
-                colorClass="bg-red-500"
+                colorClass={isChristmasTime ? "bg-green-600" : "bg-chart-3"}
                 isLoading={isLoading}
             />
             <StatCard 
                 title="FATURAS" 
-                icon={<CreditCard className="h-10 w-10" />} 
-                count={invoices?.filter(inv => inv.status !== 'paid').length || 0}
-                colorClass="bg-orange-500"
+                icon={isChristmasTime ? <CandyCane className="h-10 w-10" /> : <CreditCard className="h-10 w-10" />} 
+                count={invoices?.filter(inv => inv.status !== 'paid' && inv.status !== 'RECEIVED' && inv.status !== 'CONFIRMED').length || 0}
+                colorClass={isChristmasTime ? "bg-amber-400" : "bg-chart-5"}
                 isLoading={isLoading}
             />
         </div>
@@ -123,7 +125,7 @@ export default function ClientAreaDashboard() {
                         </TableBody>
                     </Table>
                 ) : (
-                     !isLoading && <p className="text-muted-foreground text-center py-4">Parece que você ainda não tem nenhum produto/serviço conosco. <Link href="/planos-de-hospedagem" className="text-primary font-semibold hover:underline">Faça um pedido para começar</Link>.</p>
+                     !isLoading && <p className="text-muted-foreground text-center py-4">Parece que você ainda não tem nenhum produto/serviço conosco. <Link href="/planos-de-hospedagem" className="text-link font-semibold hover:underline">Faça um pedido para começar</Link>.</p>
                 )}
             </CardContent>
             <CardFooter className="bg-muted/50 p-2 flex justify-end">
@@ -139,10 +141,10 @@ export default function ClientAreaDashboard() {
                     <CardTitle className="text-base font-semibold">Tickets de Suporte Recentes</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <p className="text-muted-foreground text-center py-4">O sistema de suporte por tickets está em desenvolvimento. Se precisar de ajuda, por favor <a href="https://wa.me/5511999999999" target="_blank" rel="noopener noreferrer" className="text-primary font-semibold hover:underline">fale conosco no WhatsApp</a>.</p>
+                    <p className="text-muted-foreground text-center py-4">O sistema de suporte por tickets está em desenvolvimento. Se precisar de ajuda, por favor <a href="https://wa.me/5511999999999" target="_blank" rel="noopener noreferrer" className="text-link font-semibold hover:underline">fale conosco no WhatsApp</a>.</p>
                 </CardContent>
                  <CardFooter className="bg-muted/50 p-2 flex justify-end">
-                    <Button asChild size="sm" className="bg-primary hover:bg-primary/90">
+                    <Button asChild size="sm" className="bg-primary hover:bg-accent text-primary-foreground">
                        <Link href="/area-do-cliente/tickets?new=true"><Plus className="mr-2 h-4 w-4" />Abrir Novo Ticket</Link>
                     </Button>
                 </CardFooter>
@@ -153,8 +155,8 @@ export default function ClientAreaDashboard() {
                 </CardHeader>
                 <CardContent className="flex gap-2">
                     <Input placeholder="example.com" className="bg-card"/>
-                    <Button className="bg-green-600 hover:bg-green-700">Registrar</Button>
-                    <Button variant="outline" className="shadow-sm">Transferir</Button>
+                    <Button variant="outline">Registrar</Button>
+                    <Button variant="secondary">Transferir</Button>
                 </CardContent>
             </Card>
         </div>
