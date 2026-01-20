@@ -1,195 +1,133 @@
 import Link from "next/link";
 import Image from "next/image";
-import {
-  ArrowRight,
-  ShieldCheck,
-  Server,
-  Zap,
-} from "lucide-react";
+import { Check } from "lucide-react";
 
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { DomainSearchHome } from "@/components/domain-search-home";
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 
-const heroImage = PlaceHolderImages.find((img) => img.id === "hero-background");
-const featureGraphic = PlaceHolderImages.find((img) => img.id === "feature-graphic");
-const securityFeatureImg = PlaceHolderImages.find((img) => img.id === "security-feature");
-const supportFeatureImg = PlaceHolderImages.find((img) => img.id === "support-feature");
-const backupFeatureImg = PlaceHolderImages.find((img) => img.id === "backup-feature");
+const heroImage = PlaceHolderImages.find((img) => img.id === "black-friday-hero");
 
-const features = [
+const ShieldIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+    <path d="M24 4L6 9V21C6 33.12 13.92 41.36 24 44C34.08 41.36 42 33.12 42 21V9L24 4Z" stroke="hsl(var(--primary))" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
+const HeadsetIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+    <path d="M2 28V24C2 15.27 9.27 8 18 8H20C28.73 8 36 15.27 36 24V28" stroke="hsl(var(--primary))" strokeWidth="2" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M28 26V36C28 38.21 29.79 40 32 40H34C35.1 40 36 39.1 36 38V28" stroke="hsl(var(--primary))" strokeWidth="2" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M12 28V38C12 39.1 12.9 40 14 40H16C18.21 40 20 38.21 20 36V26" stroke="hsl(var(--primary))" strokeWidth="2" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M36 24.06C37.82 24.02 39.6 24 41.32 24C41.74 24 42.14 24 42.54 24.02" stroke="hsl(var(--primary))" strokeWidth="2" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
+const ScalableIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+    <path d="M28.8 4H19.2C18.24 4 17.34 4.42 16.7 5.18L5.18 18.26C4.42 18.96 4 19.92 4 20.92V38C4 40.2 5.8 42 8 42H40C42.2 42 44 40.2 44 38V20.92C44 19.92 43.58 18.96 42.82 18.26L31.3 5.18C30.66 4.42 29.76 4 28.8 4Z" stroke="hsl(var(--primary))" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M24 25V34" stroke="hsl(var(--primary))" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M18 29V34" stroke="hsl(var(--primary))" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M30 21V34" stroke="hsl(var(--primary))" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M14 12H34" stroke="hsl(var(--primary))" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
+const serviceFeatures = [
   {
-    image: securityFeatureImg,
-    title: "Controle em real-time, sem \"pegadinhas\"",
-    description: "Nossa cobrança é em real e sem surpresas. Gerencie seus recursos, pague apenas pelo que usar e economize de verdade com configurações sob medida.",
+    icon: <ShieldIcon />,
+    title: "FAST & SECURE",
+    description: "Experience ultra-fast, secure and reliable hosting for your website with cutting-edge infrastructure.",
   },
   {
-    image: supportFeatureImg,
-    title: "IP brasileiro e atendimento em português",
-    description: "A segurança e a credibilidade que você precisa com um endereço IP nacional. E claro, um atendimento que fala a sua língua para resolver tudo.",
+    icon: <HeadsetIcon />,
+    title: "24/7 SUPPORT",
+    description: "Get expert assistance anytime with our round-the-clock support: team always ready to help.",
   },
   {
-    image: backupFeatureImg,
-    title: "Snapshot para restauração e backup",
-    description: "Crie imagens de sua aplicação ou arquivos, agende backups e restaure seu ambiente com apenas alguns cliques, tudo de forma simples e segura.",
+    icon: <ScalableIcon />,
+    title: "SCALABLE PLANS",
+    description: "Easily upgrade your hosting plan as your business grows with our flexible and scalable solutions.",
   },
 ];
 
+const pricingPlans = [
+  {
+    name: "Basic",
+    price: 19,
+    features: ["Single Website", "25 GB SSD Storage", "Unlimited Bandwidth"],
+    popular: false,
+  },
+  {
+    name: "Pro",
+    price: 49,
+    features: ["Unlimited Websites", "100 GB SSD Storage", "Free SSL Certificate", "Daily Backups"],
+    popular: true,
+  },
+  {
+    name: "Enterprise",
+    price: 99,
+    features: ["Unlimited Websites", "200 GB SSD Storage", "Advanced Security", "Priority Support"],
+    popular: false,
+  },
+];
 
 export default function Home() {
   return (
     <div className="flex flex-col bg-background text-foreground">
       {/* Hero Section */}
-      <section className="py-20 sm:py-32">
-        <div className="container">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-            <div>
-              <p className="text-sm font-bold uppercase tracking-wider text-primary">Dresbach Hosting</p>
-              <h1 className="font-headline text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl mt-2">
-                Crescimento exige boa estrutura e estabilidade.
-              </h1>
-              <p className="mt-6 text-lg text-muted-foreground max-w-xl">
-                Máquinas robustas para qualquer tipo de aplicação, alta disponibilidade com infraestrutura no Brasil e o e-mail mais completo do mercado.
-              </p>
-              <div className="mt-10 flex items-end gap-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">A partir de</p>
-                    <p className="text-5xl font-bold tracking-tight text-primary">
-                      <span className="text-2xl align-top">R$</span>19,90<span className="text-xl">/mês</span>
-                    </p>
-                  </div>
+      <section className="relative py-32 sm:py-48">
+        {heroImage && (
+          <Image
+            src={heroImage.imageUrl}
+            alt={heroImage.description}
+            data-ai-hint={heroImage.imageHint}
+            fill
+            className="object-cover object-center"
+            priority
+          />
+        )}
+        <div className="absolute inset-0 bg-background/70 backdrop-blur-sm"></div>
 
-              </div>
-               <div className="mt-8">
-                  <Button size="lg" asChild className="bg-primary hover:bg-accent text-primary-foreground">
-                    <Link href="/planos-de-hospedagem">
-                      Conheça Nossos Planos <ArrowRight className="ml-2 h-5 w-5" />
-                    </Link>
-                  </Button>
-               </div>
-            </div>
-            <div className="flex justify-center">
-              {heroImage && (
-                <Image
-                  src={heroImage.imageUrl}
-                  alt={heroImage.description}
-                  data-ai-hint={heroImage.imageHint}
-                  width={600}
-                  height={600}
-                  className="rounded-lg shadow-2xl object-cover aspect-square"
-                  priority
-                />
-              )}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Plans Section Preview */}
-      <section className="py-20 sm:py-32 bg-card border-y">
-        <div className="container text-center">
-          <h2 className="font-headline text-3xl font-bold tracking-tight sm:text-4xl">
-            Planos que entregam performance com preço justo
-          </h2>
-          <p className="mt-4 max-w-2xl mx-auto text-lg text-muted-foreground">
-            Contrate o Servidor VPS Linux ou Windows com infraestrutura no Brasil, pague na moeda local e tenha o melhor custo-benefício.
-          </p>
-           <div className="mt-10">
+        <div className="container relative text-left">
+          <div className="max-w-3xl">
+            <h1 className="font-headline text-5xl font-bold tracking-tight sm:text-6xl md:text-7xl">
+              Premium Hosting Solutions for Your Business
+            </h1>
+            <p className="mt-6 text-lg text-foreground/80">
+              Reliable, secure, and high-performance hosting services designed to elevate your online presence.
+            </p>
+            <div className="mt-10 flex items-center gap-4">
               <Button size="lg" asChild>
+                <Link href="/pedido">
+                  GET STARTED
+                </Link>
+              </Button>
+              <Button size="lg" variant="outline" asChild>
                 <Link href="/planos-de-hospedagem">
-                  Conheça todos os planos
+                  VIEW PLANS
                 </Link>
               </Button>
             </div>
-        </div>
-      </section>
-
-      {/* Domain Search Section */}
-      <section className="py-20 sm:py-32">
-        <div className="container">
-          <div className="max-w-2xl mx-auto text-center">
-            <h2 className="font-headline text-3xl font-bold tracking-tight sm:text-4xl">
-              Encontre o seu novo domínio
-            </h2>
-            <p className="mt-4 text-lg text-muted-foreground">
-              Comece sua jornada online registrando o nome de domínio ideal para sua marca ou projeto.
-            </p>
-          </div>
-          <div className="mt-10 max-w-xl mx-auto">
-            <DomainSearchHome />
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section id="features" className="py-20 sm:py-32">
-        <div className="container">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            <div className="flex justify-center">
-                {featureGraphic && (
-                    <Image
-                    src={featureGraphic.imageUrl}
-                    alt={featureGraphic.description}
-                    data-ai-hint={featureGraphic.imageHint}
-                    width={500}
-                    height={500}
-                    className="rounded-lg"
-                    />
-                )}
-            </div>
-            <div>
-              <h2 className="font-headline text-3xl font-bold tracking-tight sm:text-4xl">
-                Use nosso painel, automatize o operacional e foque na estratégia
-              </h2>
-              <ul className="mt-8 space-y-6 text-lg">
-                <li className="flex items-start gap-4">
-                  <Zap className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
-                  <span><span className="font-bold">Execute, valide e automatize fluxos.</span> Como interface visual e low-code, qualquer pessoa pode criar fluxos, mesmo sem saber programar.</span>
-                </li>
-                <li className="flex items-start gap-4">
-                  <Server className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
-                  <span><span className="font-bold">Organize seus arquivos automaticamente.</span> Classifique e mova arquivos com base em regras personalizadas, sem esforço manual.</span>
-                </li>
-                 <li className="flex items-start gap-4">
-                  <ShieldCheck className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
-                  <span><span className="font-bold">Integre várias ferramentas e unifique processos.</span> Conecte-se com e-mails, CRM e mais, tudo com lógica personalizada.</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Security/Performance Section */}
-      <section className="py-20 sm:py-32 bg-card border-y">
-        <div className="container">
-          <div className="text-center max-w-3xl mx-auto">
-            <h2 className="font-headline text-3xl font-bold tracking-tight sm:text-4xl">
-              Desempenho e segurança garantidos em todos os planos
-            </h2>
-            <p className="mt-4 text-lg text-muted-foreground">
-              Sua aplicação segura e sempre disponível com a melhor infraestrutura e um suporte que realmente resolve.
-            </p>
-          </div>
+      {/* Services Section */}
+      <section className="py-20 sm:py-32 bg-background border-y border-white/10">
+        <div className="container text-center">
+          <p className="text-sm font-semibold uppercase tracking-widest text-primary">OUR SERVICES</p>
+          <h2 className="font-headline text-3xl font-bold tracking-tight sm:text-4xl mt-2">
+            Premium Hosting Services Tailored to Your Needs
+          </h2>
           <div className="mt-16 grid grid-cols-1 gap-8 md:grid-cols-3">
-            {features.map((feature, index) => (
-              <Card key={index} className="overflow-hidden">
-                {feature.image && (
-                  <Image
-                    src={feature.image.imageUrl}
-                    alt={feature.image.description}
-                    data-ai-hint={feature.image.imageHint}
-                    width={400}
-                    height={300}
-                    className="w-full h-48 object-cover"
-                  />
-                )}
-                <CardHeader>
-                  <CardTitle>{feature.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">{feature.description}</p>
+            {serviceFeatures.map((feature, index) => (
+              <Card key={index} className="overflow-hidden bg-card text-left">
+                <CardContent className="p-8">
+                  {feature.icon}
+                  <h3 className="mt-6 text-xl font-bold font-headline">{feature.title}</h3>
+                  <p className="mt-2 text-muted-foreground">{feature.description}</p>
+                  <Button variant="link" className="mt-6 p-0 text-primary">LEARN MORE</Button>
                 </CardContent>
               </Card>
             ))}
@@ -197,6 +135,55 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Pricing Plans Section */}
+      <section className="py-20 sm:py-32 bg-background relative overflow-hidden">
+        <div 
+          className="absolute inset-0 z-0 opacity-10 bg-no-repeat bg-center"
+          style={{ backgroundImage: `url('https://picsum.photos/seed/golddust/1920/1080')`, backgroundSize: 'cover' }}
+          data-ai-hint="gold dust"
+        ></div>
+        <div className="container relative z-10">
+          <div className="text-center max-w-3xl mx-auto">
+            <p className="text-sm font-semibold uppercase tracking-widest text-primary">OUR PRICING PLANS</p>
+            <h2 className="font-headline text-3xl font-bold tracking-tight sm:text-4xl mt-2">
+              Choose the Perfect Plan for Your Business
+            </h2>
+          </div>
+          <div className="mt-16 grid grid-cols-1 gap-8 md:grid-cols-3 items-center">
+            {pricingPlans.map((plan) => (
+              <Card key={plan.name} className={`flex flex-col text-center bg-card ${plan.popular ? 'border-primary ring-2 ring-primary scale-105' : 'border-white/10'}`}>
+                {plan.popular && (
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                    <div className="bg-primary text-primary-foreground text-xs font-bold uppercase px-4 py-1 rounded-full">Popular</div>
+                  </div>
+                )}
+                <CardHeader className="pt-12">
+                  <CardTitle className="font-headline text-2xl uppercase tracking-wider">{plan.name}</CardTitle>
+                  <div className="mt-4">
+                    <span className="text-5xl font-bold text-foreground">${plan.price}</span>
+                    <span className="text-muted-foreground">/month</span>
+                  </div>
+                </CardHeader>
+                <CardContent className="flex-grow my-8">
+                  <ul className="space-y-4 text-left">
+                    {plan.features.map((feature) => (
+                      <li key={feature} className="flex items-center gap-3">
+                        <Check className="h-5 w-5 text-primary flex-shrink-0" />
+                        <span className="text-muted-foreground">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+                <CardFooter className="p-6">
+                  <Button className="w-full" size="lg">
+                    GET STARTED
+                  </Button>
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

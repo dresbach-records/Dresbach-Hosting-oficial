@@ -1,0 +1,35 @@
+@layer base {
+  .dark {
+    --background: 8 14% 6%; /* #110f0e */
+    --foreground: 40 14% 93%; /* #f1ede8 */
+    
+    --card: 40 4% 10%; /* #1b1a19 */
+    --card-foreground: 40 14% 93%;
+
+    --popover: 40 4% 10%;
+    --popover-foreground: 40 14% 93%;
+
+    --primary: 40 38% 62%; /* #BEA77E - Gold */
+    --primary-foreground: 8 14% 6%;
+
+    --secondary: 40 4% 14%; /* Lighter Card for hover */
+    --secondary-foreground: 40 14% 93%;
+
+    --muted: 40 4% 14%;
+    --muted-foreground: 40 5% 65%;
+
+    --accent: 40 38% 52%; /* Darker Gold for hover */
+    --accent-foreground: 40 14% 93%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 40 4% 20%;
+    --input: 40 4% 20%;
+    --ring: 40 38% 62%;
+
+    --link: 40 38% 72%; /* Lighter gold for links */
+
+    --radius: 0.3rem;
+  }
+}

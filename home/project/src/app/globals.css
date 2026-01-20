@@ -6,7 +6,8 @@
 * Para trocar o tema visual do site, mude o nome do arquivo na linha `@import` abaixo.
 *
 * Temas disponíveis na pasta /src/templantes:
-* - "german-dark.css" (Padrão atual: Sóbrio, escuro, com tons de dourado)
+* - "black-friday.css" (Tema escuro e dourado, estilo premium)
+* - "german-dark.css" (Sóbrio, escuro, com tons de dourado)
 * - "default-light.css" (Tema claro, com tons de azul)
 *
 * Exemplo para ativar o tema claro:
@@ -18,7 +19,7 @@
 *
 * ===================================================================
 */
-@import "../templantes/german-dark.css";
+@import "../templantes/black-friday.css";
 
 @tailwind base;
 @tailwind components;

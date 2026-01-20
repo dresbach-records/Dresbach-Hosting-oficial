@@ -1,0 +1,65 @@
+
+{
+  "placeholderImages": [
+    {
+      "id": "hero-background",
+      "description": "Smiling woman holding a laptop in a modern setting.",
+      "imageUrl": "https://images.unsplash.com/photo-1499914485622-a88fac536970?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHx3b21hbiUyMGxhcHRvcHxlbnwwfHx8fDE3Njg1OTY1NTl8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "woman laptop"
+    },
+    {
+      "id": "black-friday-hero",
+      "description": "Dark server room with golden lights on servers, creating a high-tech and premium feel.",
+      "imageUrl": "https://picsum.photos/seed/servers/1920/1080",
+      "imageHint": "server room"
+    },
+    {
+      "id": "app-promo",
+      "description": "A person holding a smartphone with an app interface.",
+      "imageUrl": "https://images.unsplash.com/photo-1523206489230-c012c64b2b48?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxwaG9uZSUyMGFwcHxlbnwwfHx8fDE3Njg1OTkxNjV8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "phone app"
+    },
+    {
+      "id": "tech-ops-consulting",
+      "description": "Professionals in a meeting discussing a technical diagram.",
+      "imageUrl": "https://images.unsplash.com/photo-1573164574572-cb89e39749b4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxidXNpbmVzcyUyMG1lZXRpbmd8ZW58MHx8fHwxNzY4NTY1MTA5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "business meeting"
+    },
+    {
+      "id": "client-area",
+      "description": "Dashboard interface for the client area.",
+      "imageUrl": "https://images.unsplash.com/photo-1691725909676-105654d24649?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxkYXNoYm9hcmQlMjBpbnRlcmZhY2V8ZW58MHx8fHwxNzY4NTEyMzk4fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "dashboard interface"
+    },
+    {
+      "id": "about-us",
+      "description": "Modern office interior or data center.",
+      "imageUrl": "https://images.unsplash.com/photo-1612914033131-2fbd331a3806?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxvZmZpY2UlMjBkYXRhfGVufDB8fHx8MTc2ODYwMjE0Mnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "office data"
+    },
+    {
+      "id": "feature-graphic",
+      "description": "Abstract graphic representing automation or connection.",
+      "imageUrl": "https://images.unsplash.com/photo-1644088379091-d574269d422f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxhYnN0cmFjdCUyMHRlY2h8ZW58MHx8fHwxNzY4NTQ4ODk1fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "abstract tech"
+    },
+    {
+      "id": "security-feature",
+      "description": "Close-up of a person working on a laptop, emphasizing security.",
+      "imageUrl": "https://images.unsplash.com/photo-1632910073143-6d2c52a448e5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxsYXB0b3AlMjBzZWN1cml0eXxlbnwwfHx8fDE3Njg2MDIxNDF8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "laptop security"
+    },
+    {
+      "id": "support-feature",
+      "description": "Icon representing IP address or network configuration.",
+      "imageUrl": "https://images.unsplash.com/photo-1762769180401-083b8725434b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxuZXR3b3JrJTIwaWNvbnxlbnwwfHx8fDE3Njg2MDIxNDJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "network icon"
+    },
+    {
+      "id": "backup-feature",
+      "description": "Icon representing data backup or recovery.",
+      "imageUrl": "https://images.unsplash.com/photo-1614680376739-414d95ff43df?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxiYWNrdXAlMjBpY29ufGVufDB8fHx8MTc2ODYwMjE0Mnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "backup icon"
+    }
+  ]
+}
