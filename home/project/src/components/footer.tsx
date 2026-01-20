@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Facebook, Twitter, Linkedin, Youtube, Mail } from 'lucide-react';
-import { ACTIVE_THEME } from "@/theme.config";
+import { ACTIVE_THEME } from "@/lib/theme.config";
 
 const FooterLink = ({ href, children }: { href: string; children: React.ReactNode }) => (
   <li>
@@ -169,7 +169,7 @@ const GermanDarkFooter = () => {
 
                 <div className="mt-12 border-t border-border/50 pt-8 flex flex-col items-center justify-between gap-6 sm:flex-row">
                     <p className="text-xs text-muted-foreground">
-                        © {currentYear} Dresbach Hosting do Brasil LTDA | CNPJ: 63.187.175/0001-70
+                        &copy; {currentYear} Dresbach Hosting do Brasil LTDA | CNPJ: 63.187.175/0001-70
                     </p>
                     <div className="flex items-center space-x-3">
                         <a href="#" aria-label="Facebook" className="text-muted-foreground hover:text-link"><Facebook className="h-5 w-5"/></a>
