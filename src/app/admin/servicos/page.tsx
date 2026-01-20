@@ -33,7 +33,7 @@ export default function ServicesAdminPage() {
     const fetchServices = async () => {
         setIsLoading(true);
         try {
-            const data = await apiFetch<any[]>('/admin/services');
+            const data = await apiFetch<any[]>('/api/admin/services');
             setServices(data || []);
         } catch (error: any) {
             toast({
@@ -53,7 +53,7 @@ export default function ServicesAdminPage() {
     const handleUpdateStatus = async (serviceId: string, action: 'suspend' | 'reactivate') => {
         setIsUpdatingId(serviceId);
         try {
-            await apiFetch(`/admin/services/${serviceId}/${action}`, { method: 'PUT' });
+            await apiFetch(`/api/admin/services/${serviceId}/${action}`, { method: 'PUT' });
             toast({ title: `Serviço ${action === 'suspend' ? 'suspenso' : 'reativado'} com sucesso!` });
             fetchServices(); // Refresh the list
         } catch (error: any) {

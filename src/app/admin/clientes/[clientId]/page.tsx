@@ -46,7 +46,7 @@ export default function ClientProfileAdminPage() {
         const fetchData = async () => {
             setIsLoading(true);
             try {
-                const clientData = await apiFetch(`/admin/clients/${clientId}`);
+                const clientData = await apiFetch(`/api/admin/clients/${clientId}`);
                 setClient(clientData);
             } catch (error) {
                 console.error("Failed to fetch client data", error);
@@ -61,7 +61,7 @@ export default function ClientProfileAdminPage() {
     
     const handleDeleteClient = async () => {
       try {
-        await apiFetch(`/admin/clients/${clientId}`, { method: 'DELETE' });
+        await apiFetch(`/api/admin/clients/${clientId}`, { method: 'DELETE' });
         toast({ title: 'Cliente excluído com sucesso.' });
         // Ideally, redirect back to the client list page
         window.location.href = '/admin/clientes';

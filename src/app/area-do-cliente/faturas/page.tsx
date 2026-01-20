@@ -13,21 +13,28 @@ import { apiFetch } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 
 function InvoiceStatusBadge({ status }: { status: string }) {
-    let variant: "success" | "destructive" | "warning" = "warning";
+    let variant: "info" | "destructive" | "warning" = "warning";
     const textMap: { [key: string]: string } = {
         'paid': 'Pago',
         'overdue': 'Vencida',
         'unpaid': 'Pendente',
         'canceled': 'Cancelada'
     }
-    const currentStatus = textMap[status] || status;
+    // Asaas statuses
+    const asaasStatusMap: { [key: string]: string } = {
+        'RECEIVED': 'Pago',
+        'CONFIRMED': 'Pago',
+        'PENDING': 'Pendente',
+        'OVERDUE': 'Vencida',
+    }
+    const currentStatusText = asaasStatusMap[status] || textMap[status] || status;
 
-    if (currentStatus === 'Pago') {
-        variant = 'success';
-    } else if (currentStatus === 'Vencida') {
+    if (currentStatusText === 'Pago') {
+        variant = 'info';
+    } else if (currentStatusText === 'Vencida') {
         variant = 'destructive';
     }
-    return <Badge variant={variant}>{currentStatus}</Badge>;
+    return <Badge variant={variant}>{currentStatusText}</Badge>;
 }
 
 function InvoicesPageContent() {
@@ -54,6 +61,7 @@ function InvoicesPageContent() {
         const fetchInvoices = async () => {
             setIsLoading(true);
             try {
+                // Corrected API path
                 const data = await apiFetch<any[]>('/api/my-invoices');
                 setInvoices(data);
             } catch (error) {
@@ -72,6 +80,7 @@ function InvoicesPageContent() {
     const handlePayInvoice = async (invoice: any) => {
         setIsProcessingId(invoice.id);
         try {
+            // Corrected API path and payload
             const response = await apiFetch<{ invoiceUrl: string }>('/api/checkout', {
                 method: 'POST',
                 body: JSON.stringify({ invoice_id: Number(invoice.id) }),
@@ -126,7 +135,7 @@ function InvoicesPageContent() {
                                     <TableCell>R$ {invoice.amount.toFixed(2)}</TableCell>
                                     <TableCell><InvoiceStatusBadge status={invoice.status} /></TableCell>
                                     <TableCell className="text-right">
-                                        {(invoice.status === 'unpaid' || invoice.status === 'overdue') && (
+                                        {(invoice.status === 'unpaid' || invoice.status === 'overdue' || invoice.status === 'PENDING' || invoice.status === 'OVERDUE') && (
                                             <Button 
                                                 size="sm" 
                                                 onClick={() => handlePayInvoice(invoice)}

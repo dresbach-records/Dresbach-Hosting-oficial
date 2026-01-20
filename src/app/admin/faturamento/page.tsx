@@ -31,7 +31,7 @@ export default function BillingAdminPage() {
     const fetchTransactions = async () => {
       setIsLoading(true);
       try {
-        const data = await apiFetch<any[]>('/admin/financials/transactions');
+        const data = await apiFetch<any[]>('/api/admin/financials/transactions');
         setTransactions(data || []);
       } catch (error: any) {
         toast({

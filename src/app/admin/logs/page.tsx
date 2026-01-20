@@ -14,7 +14,7 @@ export default function LogsAdminPage() {
     const fetchLogs = async () => {
       setIsLoading(true);
       try {
-        const data = await apiFetch<any>('/admin/monitoring/logs');
+        const data = await apiFetch<any>('/api/admin/monitoring/logs');
         setLogs(data?.logs || []);
       } catch (error: any) {
         toast({

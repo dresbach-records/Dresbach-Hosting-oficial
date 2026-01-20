@@ -38,9 +38,9 @@ export default function AdminDashboard() {
         setIsLoading(true);
         try {
             const [balanceData, clientsData, servicesData] = await Promise.all([
-              apiFetch<BalanceData>('/admin/financials/balance'),
-              apiFetch<any[]>('/admin/clients'),
-              apiFetch<any[]>('/admin/services'),
+              apiFetch<BalanceData>('/api/admin/financials/balance'),
+              apiFetch<any[]>('/api/admin/clients'),
+              apiFetch<any[]>('/api/admin/services'),
             ]);
             setBalance(balanceData);
             setClients(clientsData || []);

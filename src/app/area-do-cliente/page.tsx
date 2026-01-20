@@ -48,8 +48,8 @@ export default function ClientAreaDashboard() {
           setIsLoading(true);
           try {
               const [servicesData, invoicesData] = await Promise.all([
-                  apiFetch('/my-services'),
-                  apiFetch('/my-invoices'),
+                  apiFetch('/api/my-services'),
+                  apiFetch('/api/my-invoices'),
               ]);
               setServices(servicesData || []);
               setInvoices(invoicesData || []);

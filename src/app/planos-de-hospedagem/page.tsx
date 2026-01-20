@@ -18,7 +18,7 @@ export default function HostingPlansPage() {
     const fetchPlans = async () => {
       setIsLoading(true);
       try {
-        const data = await apiFetch<any[]>('/products/vps');
+        const data = await apiFetch<any[]>('/api/products/vps');
         setPlans(data || []);
       } catch (error: any) {
         toast({

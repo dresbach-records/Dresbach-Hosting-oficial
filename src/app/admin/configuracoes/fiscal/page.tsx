@@ -50,7 +50,7 @@ export default function FiscalSettingsPage() {
         const fetchSettings = async () => {
             setIsLoading(true);
             try {
-                const data = await apiFetch<FiscalSettingsForm>('/admin/fiscal/settings');
+                const data = await apiFetch<FiscalSettingsForm>('/api/admin/fiscal/settings');
                 form.reset(data);
             } catch (error: any) {
                 toast({
@@ -68,7 +68,7 @@ export default function FiscalSettingsPage() {
     const onSubmit = async (values: FiscalSettingsForm) => {
         setIsSubmitting(true);
         try {
-            await apiFetch('/admin/fiscal/settings', {
+            await apiFetch('/api/admin/fiscal/settings', {
                 method: 'PUT',
                 body: JSON.stringify(values),
             });

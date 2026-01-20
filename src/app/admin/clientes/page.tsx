@@ -63,7 +63,7 @@ export default function ClientsAdminPage() {
   const fetchClients = async () => {
     setIsLoading(true);
     try {
-        const data = await apiFetch<any[]>('/admin/clients');
+        const data = await apiFetch<any[]>('/api/admin/clients');
         setClients(data || []);
     } catch (error) {
         toast({
@@ -83,7 +83,7 @@ export default function ClientsAdminPage() {
   const onSubmit = async (values: NewClientForm) => {
     setIsSubmitting(true);
     try {
-      await apiFetch('/admin/clients', {
+      await apiFetch('/api/admin/clients', {
         method: 'POST',
         body: JSON.stringify(values),
       });

@@ -32,11 +32,11 @@ import { apiFetch } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 
 function ServiceStatusBadge({ status }: { status: string }) {
-    let variant: "success" | "destructive" | "warning" | "secondary" = "secondary";
+    let variant: "info" | "destructive" | "warning" | "secondary" = "secondary";
     
     switch (status) {
         case 'active':
-            variant = 'success';
+            variant = 'info';
             break;
         case 'suspended':
             variant = 'destructive';
@@ -207,10 +207,10 @@ export default function ServicesPage() {
                                 <TableRow key={service.id} onClick={() => handleRowClick(service.id)} className="cursor-pointer">
                                     <TableCell className="font-medium">
                                       <div className="flex items-start gap-3">
-                                        <div className="p-2 bg-green-100 rounded-md"><Unlock className="h-4 w-4 text-green-600"/></div>
+                                        <div className="p-2 bg-primary/10 rounded-md"><Unlock className="h-4 w-4 text-primary"/></div>
                                         <div>
                                           <p className="font-semibold">{service.description || service.product_name}</p>
-                                          <p className="text-sm text-primary hover:underline">{service.domain}</p>
+                                          <p className="text-sm text-link hover:underline">{service.domain}</p>
                                         </div>
                                       </div>
                                     </TableCell>

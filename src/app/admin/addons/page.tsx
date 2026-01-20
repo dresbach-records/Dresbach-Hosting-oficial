@@ -50,13 +50,13 @@ const CrmSidebar = () => {
     ];
 
     return (
-        <div className="w-[70px] bg-[#0b141a] flex flex-col items-center py-4 text-gray-400">
+        <div className="w-[70px] bg-card flex flex-col items-center py-4 text-muted-foreground">
             <div className="mb-4">
-                 <svg width="30" height="30" viewBox="0 0 31 31" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15.5 0C6.939 0 0 6.939 0 15.5C0 24.061 6.939 31 15.5 31C24.061 31 31 24.061 31 15.5C31 6.939 24.061 0 15.5 0ZM21.05 23.116L18.892 20.957C17.013 22.368 14.839 23.25 12.4 23.25C6.862 23.25 2.325 18.713 2.325 13.175C2.325 7.638 6.862 3.1 12.4 3.1C15.826 3.1 18.835 4.805 20.679 7.424L22.959 5.144C20.309 2.494 16.598 0.775 12.4 0.775C5.705 0.775 0 6.48 0 13.175C0 19.87 5.705 25.575 12.4 25.575C14.074 25.575 15.748 25.176 17.266 24.479L19.424 26.637L17.13 28.931L23.361 28.931L23.361 22.7L21.05 23.116Z" fill="#34d399"></path></svg>
+                 <svg width="30" height="30" viewBox="0 0 31 31" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15.5 0C6.939 0 0 6.939 0 15.5C0 24.061 6.939 31 15.5 31C24.061 31 31 24.061 31 15.5C31 6.939 24.061 0 15.5 0ZM21.05 23.116L18.892 20.957C17.013 22.368 14.839 23.25 12.4 23.25C6.862 23.25 2.325 18.713 2.325 13.175C2.325 7.638 6.862 3.1 12.4 3.1C15.826 3.1 18.835 4.805 20.679 7.424L22.959 5.144C20.309 2.494 16.598 0.775 12.4 0.775C5.705 0.775 0 6.48 0 13.175C0 19.87 5.705 25.575 12.4 25.575C14.074 25.575 15.748 25.176 17.266 24.479L19.424 26.637L17.13 28.931L23.361 28.931L23.361 22.7L21.05 23.116Z" fill="hsl(var(--primary))"></path></svg>
             </div>
             <div className="flex flex-col items-center space-y-2 flex-grow">
                 {icons.map((Icon, index) => (
-                    <Button key={index} variant="ghost" size="icon" className="text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg">
+                    <Button key={index} variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg">
                         <Icon className="h-6 w-6" />
                     </Button>
                 ))}
@@ -74,14 +74,14 @@ const CrmSidebar = () => {
 
 export default function CrmAdminPage() {
   return (
-    <div className="flex h-screen bg-[#f0f2f5] text-gray-800 antialiased">
+    <div className="flex h-screen bg-background text-foreground antialiased">
       <CrmSidebar />
       <div className="flex flex-1 flex-col">
         {/* Top Header */}
-        <header className="bg-[#202c33] flex items-center px-4 py-2 shrink-0">
+        <header className="bg-card flex items-center px-4 py-2 shrink-0 border-b">
             <div className="relative w-[340px]">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input placeholder="Search name or mobile number" className="bg-[#2a3942] border-transparent text-gray-300 rounded-lg pl-10 h-9 focus:bg-[#3c4a54]" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input placeholder="Search name or mobile number" className="bg-input border-transparent text-foreground rounded-lg pl-10 h-9 focus:bg-muted" />
             </div>
              <div className="flex-1 flex items-center justify-start gap-1 pl-4">
                 {topNavAvatars.map((user, index) => (
@@ -91,7 +91,7 @@ export default function CrmAdminPage() {
                             <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                         </Avatar>
                         {user.unread > 0 && (
-                            <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 justify-center text-xs bg-red-500 text-white border-2 border-[#202c33]">{user.unread}</Badge>
+                            <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 justify-center text-xs bg-destructive text-destructive-foreground border-2 border-card">{user.unread}</Badge>
                         )}
                     </div>
                 ))}
@@ -100,25 +100,25 @@ export default function CrmAdminPage() {
         
         <div className="flex flex-1 overflow-hidden">
             {/* Conversation List */}
-            <aside className="w-[380px] bg-white border-r border-gray-200 flex flex-col">
+            <aside className="w-[380px] bg-card border-r flex flex-col">
                 <div className="p-2 border-b">
-                    <div className="flex items-center justify-between text-sm text-gray-500">
+                    <div className="flex items-center justify-between text-sm text-muted-foreground">
                         <div className="flex gap-1">
-                            <Button variant="ghost" className="px-2 py-1 h-auto text-[#00a884] font-bold border-b-2 border-[#00a884] rounded-none">ACTIVE (21)</Button>
+                            <Button variant="ghost" className="px-2 py-1 h-auto text-primary font-bold border-b-2 border-primary rounded-none">ACTIVE (21)</Button>
                             <Button variant="ghost" className="px-2 py-1 h-auto font-bold">REQUESTING (24)</Button>
                             <Button variant="ghost" className="px-2 py-1 h-auto font-bold">INTERVENED (1)</Button>
                         </div>
                     </div>
                 </div>
-                <div className="p-3 border-b flex items-center justify-between bg-gray-50">
+                <div className="p-3 border-b flex items-center justify-between bg-muted/50">
                      <Button variant="ghost" className="font-semibold text-sm p-0 h-auto">
-                        <ChevronDown className="h-5 w-5 mr-1 text-gray-500" />
+                        <ChevronDown className="h-5 w-5 mr-1 text-muted-foreground" />
                         Arvind Bajaj (+91 987654321)
                     </Button>
                 </div>
                 <div className="flex-1 overflow-y-auto">
                     {contacts.map((contact) => (
-                         <div key={contact.id} className={`flex items-start gap-3 p-3 cursor-pointer border-b border-gray-100 ${contact.name === 'Arvind Bajaj' ? 'bg-[#f0f2f5]' : 'hover:bg-[#f5f7f7]'}`}>
+                         <div key={contact.id} className={`flex items-start gap-3 p-3 cursor-pointer border-b ${contact.name === 'Arvind Bajaj' ? 'bg-muted' : 'hover:bg-muted/50'}`}>
                              <Avatar className="h-12 w-12 mt-1">
                                 <AvatarImage src={contact.avatar} alt={contact.name} />
                                 <AvatarFallback>{contact.name.charAt(0)}</AvatarFallback>
@@ -128,7 +128,7 @@ export default function CrmAdminPage() {
                                     <p className="font-semibold truncate">{contact.name}</p>
                                     {contact.active && <div className="text-xs text-green-600 font-medium">10:49 AM</div>}
                                 </div>
-                                <p className="text-sm text-gray-500 truncate">{contact.message}</p>
+                                <p className="text-sm text-muted-foreground truncate">{contact.message}</p>
                             </div>
                         </div>
                     ))}
@@ -138,8 +138,8 @@ export default function CrmAdminPage() {
             {/* Chat Area & Profile Pane */}
             <main className="flex-1 grid" style={{ gridTemplateColumns: '1fr 320px' }}>
                  <div className="flex flex-col">
-                     <div className="flex-1 bg-[#efeae2] p-4 flex items-center justify-center relative bg-[url('https://picsum.photos/seed/pattern/1000/1000')] bg-blend-soft-light bg-opacity-40">
-                         <div className="text-center text-gray-500">
+                     <div className="flex-1 bg-muted/30 p-4 flex items-center justify-center relative bg-[url('https://picsum.photos/seed/pattern/1000/1000')] bg-blend-soft-light bg-opacity-10">
+                         <div className="text-center text-muted-foreground">
                              <p>Select a chat to start messaging</p>
                              <p className="text-xs mt-2">This is a visual clone. Chat functionality is not implemented.</p>
                          </div>
@@ -147,14 +147,14 @@ export default function CrmAdminPage() {
                  </div>
 
                 {/* Profile Pane */}
-                <div className="bg-[#f0f2f5] p-6 border-l border-gray-200 flex flex-col items-center text-center">
-                    <Button variant="ghost" className="w-full justify-center mb-6 bg-gray-200 py-3 text-base font-semibold">Chat Profile</Button>
-                    <Avatar className="h-24 w-24 mb-4 ring-2 ring-offset-2 ring-gray-300">
+                <div className="bg-muted p-6 border-l flex flex-col items-center text-center">
+                    <Button variant="ghost" className="w-full justify-center mb-6 bg-background py-3 text-base font-semibold">Chat Profile</Button>
+                    <Avatar className="h-24 w-24 mb-4 ring-2 ring-offset-2 ring-border">
                         <AvatarImage src="https://picsum.photos/seed/bajaj/96/96" alt="Arvind Bajaj" />
                         <AvatarFallback>AB</AvatarFallback>
                     </Avatar>
                     <h2 className="text-xl font-semibold">Arvind Bajaj</h2>
-                    <p className="text-gray-500">+91 987654321</p>
+                    <p className="text-muted-foreground">+91 987654321</p>
                 </div>
             </main>
         </div>

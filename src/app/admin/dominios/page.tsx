@@ -30,7 +30,7 @@ export default function DomainsAdminPage() {
   const fetchOrders = async () => {
     setIsLoading(true);
     try {
-      const data = await apiFetch<any[]>('/admin/domain-orders');
+      const data = await apiFetch<any[]>('/api/admin/domain-orders');
       setOrders(data || []);
     } catch (error: any) {
       toast({
@@ -49,7 +49,7 @@ export default function DomainsAdminPage() {
 
   const handleUpdateStatus = async (orderId: string, newStatus: string) => {
     try {
-      await apiFetch(`/admin/domain-orders/${orderId}`, {
+      await apiFetch(`/api/admin/domain-orders/${orderId}`, {
         method: 'PUT',
         body: JSON.stringify({ status: newStatus }),
       });

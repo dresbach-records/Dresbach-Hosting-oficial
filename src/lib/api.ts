@@ -1,7 +1,9 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 if (!API_BASE) {
-  throw new Error("NEXT_PUBLIC_API_BASE_URL não configurado. Verifique seu arquivo .env.local");
+  // This is not an error in dev because we use a relative path for the proxy.
+  // In production, this variable should be set.
+  console.warn("NEXT_PUBLIC_API_BASE_URL não configurado. Usando caminhos relativos.");
 }
 
 export async function apiFetch<T>(
@@ -19,7 +21,10 @@ export async function apiFetch<T>(
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const res = await fetch(`${API_BASE}${path}`, {
+  // Use API_BASE for production, but allow relative path for dev proxy
+  const url = API_BASE ? `${API_BASE}${path}` : path;
+
+  const res = await fetch(url, {
     ...options,
     headers,
   });
