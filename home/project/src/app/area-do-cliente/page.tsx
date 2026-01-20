@@ -74,28 +74,28 @@ export default function ClientAreaDashboard() {
                 title="SERVIÇOS" 
                 icon={<Server className="h-10 w-10" />} 
                 count={services?.length || 0}
-                colorClass="bg-cyan-500"
+                colorClass="bg-chart-1"
                 isLoading={isLoading}
             />
              <StatCard 
                 title="DOMÍNIOS" 
                 icon={<Globe className="h-10 w-10" />} 
                 count={0}
-                colorClass="bg-green-500"
+                colorClass="bg-chart-2"
                 isLoading={isLoading}
             />
              <StatCard 
                 title="TICKETS" 
                 icon={<MessageSquare className="h-10 w-10" />} 
                 count={0}
-                colorClass="bg-red-500"
+                colorClass="bg-chart-3"
                 isLoading={isLoading}
             />
             <StatCard 
                 title="FATURAS" 
                 icon={<CreditCard className="h-10 w-10" />} 
                 count={invoices?.filter(inv => inv.status !== 'paid' && inv.status !== 'RECEIVED' && inv.status !== 'CONFIRMED').length || 0}
-                colorClass="bg-orange-500"
+                colorClass="bg-chart-5"
                 isLoading={isLoading}
             />
         </div>

@@ -68,13 +68,13 @@ export default function SignupPage() {
      <div className="flex min-h-screen bg-background">
       <div className="hidden lg:flex lg:w-1/2 bg-primary text-primary-foreground p-12 flex-col justify-between">
         <div>
-          <Logo className="invert brightness-0" />
+          <Logo className="brightness-0 invert" />
         </div>
         <div className="max-w-md">
           <p className="text-sm uppercase tracking-wider text-primary-foreground/80 mb-2">Comece Agora</p>
-          <h2 className="text-3xl font-bold leading-tight">Crie sua conta e tenha acesso a um mundo de possibilidades</h2>
+          <h2 className="text-3xl font-bold leading-tight">A Arquitetura de Ponta Para o Seu Negócio.</h2>
           <p className="mt-4 text-primary-foreground/80">
-            Infraestrutura de ponta, suporte premiado e a estabilidade que seu projeto precisa para crescer sem limites.
+            Crie sua conta para ter acesso à infraestrutura de ponta, suporte premiado e a estabilidade que seu projeto precisa para crescer sem limites.
           </p>
         </div>
         <div className="text-sm text-primary-foreground/60">

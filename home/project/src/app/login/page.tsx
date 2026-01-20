@@ -85,13 +85,13 @@ export default function LoginPage() {
       <div className="flex min-h-screen bg-background">
         <div className="hidden lg:flex lg:w-1/2 bg-primary text-primary-foreground p-12 flex-col justify-between">
           <div>
-            <Logo className="invert brightness-0" />
+            <Logo className="brightness-0 invert" />
           </div>
           <div className="max-w-md">
-            <p className="text-sm uppercase tracking-wider text-primary-foreground/80 mb-2">Novidades</p>
-            <h2 className="text-3xl font-bold leading-tight">Lançamento do Novo Servidor Cloud Dinâmico</h2>
+            <p className="text-sm uppercase tracking-wider text-primary-foreground/80 mb-2">Dresbach Hosting</p>
+            <h2 className="text-3xl font-bold leading-tight">Performance e Controle Para o Seu Negócio.</h2>
             <p className="mt-4 text-primary-foreground/80">
-              Performance, escalabilidade e controle total para sua aplicação decolar. Pague apenas pelo que usar e gerencie tudo em nosso novo painel intuitivo.
+              Infraestrutura de ponta, painel de controle intuitivo e a estabilidade que sua aplicação precisa para escalar sem preocupações.
             </p>
           </div>
           <div className="text-sm text-primary-foreground/60">
