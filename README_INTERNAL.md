@@ -5,6 +5,14 @@
 - staging
 - prod
 
+## Arquitetura de Domínios (Produção)
+- **Site Principal:** `dresbachhosting.com.br`
+- **Área do Cliente:** `area-do-cliente.dresbachhosting.com.br`
+- **Painel Admin:** `admin.dresbachhosting.com.br`
+- **Checkout de Pagamentos:** `checkout.dresbachhosting.com.br`
+
+Esta estrutura será gerenciada via proxy reverso (ex: Nginx) na VPS, direcionando os subdomínios para as rotas correspondentes da aplicação Next.js.
+
 ## Autenticação
 - JWT (atual)
 
