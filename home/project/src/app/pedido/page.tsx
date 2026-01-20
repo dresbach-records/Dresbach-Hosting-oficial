@@ -237,7 +237,7 @@ function OrderPageContent() {
                                 {domainSearchResult && (
                                     <div className={cn(
                                         "p-3 mt-4 rounded-md text-sm font-medium flex items-center gap-2",
-                                        domainSearchResult.available ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300" : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
+                                        domainSearchResult.available ? "bg-green-700/20 text-green-300" : "bg-red-700/20 text-red-300"
                                     )}>
                                         {domainSearchResult.available ? <Check className="h-5 w-5"/> : <Info className="h-5 w-5"/>}
                                         {domainSearchResult.message}
@@ -307,7 +307,7 @@ function OrderPageContent() {
                                     <Button variant="outline" className="w-full" disabled={isProcessing}>Alterar suas escolhas</Button>
                                 </CardContent>
                                 <CardFooter>
-                                    <div className="w-full text-center text-sm text-muted-foreground hover:text-primary cursor-pointer">
+                                    <div className="w-full text-center text-sm text-link hover:underline cursor-pointer">
                                         Tem um código promocional?
                                     </div>
                                 </CardFooter>

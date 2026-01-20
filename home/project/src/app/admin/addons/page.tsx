@@ -50,13 +50,13 @@ const CrmSidebar = () => {
     ];
 
     return (
-        <div className="w-[70px] bg-sidebar flex flex-col items-center py-4 text-sidebar-foreground">
+        <div className="w-[70px] bg-card flex flex-col items-center py-4 text-muted-foreground">
             <div className="mb-4">
                  <svg width="30" height="30" viewBox="0 0 31 31" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15.5 0C6.939 0 0 6.939 0 15.5C0 24.061 6.939 31 15.5 31C24.061 31 31 24.061 31 15.5C31 6.939 24.061 0 15.5 0ZM21.05 23.116L18.892 20.957C17.013 22.368 14.839 23.25 12.4 23.25C6.862 23.25 2.325 18.713 2.325 13.175C2.325 7.638 6.862 3.1 12.4 3.1C15.826 3.1 18.835 4.805 20.679 7.424L22.959 5.144C20.309 2.494 16.598 0.775 12.4 0.775C5.705 0.775 0 6.48 0 13.175C0 19.87 5.705 25.575 12.4 25.575C14.074 25.575 15.748 25.176 17.266 24.479L19.424 26.637L17.13 28.931L23.361 28.931L23.361 22.7L21.05 23.116Z" fill="hsl(var(--primary))"></path></svg>
             </div>
             <div className="flex flex-col items-center space-y-2 flex-grow">
                 {icons.map((Icon, index) => (
-                    <Button key={index} variant="ghost" size="icon" className="text-sidebar-foreground hover:text-white hover:bg-black/20 rounded-lg">
+                    <Button key={index} variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg">
                         <Icon className="h-6 w-6" />
                     </Button>
                 ))}
@@ -74,14 +74,14 @@ const CrmSidebar = () => {
 
 export default function CrmAdminPage() {
   return (
-    <div className="flex h-screen bg-muted text-foreground antialiased">
+    <div className="flex h-screen bg-background text-foreground antialiased">
       <CrmSidebar />
       <div className="flex flex-1 flex-col">
         {/* Top Header */}
         <header className="bg-card flex items-center px-4 py-2 shrink-0 border-b">
             <div className="relative w-[340px]">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Search name or mobile number" className="bg-muted border-transparent text-foreground rounded-lg pl-10 h-9 focus:bg-background" />
+                <Input placeholder="Search name or mobile number" className="bg-input border-transparent text-foreground rounded-lg pl-10 h-9 focus:bg-muted" />
             </div>
              <div className="flex-1 flex items-center justify-start gap-1 pl-4">
                 {topNavAvatars.map((user, index) => (
@@ -100,7 +100,7 @@ export default function CrmAdminPage() {
         
         <div className="flex flex-1 overflow-hidden">
             {/* Conversation List */}
-            <aside className="w-[380px] bg-background border-r flex flex-col">
+            <aside className="w-[380px] bg-card border-r flex flex-col">
                 <div className="p-2 border-b">
                     <div className="flex items-center justify-between text-sm text-muted-foreground">
                         <div className="flex gap-1">

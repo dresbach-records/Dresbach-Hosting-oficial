@@ -62,7 +62,7 @@ export default function Home() {
 
               </div>
                <div className="mt-8">
-                  <Button size="lg" asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                  <Button size="lg" asChild className="bg-primary hover:bg-accent text-primary-foreground">
                     <Link href="/planos-de-hospedagem">
                       Conheça Nossos Planos <ArrowRight className="ml-2 h-5 w-5" />
                     </Link>

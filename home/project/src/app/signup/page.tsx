@@ -66,23 +66,23 @@ export default function SignupPage() {
 
   return (
      <div className="flex min-h-screen bg-background">
-      <div className="hidden lg:flex lg:w-1/2 bg-primary text-primary-foreground p-12 flex-col justify-between">
+      <div className="hidden lg:flex lg:w-1/2 bg-card text-foreground p-12 flex-col justify-between">
         <div>
-          <Logo className="brightness-0 invert" />
+          <Logo />
         </div>
         <div className="max-w-md">
-          <p className="text-sm uppercase tracking-wider text-primary-foreground/80 mb-2">Comece Agora</p>
+          <p className="text-sm uppercase tracking-wider text-muted-foreground mb-2">Comece Agora</p>
           <h2 className="text-3xl font-bold leading-tight">A Arquitetura de Ponta Para o Seu Negócio.</h2>
-          <p className="mt-4 text-primary-foreground/80">
+          <p className="mt-4 text-muted-foreground">
             Crie sua conta para ter acesso à infraestrutura de ponta, suporte premiado e a estabilidade que seu projeto precisa para crescer sem limites.
           </p>
         </div>
-        <div className="text-sm text-primary-foreground/60">
+        <div className="text-sm text-muted-foreground">
             Copyright © {new Date().getFullYear()} Dresbach hosting do brasil.ltda
         </div>
       </div>
        <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12">
-        <Card className="w-full max-w-md border-0 shadow-none">
+        <Card className="w-full max-w-md border-0 bg-transparent shadow-none">
           <CardHeader className="text-center">
             <div className="mb-4 flex justify-center">
               <Logo />
@@ -131,7 +131,7 @@ export default function SignupPage() {
             </div>
             <div className="mt-6 text-center text-sm">
               Já tem uma conta?{' '}
-              <Link href="/login" className="font-semibold text-primary hover:underline">
+              <Link href="/login" className="font-semibold text-link hover:underline">
                 Faça login
               </Link>
             </div>

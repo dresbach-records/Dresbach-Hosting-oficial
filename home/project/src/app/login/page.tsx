@@ -83,23 +83,23 @@ export default function LoginPage() {
   return (
     <>
       <div className="flex min-h-screen bg-background">
-        <div className="hidden lg:flex lg:w-1/2 bg-primary text-primary-foreground p-12 flex-col justify-between">
+        <div className="hidden lg:flex lg:w-1/2 bg-card text-foreground p-12 flex-col justify-between">
           <div>
-            <Logo className="brightness-0 invert" />
+            <Logo />
           </div>
           <div className="max-w-md">
-            <p className="text-sm uppercase tracking-wider text-primary-foreground/80 mb-2">Dresbach Hosting</p>
+            <p className="text-sm uppercase tracking-wider text-muted-foreground mb-2">Dresbach Hosting</p>
             <h2 className="text-3xl font-bold leading-tight">Performance e Controle Para o Seu Negócio.</h2>
-            <p className="mt-4 text-primary-foreground/80">
+            <p className="mt-4 text-muted-foreground">
               Infraestrutura de ponta, painel de controle intuitivo e a estabilidade que sua aplicação precisa para escalar sem preocupações.
             </p>
           </div>
-          <div className="text-sm text-primary-foreground/60">
+          <div className="text-sm text-muted-foreground">
               Copyright © {new Date().getFullYear()} Dresbach hosting do brasil.ltda
           </div>
         </div>
         <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12">
-          <Card className="w-full max-w-md border-0 shadow-none">
+          <Card className="w-full max-w-md border-0 bg-transparent shadow-none">
             <CardHeader className="text-center">
               <div className="mb-4 flex justify-center">
                 <Logo />
@@ -139,7 +139,7 @@ export default function LoginPage() {
                         <Checkbox id="remember-me" disabled={isSubmitting} />
                         <Label htmlFor="remember-me" className="text-sm font-normal text-muted-foreground">Lembrar-me</Label>
                     </div>
-                    <Link href="/forgot-password" className="text-sm text-primary hover:underline">Esqueceu a senha?</Link>
+                    <Link href="/forgot-password" className="text-sm text-link hover:underline">Esqueceu a senha?</Link>
                 </div>
                 {error && <p className="text-sm text-destructive">{error}</p>}
                 <Button type="submit" className="w-full" disabled={isSubmitting}>
@@ -168,7 +168,7 @@ export default function LoginPage() {
 
               <div className="mt-6 text-center text-sm">
                 Não tem uma conta?{' '}
-                <Link href="/signup" className="font-semibold text-primary hover:underline">
+                <Link href="/signup" className="font-semibold text-link hover:underline">
                   Crie uma agora
                 </Link>
               </div>

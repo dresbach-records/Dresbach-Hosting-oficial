@@ -6,13 +6,13 @@ import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
 
 const MaintenanceBanner = () => (
-    <div className="bg-red-200 text-red-900 p-3 text-center text-sm font-medium z-50 relative animate-blink">
+    <div className="bg-destructive text-destructive-foreground p-3 text-center text-sm font-medium z-50 relative animate-blink">
         <div className="container flex flex-col sm:flex-row items-center justify-center gap-2">
             <Wrench className="h-5 w-5 flex-shrink-0" />
             <p>
                 <strong>Aviso:</strong> Site em manutenção. Pode haver falhas e instabilidades.
                 <span className="hidden sm:inline"> Se precisar de ajuda, </span>
-                <a href="https://wa.me/5511999999999" target="_blank" rel="noopener noreferrer" className="font-bold underline hover:text-red-800 whitespace-nowrap">
+                <a href="https://wa.me/5511999999999" target="_blank" rel="noopener noreferrer" className="font-bold underline hover:text-destructive-foreground/80 whitespace-nowrap">
                     nos chame no WhatsApp
                 </a>.
             </p>

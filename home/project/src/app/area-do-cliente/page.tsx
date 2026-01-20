@@ -31,7 +31,7 @@ const StatCard = ({ title, icon, count, colorClass, isLoading }: { title: string
 );
 
 function ServiceStatusBadge({ status }: { status: string }) {
-    const variant = status === 'active' ? 'default' : 'secondary';
+    const variant = status === 'active' ? 'info' : 'secondary';
     return <Badge variant={variant}>{status === 'active' ? 'Ativo' : 'Inativo'}</Badge>;
 }
 
@@ -123,7 +123,7 @@ export default function ClientAreaDashboard() {
                         </TableBody>
                     </Table>
                 ) : (
-                     !isLoading && <p className="text-muted-foreground text-center py-4">Parece que você ainda não tem nenhum produto/serviço conosco. <Link href="/planos-de-hospedagem" className="text-primary font-semibold hover:underline">Faça um pedido para começar</Link>.</p>
+                     !isLoading && <p className="text-muted-foreground text-center py-4">Parece que você ainda não tem nenhum produto/serviço conosco. <Link href="/planos-de-hospedagem" className="text-link font-semibold hover:underline">Faça um pedido para começar</Link>.</p>
                 )}
             </CardContent>
             <CardFooter className="bg-muted/50 p-2 flex justify-end">
@@ -139,10 +139,10 @@ export default function ClientAreaDashboard() {
                     <CardTitle className="text-base font-semibold">Tickets de Suporte Recentes</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <p className="text-muted-foreground text-center py-4">O sistema de suporte por tickets está em desenvolvimento. Se precisar de ajuda, por favor <a href="https://wa.me/5511999999999" target="_blank" rel="noopener noreferrer" className="text-primary font-semibold hover:underline">fale conosco no WhatsApp</a>.</p>
+                    <p className="text-muted-foreground text-center py-4">O sistema de suporte por tickets está em desenvolvimento. Se precisar de ajuda, por favor <a href="https://wa.me/5511999999999" target="_blank" rel="noopener noreferrer" className="text-link font-semibold hover:underline">fale conosco no WhatsApp</a>.</p>
                 </CardContent>
                  <CardFooter className="bg-muted/50 p-2 flex justify-end">
-                    <Button asChild size="sm" className="bg-primary hover:bg-primary/90">
+                    <Button asChild size="sm" className="bg-primary hover:bg-accent text-primary-foreground">
                        <Link href="/area-do-cliente/tickets?new=true"><Plus className="mr-2 h-4 w-4" />Abrir Novo Ticket</Link>
                     </Button>
                 </CardFooter>
@@ -153,8 +153,8 @@ export default function ClientAreaDashboard() {
                 </CardHeader>
                 <CardContent className="flex gap-2">
                     <Input placeholder="example.com" className="bg-card"/>
-                    <Button className="bg-green-600 hover:bg-green-700">Registrar</Button>
-                    <Button variant="outline" className="shadow-sm">Transferir</Button>
+                    <Button variant="outline">Registrar</Button>
+                    <Button variant="secondary">Transferir</Button>
                 </CardContent>
             </Card>
         </div>

@@ -13,7 +13,7 @@ import { apiFetch } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 
 function InvoiceStatusBadge({ status }: { status: string }) {
-    let variant: "success" | "destructive" | "warning" = "warning";
+    let variant: "info" | "destructive" | "warning" = "warning";
     const textMap: { [key: string]: string } = {
         'paid': 'Pago',
         'overdue': 'Vencida',
@@ -30,7 +30,7 @@ function InvoiceStatusBadge({ status }: { status: string }) {
     const currentStatusText = asaasStatusMap[status] || textMap[status] || status;
 
     if (currentStatusText === 'Pago') {
-        variant = 'success';
+        variant = 'info';
     } else if (currentStatusText === 'Vencida') {
         variant = 'destructive';
     }

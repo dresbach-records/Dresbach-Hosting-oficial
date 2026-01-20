@@ -3,63 +3,33 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 224 71.4% 4.1%;
-    --card: 0 0% 100%;
-    --card-foreground: 224 71.4% 4.1%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 224 71.4% 4.1%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 210 20% 98%;
-    --secondary: 220 14.3% 95.9%;
-    --secondary-foreground: 224 71.4% 4.1%;
-    --muted: 220 14.3% 95.9%;
-    --muted-foreground: 220 9.8% 46.1%;
-    --accent: 220 14.3% 95.9%;
-    --accent-foreground: 224 71.4% 4.1%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 20% 98%;
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 217.2 91.2% 59.8%;
-    --chart-1: 217.2 91.2% 59.8%;
-    --chart-2: 45 93% 47%;
-    --chart-3: 215 28% 17%;
-    --chart-4: 220 13% 91%;
-    --chart-5: 0 84.2% 60.2%;
-    --radius: 0.3rem;
-    --sidebar-background: 220 13% 11%;
-    --sidebar-foreground: 210 20% 98%;
-  }
   .dark {
-    --background: 224 71.4% 4.1%;
-    --foreground: 210 20% 98%;
-    --card: 220 13% 11%;
-    --card-foreground: 210 20% 98%;
-    --popover: 220 13% 11%;
-    --popover-foreground: 210 20% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 210 20% 98%;
-    --secondary: 215 28% 17%;
-    --secondary-foreground: 210 20% 98%;
-    --muted: 215 28% 17%;
-    --muted-foreground: 215 25% 65.1%;
-    --accent: 215 28% 17%;
-    --accent-foreground: 210 20% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 20% 98%;
-    --border: 215 28% 17%;
-    --input: 215 28% 17%;
-    --ring: 217.2 91.2% 59.8%;
-    --chart-1: 217.2 91.2% 59.8%;
-    --chart-2: 45 93% 47%;
-    --chart-3: 215 28% 17%;
-    --chart-4: 210 20% 98%;
-    --chart-5: 0 72% 51%;
+    --background: 0 0% 7%; /* #111111 */
+    --foreground: 0 0% 95%; /* #F2F2F2 */
+    --card: 0 0% 11%; /* #1C1C1C */
+    --card-foreground: 0 0% 95%;
+    --popover: 0 0% 11%;
+    --popover-foreground: 0 0% 95%;
+    --primary: 43 60% 55%; /* #C9A24D - Dourado Imperial */
+    --primary-foreground: 0 0% 7%; /* Preto para contraste */
+    --secondary: 0 0% 18%; /* #2E2E2E - Grafite para elementos secundários */
+    --secondary-foreground: 0 0% 95%;
+    --muted: 0 0% 18%;
+    --muted-foreground: 0 0% 71%; /* #B5B5B5 - Cinza Claro */
+    --accent: 43 56% 40%; /* #9E7C2F - Ouro Antigo para hover */
+    --accent-foreground: 0 0% 95%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 18%;
+    --input: 0 0% 14%;
+    --ring: 43 60% 55%;
+    --link: 221 83% 53%; /* #2563EB - Azul Tecnológico */
+    --chart-1: 43 60% 55%;
+    --chart-2: 221 83% 53%;
+    --chart-3: 0 0% 71%;
+    --chart-4: 43 56% 40%;
+    --chart-5: 0 84% 60%;
     --radius: 0.3rem;
-    --sidebar-background: 220 13% 11%;
-    --sidebar-foreground: 210 20% 98%;
   }
 }
 
