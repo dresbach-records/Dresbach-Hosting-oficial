@@ -6,20 +6,25 @@
 * Para trocar o tema visual do site, mude o nome do arquivo na linha `@import` abaixo.
 *
 * Temas disponíveis na pasta /src/templantes:
+* - "german-dark.css" (Sóbrio, escuro, com tons de dourado e azul)
 * - "black-friday.css" (Tema escuro e dourado, estilo premium)
-* - "german-dark.css" (Sóbrio, escuro, com tons de dourado)
 * - "default-light.css" (Tema claro, com tons de azul)
 *
-* Exemplo para ativar o tema claro:
-* @import "../templantes/default-light.css";
+* Exemplo para ativar o tema Black Friday:
+* @import "../templantes/black-friday.css";
 *
-* IMPORTANTE: Se você mudar de um tema escuro para um claro (ou vice-versa),
-* você TAMBÉM precisa ajustar o arquivo `src/components/theme-provider.tsx`
-* para ativar ou desativar o modo escuro.
+* IMPORTANTE:
+* 1. Se você mudar o tema aqui, lembre-se de atualizar a variável
+*    `ACTIVE_THEME` no arquivo `src/theme.config.ts` para que a
+*    estrutura do site (página inicial, rodapé) também mude.
+*
+* 2. Se você mudar de um tema escuro para um claro (ou vice-versa),
+*    você TAMBÉM precisa ajustar o arquivo `src/components/theme-provider.tsx`
+*    para ativar ou desativar o modo escuro.
 *
 * ===================================================================
 */
-@import "../templantes/black-friday.css";
+@import "../templantes/german-dark.css";
 
 @tailwind base;
 @tailwind components;

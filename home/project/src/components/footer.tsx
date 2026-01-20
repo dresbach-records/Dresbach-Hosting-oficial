@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Facebook, Twitter, Linkedin, Youtube, Mail } from 'lucide-react';
+import { ACTIVE_THEME } from "@/theme.config";
 
 const FooterLink = ({ href, children }: { href: string; children: React.ReactNode }) => (
   <li>
@@ -43,74 +44,148 @@ const PaymentIcons = () => (
     </div>
 )
 
+const BlackFridayFooter = () => {
+    const currentYear = new Date().getFullYear();
+    return (
+        <footer className="relative border-t bg-card text-foreground overflow-hidden">
+            <div 
+                className="absolute inset-x-0 bottom-0 h-48 z-0 opacity-10 bg-no-repeat bg-cover bg-bottom"
+                style={{ backgroundImage: `url('https://picsum.photos/seed/golddust/1920/1080')` }}
+                data-ai-hint="gold dust"
+            ></div>
+            
+            <div className="container relative z-10">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 py-12">
+                    <div className="flex flex-col gap-4">
+                        <h4 className="font-headline font-semibold tracking-tight text-primary uppercase">Contato</h4>
+                        <div className="flex items-center space-x-3">
+                            <a href="mailto:contato@dresbach.hosting" aria-label="Email" className="text-muted-foreground hover:text-foreground"><Mail className="h-5 w-5"/></a>
+                            <a href="#" target="_blank" rel="noreferrer" aria-label="Facebook" className="text-muted-foreground hover:text-foreground"><Facebook className="h-5 w-5"/></a>
+                            <a href="#" target="_blank" rel="noreferrer" aria-label="Twitter" className="text-muted-foreground hover:text-foreground"><Twitter className="h-5 w-5"/></a>
+                            <a href="#" target="_blank" rel="noreferrer" aria-label="LinkedIn" className="text-muted-foreground hover:text-foreground"><Linkedin className="h-5 w-5"/></a>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 className="font-headline font-semibold tracking-tight text-primary uppercase">Empresa</h4>
+                        <ul className="mt-4 space-y-2">
+                        <FooterLink href="/sobre">Sobre Nós</FooterLink>
+                        <FooterLink href="#">Nossa Equipe</FooterLink>
+                        <FooterLink href="#">Blog</FooterLink>
+                        <FooterLink href="#">Afiliados</FooterLink>
+                        <FooterLink href="/suporte">Contato</FooterLink>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h4 className="font-headline font-semibold tracking-tight text-primary uppercase">Serviços</h4>
+                        <ul className="mt-4 space-y-2">
+                        <FooterLink href="/planos-de-hospedagem">Hospedagem</FooterLink>
+                        <FooterLink href="/planos-de-hospedagem">VPS</FooterLink>
+                        <FooterLink href="/planos-de-hospedagem">Servidores Dedicados</FooterLink>
+                        <FooterLink href="/pedido">Registro de Domínios</FooterLink>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h4 className="font-headline font-semibold tracking-tight text-primary uppercase">Suporte</h4>
+                        <ul className="mt-4 space-y-2">
+                        <FooterLink href="/suporte">Base de Conhecimento</FooterLink>
+                        <FooterLink href="#">Status da Rede</FooterLink>
+                        <FooterLink href="/area-do-cliente/tickets?new=true">Abrir Chamado</FooterLink>
+                        </ul>
+                    </div>
+                </div>
+
+                <div className="border-t border-white/10 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <p className="text-xs text-muted-foreground text-center sm:text-left">
+                        &copy; {currentYear} Dresbach Hosting. Todos os direitos reservados.
+                    </p>
+                    <div className="flex items-center gap-4">
+                        <PaymentIcons />
+                        <a href="#" target="_blank" rel="noreferrer" aria-label="Youtube" className="text-muted-foreground hover:text-foreground">
+                            <Youtube className="h-5 w-5"/>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    );
+};
+
+const GermanDarkFooter = () => {
+    const currentYear = new Date().getFullYear();
+    const FooterEmailLink = ({ email, label }: { email: string; label: string }) => (
+        <li>
+            <a href={`mailto:${email}`} className="text-sm text-muted-foreground transition-colors hover:text-link">
+                {label}
+            </a>
+        </li>
+    );
+
+    return (
+        <footer className="border-t bg-card text-foreground">
+            <div className="container py-12">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
+                    <div className="col-span-2 md:col-span-1">
+                        <h4 className="font-headline font-semibold tracking-tight text-primary uppercase">Dresbach Hosting</h4>
+                        <p className="text-sm text-muted-foreground mt-4">
+                            Infraestrutura de alta performance para missões críticas.
+                        </p>
+                    </div>
+                    <div>
+                        <h4 className="font-headline font-semibold tracking-tight uppercase">Produtos</h4>
+                        <ul className="mt-4 space-y-2">
+                            <FooterLink href="/planos-de-hospedagem">Hospedagem</FooterLink>
+                            <FooterLink href="/tech-ops">Consultoria Tech Ops</FooterLink>
+                            <FooterLink href="/pedido">Domínios</FooterLink>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 className="font-headline font-semibold tracking-tight uppercase">Empresa</h4>
+                        <ul className="mt-4 space-y-2">
+                            <FooterLink href="/sobre">Sobre</FooterLink>
+                            <FooterLink href="/suporte">Suporte</FooterLink>
+                            <FooterLink href="/admin/login">Acesso Admin</FooterLink>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 className="font-headline font-semibold tracking-tight uppercase">Legal</h4>
+                        <ul className="mt-4 space-y-2">
+                            <FooterLink href="/termos-de-uso">Termos de Uso</FooterLink>
+                            <FooterLink href="/politica-de-privacidade">Privacidade</FooterLink>
+                            <FooterLink href="/lgpd">LGPD</FooterLink>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 className="font-headline font-semibold tracking-tight uppercase">Contato</h4>
+                        <ul className="mt-4 space-y-2">
+                            <FooterEmailLink email="financeiro@dresbachhosting.com.br" label="Financeiro" />
+                            <FooterEmailLink email="suporte@dresbachhosting.com.br" label="Suporte" />
+                            <FooterEmailLink email="techops@dresbachhosting.com.br" label="Tech Ops" />
+                        </ul>
+                    </div>
+                </div>
+
+                <div className="mt-12 border-t border-border/50 pt-8 flex flex-col items-center justify-between gap-6 sm:flex-row">
+                    <p className="text-xs text-muted-foreground">
+                        © {currentYear} Dresbach Hosting do Brasil LTDA | CNPJ: 63.187.175/0001-70
+                    </p>
+                    <div className="flex items-center space-x-3">
+                        <a href="#" aria-label="Facebook" className="text-muted-foreground hover:text-link"><Facebook className="h-5 w-5"/></a>
+                        <a href="#" aria-label="Twitter" className="text-muted-foreground hover:text-link"><Twitter className="h-5 w-5"/></a>
+                        <a href="#" aria-label="LinkedIn" className="text-muted-foreground hover:text-link"><Linkedin className="h-5 w-5"/></a>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    );
+}
 
 export function Footer() {
-  const currentYear = new Date().getFullYear();
-
-  return (
-    <footer className="relative border-t bg-card text-foreground overflow-hidden">
-      <div 
-        className="absolute inset-x-0 bottom-0 h-48 z-0 opacity-10 bg-no-repeat bg-cover bg-bottom"
-        style={{ backgroundImage: `url('https://picsum.photos/seed/golddust/1920/1080')` }}
-        data-ai-hint="gold dust"
-      ></div>
-      
-      <div className="container relative z-10">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 py-12">
-          
-          <div className="flex flex-col gap-4">
-              <h4 className="font-headline font-semibold tracking-tight text-primary uppercase">Contato</h4>
-              <div className="flex items-center space-x-3">
-                <a href="mailto:contato@dresbach.hosting" aria-label="Email" className="text-muted-foreground hover:text-foreground"><Mail className="h-5 w-5"/></a>
-                <a href="#" target="_blank" rel="noreferrer" aria-label="Facebook" className="text-muted-foreground hover:text-foreground"><Facebook className="h-5 w-5"/></a>
-                <a href="#" target="_blank" rel="noreferrer" aria-label="Twitter" className="text-muted-foreground hover:text-foreground"><Twitter className="h-5 w-5"/></a>
-                <a href="#" target="_blank" rel="noreferrer" aria-label="LinkedIn" className="text-muted-foreground hover:text-foreground"><Linkedin className="h-5 w-5"/></a>
-              </div>
-          </div>
-
-          <div>
-            <h4 className="font-headline font-semibold tracking-tight text-primary uppercase">Empresa</h4>
-            <ul className="mt-4 space-y-2">
-              <FooterLink href="/sobre">Sobre Nós</FooterLink>
-              <FooterLink href="#">Nossa Equipe</FooterLink>
-              <FooterLink href="#">Blog</FooterLink>
-              <FooterLink href="#">Afiliados</FooterLink>
-              <FooterLink href="/suporte">Contato</FooterLink>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="font-headline font-semibold tracking-tight text-primary uppercase">Serviços</h4>
-            <ul className="mt-4 space-y-2">
-              <FooterLink href="/planos-de-hospedagem">Hospedagem</FooterLink>
-              <FooterLink href="/planos-de-hospedagem">VPS</FooterLink>
-              <FooterLink href="/planos-de-hospedagem">Servidores Dedicados</FooterLink>
-              <FooterLink href="/pedido">Registro de Domínios</FooterLink>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="font-headline font-semibold tracking-tight text-primary uppercase">Suporte</h4>
-            <ul className="mt-4 space-y-2">
-              <FooterLink href="/suporte">Base de Conhecimento</FooterLink>
-              <FooterLink href="#">Status da Rede</FooterLink>
-              <FooterLink href="/area-do-cliente/tickets?new=true">Abrir Chamado</FooterLink>
-            </ul>
-          </div>
-        </div>
-
-        <div className="border-t border-white/10 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-muted-foreground text-center sm:text-left">
-            &copy; {currentYear} Dresbach Hosting. Todos os direitos reservados.
-          </p>
-          <div className="flex items-center gap-4">
-            <PaymentIcons />
-            <a href="#" target="_blank" rel="noreferrer" aria-label="Youtube" className="text-muted-foreground hover:text-foreground">
-                <Youtube className="h-5 w-5"/>
-            </a>
-          </div>
-        </div>
-      </div>
-    </footer>
-  );
+    if (ACTIVE_THEME === 'black-friday') {
+        return <BlackFridayFooter />;
+    }
+    
+    return <GermanDarkFooter />;
 }
