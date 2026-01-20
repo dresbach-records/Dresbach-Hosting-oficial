@@ -33,6 +33,27 @@ const ScalableIcon = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
+const SantaHat = () => (
+  <div className="absolute -top-10 -right-2 transform rotate-12 z-10">
+    <svg
+      width="80"
+      height="80"
+      viewBox="0 0 200 200"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M 50,150 Q 40,90 100,70 Q 160,90 150,150 Z"
+        fill="#FFFFFF"
+      />
+      <path
+        d="M 100,70 C 50,20 120,0 150,50 C 180,100 140,110 100,70"
+        fill="#E53935"
+      />
+      <circle cx="160" cy="45" r="20" fill="#FFFFFF" />
+    </svg>
+  </div>
+);
+
 const serviceFeatures = [
   {
     icon: <ShieldIcon />,
@@ -151,7 +172,8 @@ export default function BlackFridayPage() {
           </div>
           <div className="mt-16 grid grid-cols-1 gap-8 md:grid-cols-3 items-center">
             {pricingPlans.map((plan) => (
-              <Card key={plan.name} className={`flex flex-col text-center bg-card ${plan.popular ? 'border-primary ring-2 ring-primary scale-105' : 'border-white/10'}`}>
+              <Card key={plan.name} className={`relative overflow-visible flex flex-col text-center bg-card ${plan.popular ? 'border-primary ring-2 ring-primary scale-105' : 'border-white/10'}`}>
+                <SantaHat />
                 {plan.popular && (
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2">
                     <div className="bg-primary text-primary-foreground text-xs font-bold uppercase px-4 py-1 rounded-full">Popular</div>
