@@ -1,37 +1,28 @@
+/*
+* ===================================================================
+* COMO TROCAR DE TEMA (TEMPLATE)
+* ===================================================================
+*
+* Para trocar o tema visual do site, mude o nome do arquivo na linha `@import` abaixo.
+*
+* Temas disponíveis na pasta /src/templantes:
+* - "german-dark.css" (Padrão atual: Sóbrio, escuro, com tons de dourado)
+* - "default-light.css" (Tema claro, com tons de azul)
+*
+* Exemplo para ativar o tema claro:
+* @import "../templantes/default-light.css";
+*
+* IMPORTANTE: Se você mudar de um tema escuro para um claro (ou vice-versa),
+* você TAMBÉM precisa ajustar o arquivo `src/components/theme-provider.tsx`
+* para ativar ou desativar o modo escuro.
+*
+* ===================================================================
+*/
+@import "../templantes/german-dark.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@layer base {
-  .dark {
-    --background: 0 0% 7%; /* #111111 */
-    --foreground: 0 0% 95%; /* #F2F2F2 */
-    --card: 0 0% 11%; /* #1C1C1C */
-    --card-foreground: 0 0% 95%;
-    --popover: 0 0% 11%;
-    --popover-foreground: 0 0% 95%;
-    --primary: 43 60% 55%; /* #C9A24D - Dourado Imperial */
-    --primary-foreground: 0 0% 7%; /* Preto para contraste */
-    --secondary: 0 0% 18%; /* #2E2E2E - Grafite para elementos secundários */
-    --secondary-foreground: 0 0% 95%;
-    --muted: 0 0% 18%;
-    --muted-foreground: 0 0% 71%; /* #B5B5B5 - Cinza Claro */
-    --accent: 43 56% 40%; /* #9E7C2F - Ouro Antigo para hover */
-    --accent-foreground: 0 0% 95%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 18%;
-    --input: 0 0% 14%;
-    --ring: 43 60% 55%;
-    --link: 221 83% 53%; /* #2563EB - Azul Tecnológico */
-    --chart-1: 43 60% 55%;
-    --chart-2: 221 83% 53%;
-    --chart-3: 0 0% 71%;
-    --chart-4: 43 56% 40%;
-    --chart-5: 0 84% 60%;
-    --radius: 0.3rem;
-  }
-}
 
 @layer base {
   * {
