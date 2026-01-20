@@ -1,4 +1,4 @@
-import { ACTIVE_THEME } from "@/lib/theme.config";
+import { ACTIVE_THEME } from "../lib/theme.config";
 import BlackFridayPage from "./themes/black-friday";
 import GermanDarkPage from "./themes/german-dark";
 

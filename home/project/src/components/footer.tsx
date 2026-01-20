@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Facebook, Twitter, Linkedin, Youtube, Mail } from 'lucide-react';
-import { ACTIVE_THEME } from "@/lib/theme.config";
+import { ACTIVE_THEME } from "../lib/theme.config";
 
 const FooterLink = ({ href, children }: { href: string; children: React.ReactNode }) => (
   <li>
